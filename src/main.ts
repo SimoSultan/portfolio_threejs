@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 class PortfolioScene {
   private scene!: THREE.Scene;
@@ -8,6 +9,9 @@ class PortfolioScene {
   private nodesGroup!: THREE.Group;
   private tubeMaterial!: THREE.MeshStandardMaterial;
   private nodeMaterial!: THREE.MeshStandardMaterial;
+  private controls!: OrbitControls;
+  private objectCenter: THREE.Vector3 = new THREE.Vector3();
+  private objectRadius: number = 1;
 
   constructor() {
     this.init();
@@ -258,6 +262,34 @@ class PortfolioScene {
     this.nodesGroup = new THREE.Group();
     this.scene.add(this.tubesGroup);
     this.scene.add(this.nodesGroup);
+
+    // Cache bounds for camera fitting
+    const box = new THREE.Box3().setFromObject(this.tubesGroup);
+    box.getCenter(this.objectCenter);
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    this.objectRadius = sphere.radius;
+  }
+
+  private fitCameraToObject(preserveDirection = true): void {
+    if (!this.tubesGroup) return;
+    // Compute distance to frame bounding sphere vertically and horizontally
+    const fov = THREE.MathUtils.degToRad(this.camera.fov);
+    const fitHeightDistance = this.objectRadius / Math.sin(fov / 2);
+    const fitWidthDistance = fitHeightDistance / this.camera.aspect;
+    const distance = Math.max(fitHeightDistance, fitWidthDistance) * 1.05; // small padding
+
+    const target = this.objectCenter.clone();
+    if (preserveDirection) {
+      const dir = this.camera.position.clone().sub(this.controls?.target ?? target).normalize();
+      this.camera.position.copy(target).add(dir.multiplyScalar(distance));
+    } else {
+      this.camera.position.copy(target).add(new THREE.Vector3(0, 0, distance));
+    }
+    this.controls.target.copy(target);
+    this.camera.near = Math.max(0.01, distance * 0.01);
+    this.camera.far = distance * 10;
+    this.camera.updateProjectionMatrix();
+    this.controls.update();
   }
 
   private init(): void {
@@ -312,13 +344,25 @@ class PortfolioScene {
     // Build face geometry
     this.buildFace();
 
+    // Controls
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.enablePan = false;
+    this.controls.dampingFactor = 0.08;
+    this.controls.rotateSpeed = 0.8;
+    this.controls.zoomSpeed = 0.9;
+
+    // Fit camera to the object and center it
+    this.fitCameraToObject(false);
+
     // Resize
     window.addEventListener("resize", this.onWindowResize.bind(this));
   }
 
   private animate(): void {
     requestAnimationFrame(this.animate.bind(this));
-    // Keep static and centered
+    // Update controls; keep centered on target
+    this.controls?.update();
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -326,6 +370,8 @@ class PortfolioScene {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    // Re-fit keeping current view direction
+    this.fitCameraToObject(true);
   }
 }
 
