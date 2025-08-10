@@ -6,9 +6,7 @@ class PortfolioScene {
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private tubesGroup!: THREE.Group;
-  private nodesGroup!: THREE.Group;
   private tubeMaterial!: THREE.MeshStandardMaterial;
-  private nodeMaterial!: THREE.MeshStandardMaterial;
   private controls!: OrbitControls;
   private objectCenter: THREE.Vector3 = new THREE.Vector3();
   private objectRadius: number = 1;
@@ -16,12 +14,6 @@ class PortfolioScene {
   constructor() {
     this.init();
     this.animate();
-  }
-
-  // Utility to mirror points across X for symmetry
-  // Legacy utility kept for potential future features
-  private mirror(points: THREE.Vector3[]): THREE.Vector3[] {
-    return points.map((p) => new THREE.Vector3(-p.x, p.y, p.z));
   }
 
   private createTubeBetweenPoints(
@@ -45,31 +37,7 @@ class PortfolioScene {
     return mesh;
   }
 
-  // Legacy helper kept for potential reuse
-  private connectIndices(
-    vertices: THREE.Vector3[],
-    edges: Array<[number, number]>,
-    radius: number
-  ): THREE.Group {
-    const g = new THREE.Group();
-    for (const [a, b] of edges)
-      g.add(this.createTubeBetweenPoints(vertices[a], vertices[b], radius));
-    return g;
-  }
-
-  // Legacy helper kept for potential reuse
-  private addNodes(vertices: THREE.Vector3[], radius: number): THREE.Group {
-    const g = new THREE.Group();
-    for (const v of vertices) {
-      const s = new THREE.Mesh(
-        new THREE.SphereGeometry(radius, 16, 12),
-        this.nodeMaterial
-      );
-      s.position.copy(v);
-      g.add(s);
-    }
-    return g;
-  }
+  // (no legacy helpers)
 
   private buildFace(): void {
     // Hand-authored low‑poly face with triangular mesh, hollow eyes and mouth
@@ -259,9 +227,7 @@ class PortfolioScene {
       )
     );
     this.tubesGroup = tubes;
-    this.nodesGroup = new THREE.Group();
     this.scene.add(this.tubesGroup);
-    this.scene.add(this.nodesGroup);
 
     // Cache bounds for camera fitting
     const box = new THREE.Box3().setFromObject(this.tubesGroup);
@@ -345,13 +311,7 @@ class PortfolioScene {
       roughness: 0.5,
       side: THREE.DoubleSide,
     });
-    this.nodeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x9fd1ff,
-      emissive: 0x2b6fff,
-      emissiveIntensity: 0.9,
-      metalness: 0.0,
-      roughness: 0.2,
-    });
+    // (no node material; we render tubes only)
 
     // Build face geometry
     this.buildFace();
