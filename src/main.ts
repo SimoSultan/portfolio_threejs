@@ -266,6 +266,9 @@ class PortfolioScene {
     // Cache bounds for camera fitting
     const box = new THREE.Box3().setFromObject(this.tubesGroup);
     box.getCenter(this.objectCenter);
+    // Nudge center upward slightly to visually center the face, not the neck
+    const height = box.max.y - box.min.y;
+    this.objectCenter.y += height * 0.06;
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     this.objectRadius = sphere.radius;
   }
@@ -276,18 +279,27 @@ class PortfolioScene {
     const fov = THREE.MathUtils.degToRad(this.camera.fov);
     const fitHeightDistance = this.objectRadius / Math.sin(fov / 2);
     const fitWidthDistance = fitHeightDistance / this.camera.aspect;
-    const distance = Math.max(fitHeightDistance, fitWidthDistance) * 1.05; // small padding
+    // Add gentle padding to avoid aggressive scaling
+    const targetDistance = Math.max(fitHeightDistance, fitWidthDistance) * 1.15;
 
     const target = this.objectCenter.clone();
-    if (preserveDirection) {
-      const dir = this.camera.position.clone().sub(this.controls?.target ?? target).normalize();
-      this.camera.position.copy(target).add(dir.multiplyScalar(distance));
-    } else {
-      this.camera.position.copy(target).add(new THREE.Vector3(0, 0, distance));
-    }
+    const currentDir = this.camera.position
+      .clone()
+      .sub(this.controls?.target ?? target)
+      .normalize();
+    const desiredDir = preserveDirection
+      ? currentDir
+      : new THREE.Vector3(0, 0, 1);
+    const currentDistance = this.camera.position.distanceTo(
+      this.controls?.target ?? target
+    );
+    const blended = preserveDirection
+      ? THREE.MathUtils.lerp(currentDistance, targetDistance, 0.25)
+      : targetDistance;
+    this.camera.position.copy(target).add(desiredDir.multiplyScalar(blended));
     this.controls.target.copy(target);
-    this.camera.near = Math.max(0.01, distance * 0.01);
-    this.camera.far = distance * 10;
+    this.camera.near = Math.max(0.01, blended * 0.01);
+    this.camera.far = blended * 10;
     this.camera.updateProjectionMatrix();
     this.controls.update();
   }
