@@ -1,8 +1,9 @@
 import * as THREE from "three";
-import { FaceGeometry } from "./face-geometry";
-import { CameraManager } from "./camera-manager";
-import { Lighting } from "./lighting";
-import { COLORS, calculateBoundingSphere } from "./utils";
+import { FaceGeometry } from "./views/geometry";
+import { CameraManager } from "./views/camera-manager";
+import { Lighting } from "./views/lighting";
+import { COLORS, calculateBoundingSphere } from "./views/utils";
+import { ChatUI } from "./chatbot";
 
 class PortfolioScene {
   private scene!: THREE.Scene;
@@ -11,6 +12,7 @@ class PortfolioScene {
   private tubesGroup!: THREE.Group;
   private cameraManager!: CameraManager;
   private animationId!: number;
+  private chatUI!: ChatUI;
 
   constructor() {
     this.init();
@@ -55,6 +57,9 @@ class PortfolioScene {
 
     // Fit camera to face
     this.cameraManager.fitCameraToObject();
+
+    // Initialize chatbot
+    this.chatUI = new ChatUI();
   }
 
   private buildFace(): void {
@@ -102,6 +107,11 @@ class PortfolioScene {
         }
       }
     });
+
+    // Dispose of chatbot
+    if (this.chatUI) {
+      this.chatUI.destroy();
+    }
 
     this.renderer.dispose();
   }
