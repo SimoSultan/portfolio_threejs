@@ -46,6 +46,8 @@ class PortfolioScene {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+    document.getElementById("fallback-content")?.classList.add("hidden");
+
     // Lighting
     Lighting.setupLighting(this.scene);
 
@@ -60,6 +62,16 @@ class PortfolioScene {
 
     // Initialize chatbot
     this.chatUI = new ChatUI();
+
+    // Position the chat UI within the app container
+    const appContainer = document.getElementById("app");
+    if (appContainer && this.chatUI) {
+      // Move the chat UI to be positioned relative to the app container
+      const chatContainer = this.chatUI.getContainer();
+      if (chatContainer) {
+        appContainer.appendChild(chatContainer);
+      }
+    }
   }
 
   private buildFace(): void {

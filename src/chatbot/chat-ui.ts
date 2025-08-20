@@ -20,40 +20,40 @@ export class ChatUI {
   }
 
   private createUI(): void {
-    // Main container
+    // Main container - positioned absolutely over canvas, below the circle
     this.container = document.createElement("div");
-    this.container.className =
-      "fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50";
+    this.container.className = "absolute left-0 right-0 bg-transparent z-10";
+    this.container.style.top = "60vh"; // Position below the blue circle
     this.container.style.maxHeight = "40vh";
 
     // Chat messages container
     this.chatContainer = document.createElement("div");
-    this.chatContainer.className = "overflow-y-auto p-4 space-y-3";
-    this.chatContainer.style.maxHeight = "30vh";
+    this.chatContainer.className = "overflow-y-auto p-4 space-y-3 mb-4";
+    this.chatContainer.style.maxHeight = "25vh";
 
-    // Input container (Gemini-style)
+    // Input container (Gemini-style) - centered, floating over canvas
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex items-center gap-3 p-4 bg-gray-50 border-t border-gray-200";
+      "flex items-center gap-3 p-4 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg mx-4";
 
     // Model selector
     this.modelSelector = document.createElement("select");
     this.modelSelector.className =
-      "px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white";
+      "px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white/80 backdrop-blur-sm";
     this.populateModelSelector();
 
     // Status indicator
     this.statusIndicator = document.createElement("div");
     this.statusIndicator.className =
-      "flex items-center gap-2 text-sm text-gray-500";
+      "flex items-center gap-2 text-sm text-gray-600";
     this.updateStatus("Initializing...");
 
     // Input field
     this.input = document.createElement("input");
     this.input.type = "text";
-    this.input.placeholder = "Ask me anything...";
+    this.input.placeholder = "Message Gemini...";
     this.input.className =
-      "flex-1 px-4 py-3 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
+      "flex-1 px-4 py-3 border-0 rounded-full text-sm focus:outline-none focus:ring-0 bg-transparent placeholder-gray-500";
     this.input.addEventListener("keypress", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -69,7 +69,7 @@ export class ChatUI {
       </svg>
     `;
     this.sendButton.className =
-      "p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+      "p-2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
     this.sendButton.addEventListener("click", () => this.sendMessage());
 
     // Assemble UI
@@ -81,8 +81,7 @@ export class ChatUI {
     this.container.appendChild(this.chatContainer);
     this.container.appendChild(this.inputContainer);
 
-    // Add to page
-    document.body.appendChild(this.container);
+    // Don't auto-append to body - let main.ts handle positioning
 
     // Handle model changes
     this.modelSelector.addEventListener("change", (e) => {
@@ -194,7 +193,7 @@ export class ChatUI {
     bubble.className = `max-w-xs px-4 py-2 rounded-2xl text-sm ${
       message.role === "user"
         ? "bg-blue-500 text-white"
-        : "bg-gray-200 text-gray-800"
+        : "bg-white/90 backdrop-blur-sm text-gray-800 border border-gray-200"
     }`;
     bubble.textContent = message.content;
 
@@ -217,6 +216,10 @@ export class ChatUI {
       }"></div>
       <span>${status}</span>
     `;
+  }
+
+  public getContainer(): HTMLDivElement {
+    return this.container;
   }
 
   public destroy(): void {

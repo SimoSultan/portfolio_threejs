@@ -29,7 +29,9 @@ export class Chatbot {
       this.pipeline = await pipeline("text-generation", this.modelConfig.url, {
         quantized: true,
         progress_callback: (progress: any) => {
-          console.log(`Loading: ${Math.round(progress.progress * 100)}%`);
+          if (progress && typeof progress.progress === 'number') {
+            console.log(`Loading: ${Math.round(progress.progress * 100)}%`);
+          }
         },
       });
       console.log(`${this.modelConfig.name} loaded successfully!`);
@@ -67,8 +69,17 @@ export class Chatbot {
         repetition_penalty: 1.1,
       });
 
-      const response =
-        result[0]?.generated_text || "Sorry, I could not generate a response.";
+      // Handle different response formats
+      let response = "Sorry, I could not generate a response.";
+      if (Array.isArray(result) && result.length > 0) {
+        if (result[0].generated_text) {
+          response = result[0].generated_text;
+        } else if (typeof result[0] === 'string') {
+          response = result[0];
+        }
+      } else if (typeof result === 'string') {
+        response = result;
+      }
 
       // Add assistant response to history
       this.messages.push({
