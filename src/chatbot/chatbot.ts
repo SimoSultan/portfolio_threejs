@@ -1,3 +1,5 @@
+import { getOllamaUrl, getOllamaEnvironment } from "./config";
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -38,7 +40,14 @@ export class Chatbot {
       console.log(`🔧 Model ID: ${this.modelConfig.modelId}`);
 
       // Test Ollama connection
-      const response = await fetch("http://localhost:11434/api/tags", {
+      const ollamaUrl = getOllamaUrl();
+      const environment = getOllamaEnvironment();
+
+      console.log(
+        `🌐 Using Ollama server: ${ollamaUrl} (${environment} environment)`
+      );
+
+      const response = await fetch(`${ollamaUrl}/api/tags`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -57,7 +66,7 @@ export class Chatbot {
           console.log(`✅ Model ${this.modelConfig.modelId} is available`);
         } else {
           console.log(
-            `⚠️ Model ${this.modelConfig.modelId} not found, will download on first use`
+            `❌ Model ${this.modelConfig.modelId} not found. Please download it manually with: ollama pull ${this.modelConfig.modelId}`
           );
         }
       } else {
@@ -121,7 +130,8 @@ export class Chatbot {
         `🤖 Generating response with Ollama model: ${this.modelConfig.modelId}`
       );
 
-      const response = await fetch("http://localhost:11434/api/generate", {
+      const ollamaUrl = getOllamaUrl();
+      const response = await fetch(`${ollamaUrl}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,6 +146,9 @@ export class Chatbot {
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          return `❌ Model ${this.modelConfig.modelId} not found. Please download it manually with: ollama pull ${this.modelConfig.modelId}`;
+        }
         throw new Error(`Ollama API error: ${response.status}`);
       }
 

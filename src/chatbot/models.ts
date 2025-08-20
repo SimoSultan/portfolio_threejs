@@ -16,9 +16,9 @@ export const AVAILABLE_MODELS: Record<string, ModelConfig> = {
     maxLength: 512,
     temperature: 0.7,
   },
-  "qwen3:1b": {
-    name: "Qwen 3 (1B)",
-    modelId: "qwen3:1b",
+  "gemma3:4b-it-qat": {
+    name: "Gemma 3 Quantized (4B)",
+    modelId: "gemma3:4b-it-qat",
     maxLength: 512,
     temperature: 0.7,
   },
@@ -54,11 +54,11 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     speed: "medium",
     quality: "good",
   },
-  "qwen3:1b": {
-    id: "qwen3:1b",
-    name: "Qwen 3 (1B)",
-    description: "Faster version of Qwen 3, good for quick responses",
-    size: "~1GB",
+  "gemma3:4b-it-qat": {
+    id: "gemma3:4b-it-qat",
+    name: "Gemma 3 Quantized (4B)",
+    description: "Faster version of Gemma 3, good for quick responses",
+    size: "~4GB",
     speed: "fast",
     quality: "good",
   },

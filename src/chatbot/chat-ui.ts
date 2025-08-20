@@ -1,5 +1,6 @@
 import { Chatbot, type ChatMessage } from "./chatbot";
 import { AVAILABLE_MODELS, DEFAULT_MODEL, MODEL_METADATA } from "./models";
+import { getOllamaEnvironment, getOllamaUrl } from "./config";
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -215,11 +216,27 @@ export class ChatUI {
   }
 
   private updateStatus(status: string): void {
+    const environment = getOllamaEnvironment();
+    const ollamaUrl = getOllamaUrl();
+    const isLocal = environment === "local";
+
+    let dotColor = "bg-yellow-500";
+    if (status === "Ready") {
+      dotColor = "bg-green-500";
+    } else if (status === "Failed to load model") {
+      dotColor = "bg-red-500";
+    }
+
     this.statusIndicator.innerHTML = `
-      <div class="w-2 h-2 rounded-full ${
-        status === "Ready" ? "bg-green-500" : "bg-yellow-500"
-      }"></div>
+      <div class="w-2 h-2 rounded-full ${dotColor}"></div>
       <span>${status}</span>
+      ${
+        status === "Ready"
+          ? `<span class="text-xs opacity-60">${
+              isLocal ? "localhost" : new URL(ollamaUrl).hostname
+            }</span>`
+          : ""
+      }
     `;
   }
 
