@@ -46,8 +46,6 @@ class PortfolioScene {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    document.getElementById("fallback-content")?.classList.add("hidden");
-
     // Lighting
     Lighting.setupLighting(this.scene);
 

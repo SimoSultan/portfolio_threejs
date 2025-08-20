@@ -1,29 +1,31 @@
 import type { ModelConfig } from "./chatbot";
 
-// Available models - easy to swap and add new ones
+// Available models - Ollama-based
 export const AVAILABLE_MODELS: Record<string, ModelConfig> = {
-  "qwen-0.5b": {
-    name: "Qwen2.5-0.5B-Instruct",
-    url: "Xenova/Qwen2.5-0.5B-Instruct",
+  // Local fallback model - works without external dependencies
+  "local-fallback": {
+    name: "Local Fallback (No AI)",
+    modelId: "local",
+    maxLength: 100,
+    temperature: 0.7,
+  },
+  // Ollama models - will be downloaded automatically
+  "gemma3:1b": {
+    name: "Gemma 3 (1B)",
+    modelId: "gemma3:1b",
     maxLength: 512,
     temperature: 0.7,
   },
-  "qwen-1.5b": {
-    name: "Qwen2.5-1.5B-Instruct",
-    url: "Xenova/Qwen2.5-1.5B-Instruct",
-    maxLength: 512,
-    temperature: 0.7,
-  },
-  "llama-1b": {
-    name: "Llama-3.2-1B-Instruct",
-    url: "Xenova/Llama-3.2-1B-Instruct",
+  "qwen3:1b": {
+    name: "Qwen 3 (1B)",
+    modelId: "qwen3:1b",
     maxLength: 512,
     temperature: 0.7,
   },
 };
 
-// Default model to use
-export const DEFAULT_MODEL = "qwen-0.5b";
+// Default model to use - start with local fallback until Ollama is set up
+export const DEFAULT_MODEL = "local-fallback";
 
 // Model metadata for UI display
 export interface ModelMetadata {
@@ -36,28 +38,28 @@ export interface ModelMetadata {
 }
 
 export const MODEL_METADATA: Record<string, ModelMetadata> = {
-  "qwen-0.5b": {
-    id: "qwen-0.5b",
-    name: "Qwen2.5-0.5B-Instruct",
-    description: "Fast, lightweight model for quick responses",
-    size: "~200MB",
+  "local-fallback": {
+    id: "local",
+    name: "Local Fallback (No AI)",
+    description: "Simple responses without external model loading",
+    size: "0MB",
     speed: "fast",
     quality: "basic",
   },
-  "qwen-1.5b": {
-    id: "qwen-1.5b",
-    name: "Qwen2.5-1.5B-Instruct",
-    description: "Balanced speed and quality",
-    size: "~600MB",
+  "gemma3:1b": {
+    id: "gemma3:1b",
+    name: "Gemma 3 (1B)",
+    description: "Meta's Gemma 3 model, good balance of speed and quality",
+    size: "~1GB",
     speed: "medium",
     quality: "good",
   },
-  "llama-1b": {
-    id: "llama-1b",
-    name: "Llama-3.2-1B-Instruct",
-    description: "Meta's lightweight instruction model",
-    size: "~500MB",
-    speed: "medium",
+  "qwen3:1b": {
+    id: "qwen3:1b",
+    name: "Qwen 3 (1B)",
+    description: "Faster version of Qwen 3, good for quick responses",
+    size: "~1GB",
+    speed: "fast",
     quality: "good",
   },
 };

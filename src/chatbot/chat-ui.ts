@@ -22,7 +22,8 @@ export class ChatUI {
   private createUI(): void {
     // Main container - positioned absolutely over canvas, below the circle
     this.container = document.createElement("div");
-    this.container.className = "absolute left-0 right-0 bg-transparent z-10";
+    this.container.className =
+      "absolute left-0 right-0 bg-transparent z-10 p-10 flex justify-end flex-col h-full";
     this.container.style.top = "60vh"; // Position below the blue circle
     this.container.style.maxHeight = "40vh";
 
@@ -34,10 +35,11 @@ export class ChatUI {
     // Input container (Gemini-style) - centered, floating over canvas
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex items-center gap-3 p-4 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg mx-4";
+      "flex items-center gap-3 p-4 bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-lg w-full min-h-20";
 
     // Model selector
     this.modelSelector = document.createElement("select");
+    this.modelSelector.id = "model-selector";
     this.modelSelector.className =
       "px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white/80 backdrop-blur-sm";
     this.populateModelSelector();
@@ -50,8 +52,9 @@ export class ChatUI {
 
     // Input field
     this.input = document.createElement("input");
+    this.input.id = "chat-input";
     this.input.type = "text";
-    this.input.placeholder = "Message Gemini...";
+    this.input.placeholder = "Ask me anything...";
     this.input.className =
       "flex-1 px-4 py-3 border-0 rounded-full text-sm focus:outline-none focus:ring-0 bg-transparent placeholder-gray-500";
     this.input.addEventListener("keypress", (e) => {
@@ -104,12 +107,14 @@ export class ChatUI {
 
   private async initializeChatbot(): Promise<void> {
     try {
+      console.log("🤖 ChatUI: Starting chatbot initialization...");
       await this.chatbot.initialize();
+      console.log("✅ ChatUI: Chatbot initialized successfully!");
       this.updateStatus("Ready");
       this.input.disabled = false;
       this.sendButton.disabled = false;
     } catch (error) {
-      console.error("Failed to initialize chatbot:", error);
+      console.error("❌ ChatUI: Failed to initialize chatbot:", error);
       this.updateStatus("Failed to load model");
       this.input.disabled = true;
       this.sendButton.disabled = true;
