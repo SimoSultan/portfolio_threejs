@@ -64,6 +64,10 @@ class PortfolioScene {
     // Fit camera to circle
     this.cameraManager.fitCameraToObject();
 
+    // Start infinite individual tube backflip animation on page load
+    this.animationManager.triggerIndividualTubeBackflipAnimation(this.tubesGroup);
+    this.animationManager.setShouldResumeInfiniteAnimation(true);
+
     // Initialize chatbot
     this.chatUI = new ChatUI();
 
@@ -123,7 +127,7 @@ class PortfolioScene {
     });
 
     // Listen for animation stop events from chatbot
-    window.addEventListener("stopAnimation", (event: Event) => {
+    window.addEventListener("stopAnimation", () => {
       console.log("⏹️ Stopping animation...");
       if (this.animationManager && this.tubesGroup) {
         this.animationManager.stopAnimation();
@@ -132,9 +136,8 @@ class PortfolioScene {
     });
 
     // Legacy event listener for backward compatibility
-    window.addEventListener("testAnimation", (event: Event) => {
-      const customEvent = event as CustomEvent;
-      console.log("🎬 Legacy animation test triggered:", customEvent.detail);
+    window.addEventListener("testAnimation", () => {
+      console.log("🎬 Legacy animation test triggered");
       this.triggerAnimation("spin");
     });
   }
@@ -149,21 +152,30 @@ class PortfolioScene {
 
     switch (animationType) {
       case "spin":
+        this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerSpinAnimation(this.tubesGroup);
         break;
       case "wave":
-        this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup);
+        this.animationManager.setShouldResumeInfiniteAnimation(true);
+        this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup, 2000, false); // Single cycle for manual trigger
+        break;
+      case "loadingWave":
+        this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup, 2000, true); // Continuous wave for loading
         break;
       case "bounce":
+        this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerBounceAnimation(this.tubesGroup);
         break;
       case "backflip":
+        this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerBackflipAnimation(this.tubesGroup);
         break;
       case "multiSpin":
+        this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerMultiAxisSpinAnimation(this.tubesGroup);
         break;
       case "individualBackflip":
+        this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerIndividualTubeBackflipAnimation(this.tubesGroup);
         break;
       case "continuousWave":

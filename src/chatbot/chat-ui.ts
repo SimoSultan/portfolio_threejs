@@ -16,6 +16,7 @@ export class ChatUI {
   private multiSpinButton!: HTMLButtonElement;
   private individualBackflipButton!: HTMLButtonElement;
   private modelSelector!: HTMLSelectElement;
+  private modelSelectorContainer!: HTMLDivElement;
   private statusIndicator!: HTMLDivElement;
   private chatbot: Chatbot;
   private currentModelId: string;
@@ -36,28 +37,32 @@ export class ChatUI {
 
     // Chat messages container - takes up 90% of screen height
     this.chatContainer = document.createElement("div");
-    this.chatContainer.className = "overflow-y-auto p-4 space-y-3 flex-1";
-    this.chatContainer.style.height = "90vh";
+    this.chatContainer.className = "overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3 flex-1 h-[80vh] md:h-[90vh]";
 
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex items-center gap-3 p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full border-t border-gray-600/30";
-    this.inputContainer.style.height = "10vh";
+      "flex flex-col md:flex-row items-center gap-2 md:gap-3 p-3 md:p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full border-t border-gray-600/30 h-[20vh] md:h-[10vh]";
     this.inputContainer.style.minHeight = "60px";
 
     // Model selector
     this.modelSelector = document.createElement("select");
     this.modelSelector.id = "model-selector";
     this.modelSelector.className =
-      "px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white/80 backdrop-blur-sm";
+      "px-3 py-2 border border-gray-300 rounded-lg text-xs md:text-sm bg-white/80 backdrop-blur-sm";
     this.populateModelSelector();
 
     // Status indicator
     this.statusIndicator = document.createElement("div");
     this.statusIndicator.className =
-      "flex items-center gap-2 text-sm text-gray-600";
+      "flex items-center gap-2 text-xs md:text-sm text-gray-600";
     this.updateStatus("Initializing...");
+
+    this.modelSelectorContainer = document.createElement("div");
+    this.modelSelectorContainer.className = "flex w-full md:w-auto items-center justify-around gap-2";
+    this.modelSelectorContainer.appendChild(this.modelSelector);
+    this.modelSelectorContainer.appendChild(this.statusIndicator);
+    this.modelSelectorContainer.id = "model-selector-container";
 
     // Input field
     this.input = document.createElement("input");
@@ -65,7 +70,7 @@ export class ChatUI {
     this.input.type = "text";
     this.input.placeholder = "Ask me anything...";
     this.input.className =
-      "flex-1 px-4 py-3 border-0 rounded-full text-sm focus:outline-none focus:ring-0 bg-transparent placeholder-gray-500";
+      "flex-1 px-4 py-3 border-0 rounded-full text-sm md:text-base focus:outline-none focus:ring-0 bg-transparent placeholder-gray-500";
     this.input.addEventListener("keypress", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -157,8 +162,7 @@ export class ChatUI {
     this.sendButton.addEventListener("click", () => this.sendMessage());
 
     // Assemble UI
-    this.inputContainer.appendChild(this.modelSelector);
-    this.inputContainer.appendChild(this.statusIndicator);
+    this.inputContainer.appendChild(this.modelSelectorContainer);
     this.inputContainer.appendChild(this.input);
     this.inputContainer.appendChild(this.animationButtonsContainer);
     this.inputContainer.appendChild(this.sendButton);
@@ -246,6 +250,9 @@ export class ChatUI {
     this.sendButton.disabled = true;
     this.updateStatus("Generating...");
 
+    // Trigger wave animation for loading
+    this.triggerAnimation("loadingWave");
+
     try {
       const response = await this.chatbot.chat(message);
 
@@ -263,6 +270,9 @@ export class ChatUI {
         timestamp: new Date(),
       });
     } finally {
+      // Stop the wave animation
+      window.dispatchEvent(new CustomEvent("stopAnimation"));
+      
       this.input.disabled = false;
       this.sendButton.disabled = false;
       this.updateStatus("Ready");
@@ -277,7 +287,7 @@ export class ChatUI {
     }`;
 
     const bubble = document.createElement("div");
-    bubble.className = `max-w-sm px-4 py-2 rounded-2xl text-sm ${
+    bubble.className = `max-w-[80%] md:max-w-md px-4 py-2 rounded-2xl text-sm md:text-base ${
       message.role === "user"
         ? "bg-blue-500/20 backdrop-blur-sm text-gray-300 border border-blue-400/30"
         : "bg-blue-500/10 backdrop-blur-sm text-gray-300 border border-blue-400/20 chat-message"

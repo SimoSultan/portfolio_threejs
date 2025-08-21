@@ -8,7 +8,7 @@ export class CircleGeometry {
     const group = new THREE.Group();
 
     const SEGMENTS = 91; // reduced by 5% from 96 for better tube visibility
-    const RADIUS = 1.5; // smaller main circle
+    const RADIUS = 1.425; // decreased by 5% from 1.5 (1.5 * 0.95 = 1.425)
     const TUBE_RADIUS = 0.03; // thicker tubes
 
     // Create material using constants

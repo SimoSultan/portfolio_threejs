@@ -9,6 +9,12 @@ export const AVAILABLE_MODELS: Record<string, ModelConfig> = {
     maxLength: 512,
     temperature: 0.7,
   },
+  "llama3.2:1b": {
+    name: "Llama 3.2 (1B)",
+    modelId: "llama3.2:1b",
+    maxLength: 512,
+    temperature: 0.7,
+  },
 };
 
 // Default model to use - start with gemma3:1b
@@ -29,6 +35,14 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     id: "gemma3:1b",
     name: "Gemma 3 (1B)",
     description: "Meta's Gemma 3 model, good balance of speed and quality",
+    size: "~1GB",
+    speed: "medium",
+    quality: "good",
+  },
+  "llama3.2:1b": {
+    id: "llama3.2:1b",
+    name: "Llama 3.2 (1B)",
+    description: "Meta's Llama 3.2 model, good balance of speed and quality",
     size: "~1GB",
     speed: "medium",
     quality: "good",
