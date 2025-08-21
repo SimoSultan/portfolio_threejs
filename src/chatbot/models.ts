@@ -9,12 +9,6 @@ export const AVAILABLE_MODELS: Record<string, ModelConfig> = {
     maxLength: 512,
     temperature: 0.7,
   },
-  "gemma3:4b-it-qat": {
-    name: "Gemma 3 Quantized (4B)",
-    modelId: "gemma3:4b-it-qat",
-    maxLength: 512,
-    temperature: 0.7,
-  },
 };
 
 // Default model to use - start with gemma3:1b
@@ -37,14 +31,6 @@ export const MODEL_METADATA: Record<string, ModelMetadata> = {
     description: "Meta's Gemma 3 model, good balance of speed and quality",
     size: "~1GB",
     speed: "medium",
-    quality: "good",
-  },
-  "gemma3:4b-it-qat": {
-    id: "gemma3:4b-it-qat",
-    name: "Gemma 3 Quantized (4B)",
-    description: "Faster version of Gemma 3, good for quick responses",
-    size: "~4GB",
-    speed: "fast",
     quality: "good",
   },
 };

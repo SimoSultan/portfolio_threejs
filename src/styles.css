@@ -30,3 +30,83 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+/* Chat message markdown styling */
+.chat-message p {
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+.chat-message p:first-child {
+    margin-top: 0;
+}
+
+.chat-message p:last-child {
+    margin-bottom: 0;
+}
+
+.chat-message strong {
+    font-weight: 600;
+    color: #e2e8f0; /* Subtle light gray for bold text */
+}
+
+.chat-message em {
+    font-style: italic;
+    color: #94a3b8; /* Muted blue-gray for italic text */
+}
+
+.chat-message ul, .chat-message ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.chat-message li {
+    margin: 0.25rem 0;
+    line-height: 1.4;
+}
+
+.chat-message .indented-text {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+    border-left: 3px solid #6366f1; /* Indigo accent for indented text */
+    color: #a1a1aa; /* Subtle gray for indented text */
+    font-style: italic;
+}
+
+.chat-message .blockquote {
+    margin: 0.75rem 0;
+    padding: 0.75rem 1rem;
+    background-color: rgba(99, 102, 241, 0.1); /* Transparent indigo background */
+    border-left: 4px solid #6366f1; /* Indigo accent border */
+    border-radius: 0.25rem;
+    color: #d1d5db; /* Light gray for blockquotes */
+    font-style: italic;
+}
+
+.chat-message code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background-color: rgba(99, 102, 241, 0.15); /* Transparent indigo background */
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #e2e8f0; /* Light gray for code text */
+}
+
+.chat-message pre {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background-color: rgba(99, 102, 241, 0.1); /* Transparent indigo background */
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #e2e8f0; /* Light gray for pre text */
+    margin: 0.75rem 0;
+    overflow-x: auto;
+    border: 1px solid rgba(99, 102, 241, 0.3); /* Subtle indigo border */
+}
+
+.chat-message pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    color: inherit;
+}

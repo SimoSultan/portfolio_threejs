@@ -337,6 +337,94 @@ export class AnimationManager {
   }
 
   /**
+   * Trigger individual tube backflip animation - each tube spins on its own axis
+   * @param tubesGroup - The group containing the circle tubes
+   * @param duration - Animation duration in milliseconds (default: 3000ms)
+   * @param continuous - Whether to run continuously until stopped (default: false)
+   */
+  public triggerIndividualTubeBackflipAnimation(
+    tubesGroup: THREE.Group,
+    duration: number = 3000,
+    continuous: boolean = false
+  ): void {
+    if (this.isAnimating) {
+      console.log("⚠️ Animation already in progress, stopping current animation...");
+      this.stopAnimation();
+    }
+
+    console.log(`🤸 Starting individual tube backflip animation (${continuous ? 'continuous' : 'single cycle'})...`);
+    this.isAnimating = true;
+
+    const startTime = Date.now();
+    const tubes = tubesGroup.children as THREE.Mesh[];
+    const originalRotations: THREE.Euler[] = [];
+    const originalPositions: THREE.Vector3[] = [];
+
+    // Store original rotations and positions
+    tubes.forEach((tube) => {
+      originalRotations.push(tube.rotation.clone());
+      originalPositions.push(tube.position.clone());
+    });
+
+    // Store original positions and scales in the instance for reset
+    this.originalPositions = originalPositions;
+    this.originalScales = originalRotations.map(() => new THREE.Vector3(1, 1, 1)); // Default scales
+
+    const animate = () => {
+      if (!this.isAnimating) return;
+
+      const elapsed = Date.now() - startTime;
+      
+      let progress: number;
+      if (continuous) {
+        // For continuous mode, loop the animation
+        progress = (elapsed % duration) / duration;
+      } else {
+        // For single cycle, progress from 0 to 1
+        progress = Math.min(elapsed / duration, 1);
+      }
+
+      tubes.forEach((tube, index) => {
+        // Each tube rotates on its own axis (X-axis for backflip effect)
+        // Add some variation to make it more interesting
+        const individualDelay = (index / tubes.length) * 0.3; // Stagger the animation
+        const adjustedProgress = Math.max(0, Math.min(1, (progress - individualDelay) / (1 - individualDelay)));
+        
+        if (adjustedProgress > 0) {
+          const easedIndividualProgress =
+            adjustedProgress < 0.5
+              ? 2 * adjustedProgress * adjustedProgress
+              : 1 - Math.pow(-2 * adjustedProgress + 2, 2) / 2;
+
+          // Rotate each tube on its own axis for backflip effect
+          tube.rotation.x = originalRotations[index].x + Math.PI * 2 * easedIndividualProgress;
+          
+          // Add slight wobble for more dynamic effect
+          tube.rotation.z = originalRotations[index].z + Math.sin(adjustedProgress * Math.PI * 4) * 0.1;
+        }
+      });
+
+      if (continuous) {
+        // For continuous mode, keep running until stopped
+        this.currentAnimationId = requestAnimationFrame(animate);
+      } else if (progress < 1) {
+        // For single cycle, continue until complete
+        this.currentAnimationId = requestAnimationFrame(animate);
+      } else {
+        // Animation complete - reset to original rotations
+        tubes.forEach((tube, index) => {
+          tube.rotation.copy(originalRotations[index]);
+        });
+        this.isAnimating = false;
+        this.currentAnimationId = undefined;
+        console.log("✅ Individual tube backflip animation complete");
+      }
+    };
+
+    animate();
+  }
+
+  /**
    * Stop any currently running animation
    */
   public stopAnimation(): void {

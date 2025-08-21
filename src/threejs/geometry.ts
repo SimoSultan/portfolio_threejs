@@ -7,7 +7,7 @@ export class CircleGeometry {
   static buildCircle(): THREE.Group {
     const group = new THREE.Group();
 
-    const SEGMENTS = 96; // smooth circle
+    const SEGMENTS = 91; // reduced by 5% from 96 for better tube visibility
     const RADIUS = 1.5; // smaller main circle
     const TUBE_RADIUS = 0.03; // thicker tubes
 
@@ -33,6 +33,7 @@ export class CircleGeometry {
       const a = points[i];
       const b = points[(i + 1) % SEGMENTS];
       const tube = createTubeBetweenPoints(a, b, TUBE_RADIUS, material);
+      tube.castShadow = true; // Enable shadows for tubes
       group.add(tube);
       tubeCount++;
     }

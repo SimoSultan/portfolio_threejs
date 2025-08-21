@@ -14,6 +14,7 @@ export class ChatUI {
   private bounceButton!: HTMLButtonElement;
   private backflipButton!: HTMLButtonElement;
   private multiSpinButton!: HTMLButtonElement;
+  private individualBackflipButton!: HTMLButtonElement;
   private modelSelector!: HTMLSelectElement;
   private statusIndicator!: HTMLDivElement;
   private chatbot: Chatbot;
@@ -41,7 +42,7 @@ export class ChatUI {
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex items-center gap-3 p-4 bg-slate-800/50 backdrop-blur-sm rounded-t-2xl shadow-lg w-full";
+      "flex items-center gap-3 p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full border-t border-gray-600/30";
     this.inputContainer.style.height = "10vh";
     this.inputContainer.style.minHeight = "60px";
 
@@ -126,12 +127,23 @@ export class ChatUI {
       this.triggerAnimation("multiSpin")
     );
 
+    // Individual tube backflip animation button
+    this.individualBackflipButton = document.createElement("button");
+    this.individualBackflipButton.innerHTML = "🔄";
+    this.individualBackflipButton.className =
+      "px-3 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors";
+    this.individualBackflipButton.title = "Individual Tube Backflip Animation";
+    this.individualBackflipButton.addEventListener("click", () =>
+      this.triggerAnimation("individualBackflip")
+    );
+
     // Add buttons to container
     this.animationButtonsContainer.appendChild(this.spinButton);
     this.animationButtonsContainer.appendChild(this.waveButton);
     this.animationButtonsContainer.appendChild(this.bounceButton);
     this.animationButtonsContainer.appendChild(this.backflipButton);
     this.animationButtonsContainer.appendChild(this.multiSpinButton);
+    this.animationButtonsContainer.appendChild(this.individualBackflipButton);
 
     // Send button
     this.sendButton = document.createElement("button");
@@ -265,18 +277,65 @@ export class ChatUI {
     }`;
 
     const bubble = document.createElement("div");
-    bubble.className = `max-w-xs px-4 py-2 rounded-2xl text-sm ${
+    bubble.className = `max-w-sm px-4 py-2 rounded-2xl text-sm ${
       message.role === "user"
-        ? "bg-blue-500 text-white"
-        : "bg-white/90 backdrop-blur-sm text-gray-800 border border-gray-200"
+        ? "bg-blue-500/20 backdrop-blur-sm text-gray-300 border border-blue-400/30"
+        : "bg-blue-500/10 backdrop-blur-sm text-gray-300 border border-blue-400/20 chat-message"
     }`;
-    bubble.textContent = message.content;
+    
+    // For AI messages, render markdown; for user messages, use plain text
+    if (message.role === "assistant") {
+      bubble.innerHTML = this.renderMarkdown(message.content);
+    } else {
+      bubble.textContent = message.content;
+    }
 
     messageDiv.appendChild(bubble);
     this.chatContainer.appendChild(messageDiv);
 
     // Scroll to bottom
     this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+  }
+
+  private renderMarkdown(content: string): string {
+    let rendered = content;
+
+    // Handle line breaks and paragraphs
+    rendered = rendered.replace(/\n\n/g, '</p><p>');
+    rendered = rendered.replace(/\n/g, '<br>');
+    
+    // Wrap in paragraph tags if not already wrapped
+    if (!rendered.startsWith('<p>')) {
+      rendered = `<p>${rendered}</p>`;
+    }
+
+    // Handle bold text (**text**)
+    rendered = rendered.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Handle italic text (*text*)
+    rendered = rendered.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Handle numbered lists (1. item) with better indentation
+    rendered = rendered.replace(/^(\d+\.\s+)(.*?)(?=\n\d+\.|$)/gm, '<ol><li>$2</li></ol>');
+    rendered = rendered.replace(/<\/ol>\n<ol>/g, '');
+    
+    // Handle bullet points (- item or * item) with better indentation
+    rendered = rendered.replace(/^[-*]\s+(.*?)(?=\n[-*]|$)/gm, '<ul><li>$1</li></ul>');
+    rendered = rendered.replace(/<\/ul>\n<ul>/g, '');
+    
+    // Handle indented text (4+ spaces or tabs)
+    rendered = rendered.replace(/^(\s{4,}|\t+)(.*?)(?=\n\S|$)/gm, '<div class="indented-text">$2</div>');
+    
+    // Handle blockquotes (> text)
+    rendered = rendered.replace(/^>\s+(.*?)(?=\n[^>]|$)/gm, '<blockquote class="blockquote">$1</blockquote>');
+    
+    // Handle code blocks (```code```)
+    rendered = rendered.replace(/```(.*?)```/gs, '<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>$1</code></pre>');
+    
+    // Handle inline code (`code`)
+    rendered = rendered.replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>');
+
+    return rendered;
   }
 
   private clearChat(): void {
@@ -353,10 +412,10 @@ export class ChatUI {
         return this.backflipButton;
       case "multiSpin":
         return this.multiSpinButton;
+      case "individualBackflip":
+        return this.individualBackflipButton;
       default:
         return null;
     }
   }
-
-  // Legacy testAnimation method removed - use triggerAnimation instead
 }

@@ -72,15 +72,22 @@ export function createTubeBetweenPoints(
 ): THREE.Mesh {
   const direction = new THREE.Vector3().subVectors(end, start);
   const length = direction.length();
-  const INCREASE_TUBE_LENGTH_FACTOR = 1.25; // User prefers uppercase snake case variable naming [[memory:5747858]]
+  const INCREASE_TUBE_LENGTH_FACTOR = 1.875; // Increased by 50% more (1.25 * 1.5)
   const adjustedLength = length * INCREASE_TUBE_LENGTH_FACTOR;
 
   const geometry = new THREE.CylinderGeometry(radius, radius, adjustedLength, 8);
   const mesh = new THREE.Mesh(geometry, material);
 
-  // Position and rotate the tube
+  // Position the tube at the midpoint
   mesh.position.copy(start).add(direction.multiplyScalar(0.5));
-  mesh.lookAt(end);
+  
+  // Calculate the angle to rotate the tube to align with the direction
+  // This ensures all tubes have consistent orientation
+  const angle = Math.atan2(direction.y, direction.x);
+  mesh.rotation.z = angle;
+  
+  // Ensure the tube is oriented correctly (cylinder default is along Y-axis)
+  mesh.rotation.x = Math.PI / 2;
 
   return mesh;
 }
