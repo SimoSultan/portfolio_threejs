@@ -2,13 +2,6 @@ import type { ModelConfig } from "./chatbot";
 
 // Available models - Ollama-based
 export const AVAILABLE_MODELS: Record<string, ModelConfig> = {
-  // Local fallback model - works without external dependencies
-  "local-fallback": {
-    name: "Local Fallback (No AI)",
-    modelId: "local",
-    maxLength: 100,
-    temperature: 0.7,
-  },
   // Ollama models - will be downloaded automatically
   "gemma3:1b": {
     name: "Gemma 3 (1B)",
@@ -24,8 +17,8 @@ export const AVAILABLE_MODELS: Record<string, ModelConfig> = {
   },
 };
 
-// Default model to use - start with local fallback until Ollama is set up
-export const DEFAULT_MODEL = "local-fallback";
+// Default model to use - start with gemma3:1b
+export const DEFAULT_MODEL = "gemma3:1b";
 
 // Model metadata for UI display
 export interface ModelMetadata {
@@ -38,14 +31,6 @@ export interface ModelMetadata {
 }
 
 export const MODEL_METADATA: Record<string, ModelMetadata> = {
-  "local-fallback": {
-    id: "local",
-    name: "Local Fallback (No AI)",
-    description: "Simple responses without external model loading",
-    size: "0MB",
-    speed: "fast",
-    quality: "basic",
-  },
   "gemma3:1b": {
     id: "gemma3:1b",
     name: "Gemma 3 (1B)",

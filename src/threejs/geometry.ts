@@ -1,14 +1,24 @@
 import * as THREE from "three";
 import { createTubeBetweenPoints } from "./utils";
+import { COLORS, MATERIAL_PROPERTIES } from "./constants";
 
-export class FaceGeometry {
+export class CircleGeometry {
   // Build a tube-based circle (smaller radius, thicker tubes)
-  static buildFace(): THREE.Group {
+  static buildCircle(): THREE.Group {
     const group = new THREE.Group();
 
     const SEGMENTS = 96; // smooth circle
     const RADIUS = 1.5; // smaller main circle
     const TUBE_RADIUS = 0.03; // thicker tubes
+
+    // Create material using constants
+    const material = new THREE.MeshStandardMaterial({
+      color: COLORS.CIRCLE_WIREFRAME,
+      emissive: COLORS.CIRCLE_EMISSIVE,
+      emissiveIntensity: MATERIAL_PROPERTIES.EMISSIVE_INTENSITY,
+      metalness: MATERIAL_PROPERTIES.METALNESS,
+      roughness: MATERIAL_PROPERTIES.ROUGHNESS,
+    });
 
     const points: THREE.Vector3[] = [];
     for (let i = 0; i < SEGMENTS; i++) {
@@ -22,7 +32,7 @@ export class FaceGeometry {
     for (let i = 0; i < SEGMENTS; i++) {
       const a = points[i];
       const b = points[(i + 1) % SEGMENTS];
-      const tube = createTubeBetweenPoints(a, b, TUBE_RADIUS);
+      const tube = createTubeBetweenPoints(a, b, TUBE_RADIUS, material);
       group.add(tube);
       tubeCount++;
     }

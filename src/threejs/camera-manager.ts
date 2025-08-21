@@ -31,7 +31,7 @@ export class CameraManager {
   }
 
   fitCameraToObject(preserveDirection = true): void {
-    // Adjust object center for vertical centering (e.g., face vs. full head)
+    // Adjust object center for vertical centering (e.g., circle positioning)
     const adjustedCenter = this.objectCenter.clone();
     adjustedCenter.y += this.objectRadius * 0.06; // Shift up by 6% of radius
 

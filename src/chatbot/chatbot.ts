@@ -93,21 +93,16 @@ export class Chatbot {
 
     this.isGenerating = true;
 
+    // Trigger continuous wave animation while generating response
+    const animationEvent = new CustomEvent("triggerAnimation", {
+      detail: {
+        type: "continuousWave",
+        timestamp: Date.now(),
+      },
+    });
+    window.dispatchEvent(animationEvent);
+
     try {
-      // Handle local fallback model
-      if (this.modelConfig.modelId === "local" || !this.isOllamaAvailable) {
-        const response = this.generateLocalResponse(userMessage);
-
-        // Add assistant response to history
-        this.messages.push({
-          role: "assistant",
-          content: response,
-          timestamp: new Date(),
-        });
-
-        return response;
-      }
-
       // Use Ollama for AI responses
       const response = await this.generateOllamaResponse(userMessage);
 
@@ -121,6 +116,14 @@ export class Chatbot {
       return response;
     } finally {
       this.isGenerating = false;
+      
+      // Stop the continuous wave animation when response is complete
+      const stopAnimationEvent = new CustomEvent("stopAnimation", {
+        detail: {
+          timestamp: Date.now(),
+        },
+      });
+      window.dispatchEvent(stopAnimationEvent);
     }
   }
 
@@ -156,37 +159,8 @@ export class Chatbot {
       return data.response || "Sorry, I couldn't generate a response.";
     } catch (error) {
       console.error("❌ Ollama API error:", error);
-      console.log("🔄 Falling back to local response");
-      return this.generateLocalResponse(userMessage);
+      return "Sorry, I couldn't generate a response. Please make sure Ollama is running and the model is available.";
     }
-  }
-
-  private generateLocalResponse(userMessage: string): string {
-    const message = userMessage.toLowerCase();
-
-    // Simple response patterns
-    if (message.includes("hello") || message.includes("hi")) {
-      return "Hello! I'm a local fallback chatbot. I can provide basic responses while we work on getting Ollama set up properly.";
-    }
-
-    if (message.includes("how are you")) {
-      return "I'm functioning well as a local chatbot! We're setting up Ollama for better AI responses, but I'm here to help with basic responses.";
-    }
-
-    if (message.includes("what can you do")) {
-      return "Right now I'm running locally without external AI. I can provide basic responses and help you test the chat interface. We're setting up Ollama for full AI capabilities!";
-    }
-
-    if (message.includes("help")) {
-      return "I'm a local fallback chatbot. You can ask me basic questions, and I'll respond with simple, helpful answers. Full AI capabilities are coming soon with Ollama!";
-    }
-
-    if (message.includes("ollama")) {
-      return "Ollama is a local AI model runner that will give us much better responses! It runs models on your machine instead of in the browser.";
-    }
-
-    // Default response
-    return "Thanks for your message! I'm currently running as a local fallback chatbot while we set up Ollama for better AI responses.";
   }
 
   getMessages(): ChatMessage[] {
@@ -202,7 +176,7 @@ export class Chatbot {
   }
 
   isReady(): boolean {
-    return true; // Always ready since we have fallback
+    return this.isOllamaAvailable;
   }
 
   getModelInfo(): ModelConfig {

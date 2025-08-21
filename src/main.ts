@@ -1,8 +1,10 @@
 import * as THREE from "three";
-import { FaceGeometry } from "./views/geometry";
-import { CameraManager } from "./views/camera-manager";
-import { Lighting } from "./views/lighting";
-import { COLORS, calculateBoundingSphere } from "./views/utils";
+import { CircleGeometry } from "./threejs/geometry";
+import { CameraManager } from "./threejs/camera-manager";
+import { Lighting } from "./threejs/lighting";
+import { calculateBoundingSphere } from "./threejs/utils";
+import { COLORS } from "./threejs/constants";
+import { AnimationManager } from "./threejs/animation-manager";
 import { ChatUI } from "./chatbot";
 
 class PortfolioScene {
@@ -11,6 +13,7 @@ class PortfolioScene {
   private renderer!: THREE.WebGLRenderer;
   private tubesGroup!: THREE.Group;
   private cameraManager!: CameraManager;
+  private animationManager!: AnimationManager;
   private animationId!: number;
   private chatUI!: ChatUI;
 
@@ -28,7 +31,7 @@ class PortfolioScene {
     // Camera setup
     this.camera = new THREE.PerspectiveCamera(
       75,
-      window.innerWidth / window.innerHeight,
+      window.innerWidth / (window.innerHeight * 0.9),
       0.1,
       1000
     );
@@ -41,7 +44,7 @@ class PortfolioScene {
       antialias: true,
       alpha: false,
     });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setSize(window.innerWidth, window.innerHeight * 0.9);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -52,10 +55,13 @@ class PortfolioScene {
     // Initialize camera manager first
     this.cameraManager = new CameraManager(this.camera, this.renderer);
 
-    // Build face geometry
-    this.buildFace();
+    // Initialize animation manager
+    this.animationManager = new AnimationManager(this.scene);
 
-    // Fit camera to face
+    // Build circle geometry
+    this.buildCircle();
+
+    // Fit camera to circle
     this.cameraManager.fitCameraToObject();
 
     // Initialize chatbot
@@ -72,15 +78,15 @@ class PortfolioScene {
     }
   }
 
-  private buildFace(): void {
-    this.tubesGroup = FaceGeometry.buildFace();
-    // Center the face at the origin
+  private buildCircle(): void {
+    this.tubesGroup = CircleGeometry.buildCircle();
+    // Center the circle at the origin
     this.tubesGroup.position.set(0, 0, 0);
     this.scene.add(this.tubesGroup);
 
     // Calculate bounding sphere for camera fitting
     const bounds = calculateBoundingSphere([this.tubesGroup]);
-    console.log("Face bounds:", bounds); // Debug logging
+    console.log("Circle bounds:", bounds); // Debug logging
     this.cameraManager.setObjectBounds(bounds.center, bounds.radius);
   }
 
@@ -97,9 +103,69 @@ class PortfolioScene {
   private setupEventListeners(): void {
     window.addEventListener("resize", () => {
       this.cameraManager.onWindowResize();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.setSize(window.innerWidth, window.innerHeight * 0.9);
+      this.camera.aspect = window.innerWidth / (window.innerHeight * 0.9);
+      this.camera.updateProjectionMatrix();
+    });
+
+    // Listen for animation trigger events from chat UI
+    window.addEventListener("triggerAnimation", (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log("🎬 Animation triggered:", customEvent.detail);
+      this.triggerAnimation(customEvent.detail.type);
+    });
+
+    // Listen for animation stop events from chatbot
+    window.addEventListener("stopAnimation", (event: Event) => {
+      console.log("⏹️ Stopping animation...");
+      if (this.animationManager && this.tubesGroup) {
+        this.animationManager.stopAnimation();
+        this.animationManager.resetTubesToOriginal(this.tubesGroup);
+      }
+    });
+
+    // Legacy event listener for backward compatibility
+    window.addEventListener("testAnimation", (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log("🎬 Legacy animation test triggered:", customEvent.detail);
+      this.triggerAnimation("spin");
     });
   }
+
+  private triggerAnimation(animationType: string): void {
+    if (!this.tubesGroup || !this.animationManager) {
+      console.warn(
+        "⚠️ Cannot trigger animation - tubes group or animation manager not ready"
+      );
+      return;
+    }
+
+    switch (animationType) {
+      case "spin":
+        this.animationManager.triggerSpinAnimation(this.tubesGroup);
+        break;
+      case "wave":
+        this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup);
+        break;
+      case "bounce":
+        this.animationManager.triggerBounceAnimation(this.tubesGroup);
+        break;
+      case "backflip":
+        this.animationManager.triggerBackflipAnimation(this.tubesGroup);
+        break;
+      case "multiSpin":
+        this.animationManager.triggerMultiAxisSpinAnimation(this.tubesGroup);
+        break;
+      case "continuousWave":
+        this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup, 2000, true);
+        break;
+      default:
+        console.warn(`⚠️ Unknown animation type: ${animationType}`);
+        break;
+    }
+  }
+
+  // Legacy triggerCircleAnimation method removed - use triggerAnimation instead
 
   public dispose(): void {
     if (this.animationId) {
@@ -117,6 +183,11 @@ class PortfolioScene {
         }
       }
     });
+
+    // Dispose of animation manager
+    if (this.animationManager) {
+      this.animationManager.dispose();
+    }
 
     // Dispose of chatbot
     if (this.chatUI) {

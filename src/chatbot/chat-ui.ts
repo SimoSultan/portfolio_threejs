@@ -8,6 +8,12 @@ export class ChatUI {
   private inputContainer!: HTMLDivElement;
   private input!: HTMLInputElement;
   private sendButton!: HTMLButtonElement;
+  private animationButtonsContainer!: HTMLDivElement;
+  private spinButton!: HTMLButtonElement;
+  private waveButton!: HTMLButtonElement;
+  private bounceButton!: HTMLButtonElement;
+  private backflipButton!: HTMLButtonElement;
+  private multiSpinButton!: HTMLButtonElement;
   private modelSelector!: HTMLSelectElement;
   private statusIndicator!: HTMLDivElement;
   private chatbot: Chatbot;
@@ -21,22 +27,23 @@ export class ChatUI {
   }
 
   private createUI(): void {
-    // Main container - positioned absolutely over canvas, below the circle
+    // Main container - positioned absolutely over canvas, full height
     this.container = document.createElement("div");
     this.container.className =
-      "absolute left-0 right-0 bg-transparent z-10 p-10 flex justify-end flex-col h-full";
-    this.container.style.top = "60vh"; // Position below the blue circle
-    this.container.style.maxHeight = "40vh";
+      "absolute left-0 right-0 bg-transparent z-10 flex flex-col h-screen";
+    this.container.style.top = "0";
 
-    // Chat messages container
+    // Chat messages container - takes up 90% of screen height
     this.chatContainer = document.createElement("div");
-    this.chatContainer.className = "overflow-y-auto p-4 space-y-3 mb-4";
-    this.chatContainer.style.maxHeight = "25vh";
+    this.chatContainer.className = "overflow-y-auto p-4 space-y-3 flex-1";
+    this.chatContainer.style.height = "90vh";
 
-    // Input container (Gemini-style) - centered, floating over canvas
+    // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex items-center gap-3 p-4 bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-lg w-full min-h-20";
+      "flex items-center gap-3 p-4 bg-slate-800/50 backdrop-blur-sm rounded-t-2xl shadow-lg w-full";
+    this.inputContainer.style.height = "10vh";
+    this.inputContainer.style.minHeight = "60px";
 
     // Model selector
     this.modelSelector = document.createElement("select");
@@ -65,6 +72,67 @@ export class ChatUI {
       }
     });
 
+    // Animation buttons container
+    this.animationButtonsContainer = document.createElement("div");
+    this.animationButtonsContainer.className = "flex gap-2 mr-2";
+
+    // Spin animation button
+    this.spinButton = document.createElement("button");
+    this.spinButton.innerHTML = "🌀";
+    this.spinButton.className =
+      "px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors";
+    this.spinButton.title = "Spin Animation";
+    this.spinButton.addEventListener("click", () =>
+      this.triggerAnimation("spin")
+    );
+
+    // Mexican wave animation button
+    this.waveButton = document.createElement("button");
+    this.waveButton.innerHTML = "🌊";
+    this.waveButton.className =
+      "px-3 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors";
+    this.waveButton.title = "Mexican Wave Animation";
+    this.waveButton.addEventListener("click", () =>
+      this.triggerAnimation("wave")
+    );
+
+    // Bounce animation button
+    this.bounceButton = document.createElement("button");
+    this.bounceButton.innerHTML = "🦘";
+    this.bounceButton.className =
+      "px-3 py-2 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors";
+    this.bounceButton.title = "Bounce Animation";
+    this.bounceButton.addEventListener("click", () =>
+      this.triggerAnimation("bounce")
+    );
+
+    // Backflip animation button
+    this.backflipButton = document.createElement("button");
+    this.backflipButton.innerHTML = "🤸";
+    this.backflipButton.className =
+      "px-3 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors";
+    this.backflipButton.title = "Backflip Animation";
+    this.backflipButton.addEventListener("click", () =>
+      this.triggerAnimation("backflip")
+    );
+
+    // Multi-axis spin animation button
+    this.multiSpinButton = document.createElement("button");
+    this.multiSpinButton.innerHTML = "🎡";
+    this.multiSpinButton.className =
+      "px-3 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors";
+    this.multiSpinButton.title = "Multi-Axis Spin Animation";
+    this.multiSpinButton.addEventListener("click", () =>
+      this.triggerAnimation("multiSpin")
+    );
+
+    // Add buttons to container
+    this.animationButtonsContainer.appendChild(this.spinButton);
+    this.animationButtonsContainer.appendChild(this.waveButton);
+    this.animationButtonsContainer.appendChild(this.bounceButton);
+    this.animationButtonsContainer.appendChild(this.backflipButton);
+    this.animationButtonsContainer.appendChild(this.multiSpinButton);
+
     // Send button
     this.sendButton = document.createElement("button");
     this.sendButton.innerHTML = `
@@ -80,6 +148,7 @@ export class ChatUI {
     this.inputContainer.appendChild(this.modelSelector);
     this.inputContainer.appendChild(this.statusIndicator);
     this.inputContainer.appendChild(this.input);
+    this.inputContainer.appendChild(this.animationButtonsContainer);
     this.inputContainer.appendChild(this.sendButton);
 
     this.container.appendChild(this.chatContainer);
@@ -249,4 +318,45 @@ export class ChatUI {
       this.container.parentNode.removeChild(this.container);
     }
   }
+
+  private triggerAnimation(animationType: string): void {
+    console.log(`🎬 Triggering ${animationType} animation...`);
+
+    // Dispatch custom event for main.ts to listen to
+    const animationEvent = new CustomEvent("triggerAnimation", {
+      detail: {
+        type: animationType,
+        timestamp: Date.now(),
+      },
+    });
+    window.dispatchEvent(animationEvent);
+
+    // Visual feedback on the clicked button
+    const button = this.getAnimationButton(animationType);
+    if (button) {
+      button.classList.add("animate-pulse");
+      setTimeout(() => {
+        button.classList.remove("animate-pulse");
+      }, 1000);
+    }
+  }
+
+  private getAnimationButton(animationType: string): HTMLButtonElement | null {
+    switch (animationType) {
+      case "spin":
+        return this.spinButton;
+      case "wave":
+        return this.waveButton;
+      case "bounce":
+        return this.bounceButton;
+      case "backflip":
+        return this.backflipButton;
+      case "multiSpin":
+        return this.multiSpinButton;
+      default:
+        return null;
+    }
+  }
+
+  // Legacy testAnimation method removed - use triggerAnimation instead
 }
