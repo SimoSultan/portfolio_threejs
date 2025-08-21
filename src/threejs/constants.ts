@@ -8,7 +8,7 @@ export const CIRCLE_GEOMETRY = {
 
 // Colors and Materials
 export const COLORS = {
-  BACKGROUND: 0x000000,
+  BACKGROUND: 0x0a0a0a, // Much darker background that matches the new gradient
   CIRCLE_WIREFRAME: 0x4a9eff,
   CIRCLE_EMISSIVE: 0x1e3a8a,
 } as const;
