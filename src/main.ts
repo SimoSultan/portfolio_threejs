@@ -132,6 +132,11 @@ class PortfolioScene {
       if (this.animationManager && this.tubesGroup) {
         this.animationManager.stopAnimation();
         this.animationManager.resetTubesToOriginal(this.tubesGroup);
+        
+        // Resume infinite animation if it should be resumed
+        setTimeout(() => {
+          this.animationManager.resumeInfiniteAnimation(this.tubesGroup);
+        }, 50);
       }
     });
 
@@ -160,6 +165,7 @@ class PortfolioScene {
         this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup, 2000, false); // Single cycle for manual trigger
         break;
       case "loadingWave":
+        this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup, 2000, true); // Continuous wave for loading
         break;
       case "bounce":

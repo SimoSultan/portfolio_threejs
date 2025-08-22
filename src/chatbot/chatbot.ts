@@ -1,4 +1,5 @@
 import { getOllamaUrl, getOllamaEnvironment } from "./config";
+import { ContextManager, type ChatContext } from "./context-manager";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -18,9 +19,11 @@ export class Chatbot {
   private messages: ChatMessage[] = [];
   private isGenerating = false;
   private isOllamaAvailable: boolean = false;
+  private contextManager: ContextManager;
 
-  constructor(modelConfig: ModelConfig) {
+  constructor(modelConfig: ModelConfig, onContextUpdate?: () => void) {
     this.modelConfig = modelConfig;
+    this.contextManager = new ContextManager(onContextUpdate);
   }
 
   async initialize(): Promise<void> {
@@ -133,13 +136,19 @@ export class Chatbot {
         `🤖 Generating response with Ollama model: ${this.modelConfig.modelId}`
       );
 
+      // Get current context and format it for the prompt
+      const context = this.contextManager.formatContextForPrompt();
+      const contextualizedPrompt = `${context}\n\nUser Message: ${userMessage}`;
+
+      console.log('📍 Sending contextualized prompt:', contextualizedPrompt);
+
       const ollamaUrl = getOllamaUrl();
       const response = await fetch(`${ollamaUrl}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: this.modelConfig.modelId,
-          prompt: userMessage,
+          prompt: contextualizedPrompt,
           stream: false,
           options: {
             temperature: this.modelConfig.temperature,
@@ -185,5 +194,17 @@ export class Chatbot {
 
   isOllamaRunning(): boolean {
     return this.isOllamaAvailable;
+  }
+
+  getCurrentContext(): ChatContext | null {
+    return this.contextManager.getContext();
+  }
+
+  async refreshLocation(): Promise<void> {
+    await this.contextManager.refreshLocation();
+  }
+
+  ensureContextAvailable(): void {
+    this.contextManager.ensureContextAvailable();
   }
 }

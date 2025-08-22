@@ -106,6 +106,19 @@ body {
     border: 1px solid rgba(99, 102, 241, 0.3); /* Subtle indigo border */
 }
 
+/* Context display text truncation */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+}
+
+.truncate:hover {
+    white-space: normal;
+    word-break: break-word;
+}
+
 .chat-message pre code {
     background: none;
     padding: 0;
