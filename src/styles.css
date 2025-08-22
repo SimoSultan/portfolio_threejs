@@ -23,14 +23,7 @@ body {
 
 #threejs-canvas {
   display: block;
-  background: linear-gradient(
-    135deg,
-    #000000 0%,
-    #0a0a0a 25%,
-    #0f0f23 50%,
-    #1a1a2e 75%,
-    #16213e 100%
-  );
+  background: #000000;
 }
 
 /* Smooth animations */
@@ -123,19 +116,6 @@ body {
   margin: 0.75rem 0;
   overflow-x: auto;
   border: 1px solid rgba(99, 102, 241, 0.3); /* Subtle indigo border */
-}
-
-/* Context display text truncation */
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: help;
-}
-
-.truncate:hover {
-  white-space: normal;
-  word-break: break-word;
 }
 
 .chat-message pre code {

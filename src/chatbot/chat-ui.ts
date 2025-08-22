@@ -1,27 +1,30 @@
 import { type ChatMessage, Chatbot } from "./chatbot";
 import { AVAILABLE_MODELS, DEFAULT_MODEL, MODEL_METADATA } from "./models";
 
+interface ContextData {
+  currentDate: string;
+  currentTime: string;
+  timezone: string;
+  location: string;
+}
+
 export class ChatUI {
   private container!: HTMLDivElement;
   private chatContainer!: HTMLDivElement;
   private inputContainer!: HTMLDivElement;
   private input!: HTMLInputElement;
   private sendButton!: HTMLButtonElement;
-  private animationButtonsContainer!: HTMLDivElement;
-  private spinButton!: HTMLButtonElement;
-  private waveButton!: HTMLButtonElement;
-  private bounceButton!: HTMLButtonElement;
-  private backflipButton!: HTMLButtonElement;
-  private multiSpinButton!: HTMLButtonElement;
-  private individualBackflipButton!: HTMLButtonElement;
+  private debugButton!: HTMLButtonElement;
+  private debugDropdown!: HTMLDivElement;
   private modelSelector!: HTMLDivElement;
   private modelSelectorContainer!: HTMLDivElement;
   private statusIndicator!: HTMLDivElement;
   private contextDisplay!: HTMLDivElement;
   private modelDropdown!: HTMLDivElement;
   private contextDropdown!: HTMLDivElement;
-  private isDropdownOpen: boolean = false;
+  private isModelDropdownOpen: boolean = false;
   private isContextDropdownOpen: boolean = false;
+  private isDebugDropdownOpen: boolean = false;
   private chatbot: Chatbot;
   private currentModelId: string;
 
@@ -45,19 +48,19 @@ export class ChatUI {
     // Chat messages container - takes up 90% of screen height
     this.chatContainer = document.createElement("div");
     this.chatContainer.className =
-      "overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3 flex-1 h-[80vh] md:h-[90vh]";
+      "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 flex-1";
+    this.chatContainer.id = "chat-container";
 
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex flex-col md:flex-row items-center gap-2 md:gap-3 p-3 md:p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full md:w-auto border-t border-gray-600/30 h-[20vh] md:h-[10vh]";
-    this.inputContainer.style.minHeight = "60px";
+      "flex flex-col lg:flex-row justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full md:w-auto border-t border-gray-600/30 h-[15vh] md:h-[10vh] min-h-[100px] sm:min-h-[15%]";
 
     // Model selector - compact transparent design
     this.modelSelector = document.createElement("div");
     this.modelSelector.id = "model-selector";
     this.modelSelector.className =
-      "flex items-center gap-2 text-xs md:text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors";
+      "flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors w-[fit-content]";
 
     // Create the model display text
     const modelText = document.createElement("span");
@@ -67,7 +70,7 @@ export class ChatUI {
     // Create the up arrow
     const arrowIcon = document.createElement("span");
     arrowIcon.innerHTML = "▲";
-    arrowIcon.className = "text-xs transition-transform duration-200";
+    arrowIcon.className = "transition-transform duration-200";
     arrowIcon.id = "model-arrow";
 
     this.modelSelector.appendChild(modelText);
@@ -79,20 +82,21 @@ export class ChatUI {
     // Add click event to toggle dropdown
     this.modelSelector.addEventListener("click", e => {
       e.stopPropagation();
-      this.toggleModelDropdown();
+      this.toggleModelDropdown({ forceOpen: true });
     });
 
     // Close dropdown when clicking outside
-    document.addEventListener("click", () => {
-      if (this.isDropdownOpen) {
-        this.toggleModelDropdown();
-      }
+    this.chatContainer.addEventListener("click", () => {
+      this.toggleModelDropdown({ forceClose: true });
+
+      this.toggleDebugDropdown({ forceClose: true });
+
+      this.toggleContextDropdown({ forceClose: true });
     });
 
     // Status indicator
     this.statusIndicator = document.createElement("div");
-    this.statusIndicator.className =
-      "flex items-center gap-2 text-xs md:text-sm text-gray-600";
+    this.statusIndicator.className = "flex items-center gap-2 text-gray-600";
     this.updateStatus("Initializing...");
 
     // Context display
@@ -100,7 +104,7 @@ export class ChatUI {
 
     this.modelSelectorContainer = document.createElement("div");
     this.modelSelectorContainer.className =
-      "flex w-full md:w-auto items-center gap-4";
+      "flex w-full lg:w-2/5 items-center justify-around gap-4 text-sm sm:text-lg overflow-visible";
     this.modelSelectorContainer.id = "model-selector-container";
 
     // Model selector and status
@@ -116,7 +120,7 @@ export class ChatUI {
     this.input.type = "text";
     this.input.placeholder = "Ask me anything...";
     this.input.className =
-      "flex-1 px-4 py-3 border-0 rounded-full text-sm md:text-base focus:outline-none focus:ring-0 bg-transparent placeholder-gray-500";
+      "flex-1 px-4 py-3 border-0 rounded-full text-sm md:text-base focus:outline-none focus:ring-0 bg-gray-800 placeholder-gray-500 text-white";
     this.input.addEventListener("keypress", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -124,77 +128,28 @@ export class ChatUI {
       }
     });
 
-    // Animation buttons container
-    this.animationButtonsContainer = document.createElement("div");
-    this.animationButtonsContainer.className = "flex gap-2 mr-2";
+    // Create debug button
+    this.debugButton = document.createElement("button");
+    this.debugButton.innerHTML = "🐛";
+    this.debugButton.className =
+      "px-3 py-2 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors";
+    this.debugButton.title = "Debug Animations";
+    this.debugButton.addEventListener("click", () => {
+      this.toggleDebugDropdown();
+    });
 
-    // Spin animation button
-    this.spinButton = document.createElement("button");
-    this.spinButton.innerHTML = "🌀";
-    this.spinButton.className =
-      "px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors";
-    this.spinButton.title = "Spin Animation";
-    this.spinButton.addEventListener("click", () =>
-      this.triggerAnimation("spin")
-    );
+    // Only show debug button in development mode (check if we're on localhost)
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      this.debugButton.style.display = "flex";
+    } else {
+      this.debugButton.style.display = "none";
+    }
 
-    // Mexican wave animation button
-    this.waveButton = document.createElement("button");
-    this.waveButton.innerHTML = "🌊";
-    this.waveButton.className =
-      "px-3 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors";
-    this.waveButton.title = "Mexican Wave Animation";
-    this.waveButton.addEventListener("click", () =>
-      this.triggerAnimation("wave")
-    );
-
-    // Bounce animation button
-    this.bounceButton = document.createElement("button");
-    this.bounceButton.innerHTML = "🦘";
-    this.bounceButton.className =
-      "px-3 py-2 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors";
-    this.bounceButton.title = "Bounce Animation";
-    this.bounceButton.addEventListener("click", () =>
-      this.triggerAnimation("bounce")
-    );
-
-    // Backflip animation button
-    this.backflipButton = document.createElement("button");
-    this.backflipButton.innerHTML = "🤸";
-    this.backflipButton.className =
-      "px-3 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors";
-    this.backflipButton.title = "Backflip Animation";
-    this.backflipButton.addEventListener("click", () =>
-      this.triggerAnimation("backflip")
-    );
-
-    // Multi-axis spin animation button
-    this.multiSpinButton = document.createElement("button");
-    this.multiSpinButton.innerHTML = "🎡";
-    this.multiSpinButton.className =
-      "px-3 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors";
-    this.multiSpinButton.title = "Multi-Axis Spin Animation";
-    this.multiSpinButton.addEventListener("click", () =>
-      this.triggerAnimation("multiSpin")
-    );
-
-    // Individual tube backflip animation button
-    this.individualBackflipButton = document.createElement("button");
-    this.individualBackflipButton.innerHTML = "🔄";
-    this.individualBackflipButton.className =
-      "px-3 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors";
-    this.individualBackflipButton.title = "Individual Tube Backflip Animation";
-    this.individualBackflipButton.addEventListener("click", () =>
-      this.triggerAnimation("individualBackflip")
-    );
-
-    // Add buttons to container
-    this.animationButtonsContainer.appendChild(this.spinButton);
-    this.animationButtonsContainer.appendChild(this.waveButton);
-    this.animationButtonsContainer.appendChild(this.bounceButton);
-    this.animationButtonsContainer.appendChild(this.backflipButton);
-    this.animationButtonsContainer.appendChild(this.multiSpinButton);
-    this.animationButtonsContainer.appendChild(this.individualBackflipButton);
+    // Create debug dropdown
+    this.createDebugDropdown();
 
     // Send button
     this.sendButton = document.createElement("button");
@@ -204,14 +159,22 @@ export class ChatUI {
       </svg>
     `;
     this.sendButton.className =
-      "p-2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
-    this.sendButton.addEventListener("click", () => this.sendMessage());
+      "p-2 text-gray-400 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 hover:bg-gray-600 rounded-full transition-colors";
+    this.sendButton.addEventListener("click", () => {
+      console.log("📤 Send button clicked, calling sendMessage()");
+      this.sendMessage();
+    });
+
+    // Create input row with send button
+    const inputRow = document.createElement("div");
+    inputRow.className = "flex items-center gap-2 w-full md:flex-1";
+    inputRow.appendChild(this.input);
+    inputRow.appendChild(this.sendButton);
+    inputRow.appendChild(this.debugButton);
 
     // Assemble UI
     this.inputContainer.appendChild(this.modelSelectorContainer);
-    this.inputContainer.appendChild(this.input);
-    this.inputContainer.appendChild(this.animationButtonsContainer);
-    this.inputContainer.appendChild(this.sendButton);
+    this.inputContainer.appendChild(inputRow);
 
     this.container.appendChild(this.chatContainer);
     this.container.appendChild(this.inputContainer);
@@ -236,7 +199,9 @@ export class ChatUI {
   }
 
   private async switchModel(newModelId: string): Promise<void> {
-    if (newModelId === this.currentModelId) return;
+    if (newModelId === this.currentModelId) {
+      return;
+    }
 
     this.currentModelId = newModelId;
     this.chatbot = new Chatbot(
@@ -264,7 +229,13 @@ export class ChatUI {
 
   private async sendMessage(): Promise<void> {
     const message = this.input.value.trim();
-    if (!message || !this.chatbot.isReady()) return;
+    console.log("📤 sendMessage called with:", message);
+    console.log("📤 chatbot.isReady():", this.chatbot.isReady());
+
+    if (!message || !this.chatbot.isReady()) {
+      console.log("📤 Message or chatbot not ready, returning");
+      return;
+    }
 
     // Clear input
     this.input.value = "";
@@ -281,8 +252,8 @@ export class ChatUI {
     this.sendButton.disabled = true;
     this.updateStatus("Generating...");
 
-    // Trigger wave animation for loading
-    this.triggerAnimation("loadingWave");
+    // Speed up infinite animation for loading
+    this.triggerAnimation("speedUpInfinite");
 
     try {
       const response = await this.chatbot.chat(message);
@@ -301,8 +272,9 @@ export class ChatUI {
         timestamp: new Date(),
       });
     } finally {
-      // Stop the wave animation - infinite animation will resume automatically
-      window.dispatchEvent(new CustomEvent("stopAnimation"));
+      // Resume infinite animation at normal speed and restart it
+      this.triggerAnimation("resumeInfiniteSpeed");
+      this.triggerAnimation("resumeInfinite");
 
       this.input.disabled = false;
       this.sendButton.disabled = false;
@@ -313,14 +285,12 @@ export class ChatUI {
 
   private addMessageToUI(message: ChatMessage): void {
     const messageDiv = document.createElement("div");
-    messageDiv.className = `flex ${
-      message.role === "user" ? "justify-end" : "justify-start"
-    }`;
+    messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
     const bubble = document.createElement("div");
     bubble.className = `max-w-[80%] md:max-w-md px-4 py-2 rounded-2xl text-sm md:text-base ${
       message.role === "user"
-        ? "bg-blue-500/20 backdrop-blur-sm text-gray-300 border border-blue-400/30"
+        ? "bg-blue-500/20 backdrop-blur-sm text-blue-200 border border-blue-400/30"
         : "bg-blue-500/10 backdrop-blur-sm text-gray-300 border border-blue-400/20 chat-message"
     }`;
 
@@ -448,35 +418,22 @@ export class ChatUI {
     }
   }
 
-  private getAnimationButton(animationType: string): HTMLButtonElement | null {
-    switch (animationType) {
-      case "spin":
-        return this.spinButton;
-      case "wave":
-        return this.waveButton;
-      case "bounce":
-        return this.bounceButton;
-      case "backflip":
-        return this.backflipButton;
-      case "multiSpin":
-        return this.multiSpinButton;
-      case "individualBackflip":
-        return this.individualBackflipButton;
-      default:
-        return null;
-    }
+  private getAnimationButton(_animationType: string): HTMLButtonElement | null {
+    // Since we no longer have individual buttons, return null
+    // The animation feedback is now handled in the debug dropdown
+    return null;
   }
 
   private createContextDisplay(): void {
     this.contextDisplay = document.createElement("div");
     this.contextDisplay.className =
-      "relative flex items-center gap-2 text-xs text-gray-600 cursor-pointer hover:text-gray-800 transition-colors flex-1 min-w-0 w-auto";
+      "relative flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors min-w-0 w-auto overflow-visible";
     this.contextDisplay.id = "context-display";
 
     // Create context summary (inline display)
     const contextSummary = document.createElement("div");
     contextSummary.className = "flex items-center gap-2 truncate";
-    contextSummary.innerHTML = `<span>📍 Context</span><span class="text-gray-500">Loading...</span><span class="text-xs text-gray-600">▲</span>`;
+    contextSummary.innerHTML = `<span>📍 Context</span><span class="text-xs text-gray-600">▲</span>`;
     contextSummary.id = "context-summary";
 
     this.contextDisplay.appendChild(contextSummary);
@@ -490,25 +447,20 @@ export class ChatUI {
       this.toggleContextDropdown();
     });
 
-    // Close dropdown when clicking outside
-    document.addEventListener("click", () => {
-      if (this.isContextDropdownOpen) {
-        this.toggleContextDropdown();
-      }
-    });
-
     // Initial context display
     this.updateContextDisplay();
 
-    // Update context every minute
+    // Update context every 5 minutes instead of every minute for better performance
     setInterval(() => {
       this.updateContextDisplay();
-    }, 60000);
+    }, 300000);
   }
 
   private updateContextDisplay(): void {
     const contextSummary = document.getElementById("context-summary");
-    if (!contextSummary) return;
+    if (!contextSummary) {
+      return;
+    }
 
     // Ensure context is available
     this.chatbot.ensureContextAvailable();
@@ -518,7 +470,6 @@ export class ChatUI {
       // Update inline summary
       contextSummary.innerHTML = `
         <span>📍 Context</span>
-        <span class="text-gray-500 truncate">${context.location}</span>
         <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? "▼" : "▲"}</span>
       `;
 
@@ -541,7 +492,7 @@ export class ChatUI {
   private createContextDropdown(): void {
     this.contextDropdown = document.createElement("div");
     this.contextDropdown.className =
-      "absolute bottom-full left-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-64 p-3";
+      "absolute bottom-full right-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-64 p-3";
     this.contextDropdown.style.display = "none";
     this.contextDropdown.id = "context-dropdown";
 
@@ -569,10 +520,31 @@ export class ChatUI {
     this.contextDropdown.appendChild(refreshButton);
 
     // Position the dropdown relative to the context display
+    this.contextDisplay.style.position = "relative";
     this.contextDisplay.appendChild(this.contextDropdown);
   }
 
-  private toggleContextDropdown(): void {
+  private toggleContextDropdown({
+    forceClose,
+    forceOpen,
+  }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
+    if (forceClose) {
+      this.contextDropdown.style.display = "none";
+      this.isContextDropdownOpen = false;
+      return;
+    }
+
+    if (forceOpen) {
+      this.contextDropdown.style.display = "block";
+      this.isContextDropdownOpen = true;
+      return;
+    }
+
+    console.log(
+      "🐛 Context dropdown toggle called, current state:",
+      this.isContextDropdownOpen
+    );
+
     if (this.isContextDropdownOpen) {
       this.contextDropdown.style.display = "none";
       this.isContextDropdownOpen = false;
@@ -596,8 +568,10 @@ export class ChatUI {
     }
   }
 
-  private updateContextDropdownContent(context: any): void {
-    if (!this.contextDropdown) return;
+  private updateContextDropdownContent(context: ContextData): void {
+    if (!this.contextDropdown) {
+      return;
+    }
 
     // Find the refresh button to preserve it
     const refreshButton = this.contextDropdown.querySelector("button");
@@ -646,7 +620,6 @@ export class ChatUI {
 
       option.addEventListener("click", () => {
         this.selectModel(id);
-        this.toggleModelDropdown();
       });
 
       this.modelDropdown.appendChild(option);
@@ -657,24 +630,45 @@ export class ChatUI {
     this.modelSelector.appendChild(this.modelDropdown);
   }
 
-  private toggleModelDropdown(): void {
-    if (this.isDropdownOpen) {
+  private toggleModelDropdown({
+    forceClose,
+    forceOpen,
+  }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
+    if (forceClose) {
       this.modelDropdown.style.display = "none";
-      this.isDropdownOpen = false;
+      this.isModelDropdownOpen = false;
+      return;
+    }
+
+    if (forceOpen) {
+      this.modelDropdown.style.display = "block";
+      this.isModelDropdownOpen = true;
+      return;
+    }
+
+    if (this.isModelDropdownOpen) {
+      this.modelDropdown.style.display = "none";
+      this.isModelDropdownOpen = false;
       // Rotate arrow back up
       const arrow = document.getElementById("model-arrow");
-      if (arrow) arrow.style.transform = "rotate(0deg)";
+      if (arrow) {
+        arrow.style.transform = "rotate(0deg)";
+      }
     } else {
       this.modelDropdown.style.display = "block";
-      this.isDropdownOpen = true;
+      this.isModelDropdownOpen = true;
       // Rotate arrow down
       const arrow = document.getElementById("model-arrow");
-      if (arrow) arrow.style.transform = "rotate(180deg)";
+      if (arrow) {
+        arrow.style.transform = "rotate(180deg)";
+      }
     }
   }
 
   private selectModel(modelId: string): void {
-    if (modelId === this.currentModelId) return;
+    if (modelId === this.currentModelId) {
+      return;
+    }
 
     this.currentModelId = modelId;
     const modelText = document.getElementById("model-text");
@@ -684,5 +678,118 @@ export class ChatUI {
 
     // Switch the model
     this.switchModel(modelId);
+
+    this.toggleModelDropdown({ forceClose: true });
+  }
+
+  private createDebugDropdown(): void {
+    this.debugDropdown = document.createElement("div");
+    this.debugDropdown.className =
+      "absolute bottom-full right-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-[9999] min-w-48 p-3";
+    this.debugDropdown.style.display = "none";
+    this.debugDropdown.id = "debug-dropdown";
+
+    // Add animation options
+    const animations = [
+      {
+        id: "initialPageLoad",
+        name: "Initial Page Load",
+        icon: "🌟",
+        color: "bg-yellow-500 hover:bg-yellow-600",
+      },
+      {
+        id: "spin",
+        name: "Spin Animation",
+        icon: "🌀",
+        color: "bg-blue-500 hover:bg-blue-600",
+      },
+      {
+        id: "wave",
+        name: "Mexican Wave",
+        icon: "🌊",
+        color: "bg-green-500 hover:bg-green-600",
+      },
+      {
+        id: "bounce",
+        name: "Bounce Animation",
+        icon: "🦘",
+        color: "bg-purple-500 hover:bg-purple-600",
+      },
+      {
+        id: "backflip",
+        name: "Backflip Animation",
+        icon: "🤸",
+        color: "bg-orange-500 hover:bg-orange-600",
+      },
+      {
+        id: "multiSpin",
+        name: "Multi-Axis Spin",
+        icon: "🎡",
+        color: "bg-red-500 hover:bg-red-600",
+      },
+      {
+        id: "individualBackflip",
+        name: "Individual Backflip",
+        icon: "🔄",
+        color: "bg-indigo-500 hover:bg-indigo-600",
+      },
+    ];
+
+    animations.forEach(animation => {
+      const button = document.createElement("button");
+      button.innerHTML = `${animation.icon} ${animation.name}`;
+      button.className = `w-full px-3 py-2 text-sm text-white rounded-lg transition-colors ${animation.color} text-left mb-2`;
+      button.addEventListener("click", () => {
+        this.triggerAnimation(animation.id);
+        this.toggleDebugDropdown({ forceClose: true });
+      });
+      this.debugDropdown.appendChild(button);
+    });
+
+    // Remove margin from last button
+    const lastButton = this.debugDropdown.lastElementChild as HTMLElement;
+    if (lastButton) {
+      lastButton.classList.remove("mb-2");
+    }
+
+    // Position the dropdown relative to the debug button
+    this.debugButton.style.position = "relative";
+    this.debugButton.appendChild(this.debugDropdown);
+
+    console.log(
+      "🐛 Debug dropdown created and attached to button:",
+      this.debugButton
+    );
+  }
+
+  private toggleDebugDropdown({
+    forceClose,
+    forceOpen,
+  }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
+    if (forceClose) {
+      this.debugDropdown.style.display = "none";
+      this.isDebugDropdownOpen = false;
+      return;
+    }
+
+    if (forceOpen) {
+      this.debugDropdown.style.display = "block";
+      this.isDebugDropdownOpen = true;
+      return;
+    }
+
+    console.log(
+      "🐛 Debug dropdown toggle called, current state:",
+      this.isDebugDropdownOpen
+    );
+    if (this.isDebugDropdownOpen) {
+      this.debugDropdown.style.display = "none";
+      this.isDebugDropdownOpen = false;
+      console.log("🐛 Debug dropdown closed");
+    } else {
+      this.debugDropdown.style.display = "block";
+      this.isDebugDropdownOpen = true;
+      console.log("🐛 Debug dropdown opened");
+    }
   }
 }

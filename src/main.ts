@@ -29,14 +29,14 @@ class PortfolioScene {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(COLORS.BACKGROUND);
 
-    // Camera setup
+    // Camera setup - aspect ratio will be set properly after renderer initialization
     this.camera = new THREE.PerspectiveCamera(
       75,
-      window.innerWidth / (window.innerHeight * 0.9),
+      1, // Temporary aspect ratio, will be updated in updateRendererSize()
       0.1,
       1000
     );
-    // Set initial camera position
+    // Set initial camera position - will be adjusted for mobile in updateRendererSize()
     this.camera.position.set(0, 0, 10);
 
     // Renderer setup
@@ -44,11 +44,19 @@ class PortfolioScene {
       canvas: document.getElementById("threejs-canvas") as HTMLCanvasElement,
       antialias: true,
       alpha: false,
+      powerPreference: "high-performance",
+      preserveDrawingBuffer: false,
+      stencil: false,
+      depth: true,
     });
-    this.renderer.setSize(window.innerWidth, window.innerHeight * 0.9);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Set initial renderer size based on actual canvas dimensions
+    this.updateRendererSize();
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     // Lighting
     Lighting.setupLighting(this.scene);
@@ -62,14 +70,10 @@ class PortfolioScene {
     // Build circle geometry
     this.buildCircle();
 
-    // Fit camera to circle
-    this.cameraManager.fitCameraToObject();
+    // Camera positioning is now handled manually in updateRendererSize() for mobile responsiveness
 
-    // Start infinite individual tube backflip animation on page load
-    this.animationManager.triggerIndividualTubeBackflipAnimation(
-      this.tubesGroup
-    );
-    this.animationManager.setShouldResumeInfiniteAnimation(true);
+    // Start initial page load animation on page load
+    this.animationManager.triggerInitialPageLoadAnimation(this.tubesGroup);
 
     // Initialize chatbot
     this.chatUI = new ChatUI();
@@ -83,6 +87,33 @@ class PortfolioScene {
         appContainer.appendChild(chatContainer);
       }
     }
+  }
+
+  private getCanvasDimensions(): { width: number; height: number } {
+    const canvas = document.getElementById(
+      "threejs-canvas"
+    ) as HTMLCanvasElement;
+    const canvasRect = canvas.getBoundingClientRect();
+    return { width: canvasRect.width, height: canvasRect.height };
+  }
+
+  private updateRendererSize(): void {
+    const { width, height } = this.getCanvasDimensions();
+    this.renderer.setSize(width, height);
+    this.camera.aspect = width / height;
+
+    // Adjust camera position for mobile devices
+    // Move camera down and adjust Z to maintain proper perspective
+    if (width < 640) {
+      // Mobile breakpoint (sm:)
+      this.camera.position.y = -1.5; // Move camera down significantly
+      this.camera.position.z = 4; // Much closer than the calculated 80.6
+    } else {
+      this.camera.position.y = 0; // Desktop: keep centered
+      this.camera.position.z = 2.3; // Desktop: original Z position
+    }
+
+    this.camera.updateProjectionMatrix();
   }
 
   private buildCircle(): void {
@@ -120,9 +151,7 @@ class PortfolioScene {
   private setupEventListeners(): void {
     window.addEventListener("resize", () => {
       this.cameraManager.onWindowResize();
-      this.renderer.setSize(window.innerWidth, window.innerHeight * 0.9);
-      this.camera.aspect = window.innerWidth / (window.innerHeight * 0.9);
-      this.camera.updateProjectionMatrix();
+      this.updateRendererSize();
     });
 
     // Listen for animation trigger events from chat UI
@@ -174,13 +203,17 @@ class PortfolioScene {
           false
         ); // Single cycle for manual trigger
         break;
-      case "loadingWave":
-        this.animationManager.setShouldResumeInfiniteAnimation(true);
-        this.animationManager.triggerMexicanWaveAnimation(
-          this.tubesGroup,
-          2000,
-          true
-        ); // Continuous wave for loading
+      case "speedUpInfinite":
+        this.animationManager.speedUpInfiniteAnimation(3.0); // 3x speed
+        break;
+      case "resumeInfiniteSpeed":
+        this.animationManager.resumeInfiniteAnimationSpeed();
+        break;
+      case "resumeInfinite":
+        this.animationManager.forceRestartInfiniteAnimation(this.tubesGroup);
+        break;
+      case "initialPageLoad":
+        this.animationManager.triggerInitialPageLoadAnimation(this.tubesGroup);
         break;
       case "bounce":
         this.animationManager.setShouldResumeInfiniteAnimation(true);

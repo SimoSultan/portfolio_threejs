@@ -6,11 +6,46 @@ export class AnimationManager {
   private originalPositions: THREE.Vector3[] | undefined;
   private originalScales: THREE.Vector3[] | undefined;
   private shouldResumeInfiniteAnimation: boolean = false; // Flag to resume infinite animation after others finish
+  private infiniteAnimationSpeed: number = 1.0; // Speed multiplier for infinite animation
+  private originalInfiniteAnimationSpeed: number = 1.0; // Store original speed
+  private isInfiniteAnimationRunning: boolean = false; // Track if infinite animation is running
 
   constructor(_scene: THREE.Scene) {
     // Scene parameter kept for future use (e.g., adding particles, effects)
     // Currently not used but will be useful for scene-wide animations
     // Prefixed with underscore to indicate intentional non-use
+  }
+
+  /**
+   * Speed up the infinite animation when user submits a prompt
+   * @param speedMultiplier - Speed multiplier (default: 3.0 for 3x speed)
+   */
+  public speedUpInfiniteAnimation(speedMultiplier: number = 3.0): void {
+    console.log("🚀 Attempting to speed up infinite animation...");
+    this.logAnimationState();
+
+    // Check if infinite animation is active (either running or should resume)
+    if (this.isInfiniteAnimationActive()) {
+      this.infiniteAnimationSpeed = speedMultiplier;
+      console.log(
+        `🚀 Infinite animation speed increased to ${speedMultiplier}x`
+      );
+    } else {
+      console.log(
+        "⚠️ Cannot speed up infinite animation - not currently active"
+      );
+    }
+  }
+
+  /**
+   * Resume infinite animation at original speed when chatbot responds
+   */
+  public resumeInfiniteAnimationSpeed(): void {
+    console.log("🔄 Attempting to resume infinite animation speed...");
+    this.logAnimationState();
+
+    this.infiniteAnimationSpeed = this.originalInfiniteAnimationSpeed;
+    console.log("🔄 Infinite animation speed restored to normal");
   }
 
   /**
@@ -102,7 +137,9 @@ export class AnimationManager {
     this.originalScales = originalScales;
 
     const animate = () => {
-      if (!this.isAnimating) return;
+      if (!this.isAnimating) {
+        return;
+      }
 
       const elapsed = Date.now() - startTime;
 
@@ -386,9 +423,15 @@ export class AnimationManager {
     }
 
     console.log(
-      `🤸 Starting individual tube backflip animation (${continuous ? "continuous" : "single cycle"})...`
+      `🤸 Starting individual tube backflip animation (${continuous ? "continuous" : "single loop"})...`
     );
     this.isAnimating = true;
+    this.isInfiniteAnimationRunning = continuous;
+
+    // If this is the initial infinite animation, set the original speed
+    if (continuous && this.infiniteAnimationSpeed === 1.0) {
+      this.originalInfiniteAnimationSpeed = 1.0;
+    }
 
     const startTime = Date.now();
     const tubes = tubesGroup.children as THREE.Mesh[];
@@ -408,9 +451,17 @@ export class AnimationManager {
     ); // Default scales
 
     const animate = () => {
-      if (!this.isAnimating) return;
+      if (!this.isAnimating) {
+        return;
+      }
 
       const elapsed = Date.now() - startTime;
+
+      // Add very slow spin to the entire circle
+      if (continuous) {
+        const slowSpinSpeed = 0.0001; // Very slow rotation (adjust this value to control speed)
+        tubesGroup.rotation.z += slowSpinSpeed * this.infiniteAnimationSpeed;
+      }
 
       tubes.forEach((tube, index) => {
         if (continuous) {
@@ -418,17 +469,19 @@ export class AnimationManager {
           const individualDelay = (index / tubes.length) * duration * 0.3; // Stagger the animation
           const adjustedElapsed = elapsed + individualDelay;
 
-          // Calculate continuous rotation based on elapsed time
-          const rotationCycles = adjustedElapsed / duration;
+          // Calculate continuous rotation based on elapsed time with speed control
+          const rotationCycles =
+            (adjustedElapsed / duration) * this.infiniteAnimationSpeed;
           const continuousRotation = rotationCycles * Math.PI * 2;
 
           // Apply continuous rotation
           tube.rotation.x = originalRotations[index].x + continuousRotation;
 
-          // Add slight wobble for more dynamic effect using continuous time
+          // Add slight wobble for more dynamic effect using continuous time with speed control
           tube.rotation.z =
             originalRotations[index].z +
-            Math.sin(adjustedElapsed * 0.004) * 0.1;
+            Math.sin(adjustedElapsed * 0.004 * this.infiniteAnimationSpeed) *
+              0.1;
         } else {
           // For single cycle, use the original progress-based approach
           const progress = Math.min(elapsed / duration, 1);
@@ -482,6 +535,9 @@ export class AnimationManager {
       cancelAnimationFrame(this.currentAnimationId);
       this.currentAnimationId = undefined;
       this.isAnimating = false;
+
+      // Don't reset infinite animation state - let the resume logic handle it
+      // This ensures that speedUpInfiniteAnimation can work on subsequent calls
 
       // Reset all tubes to their original positions and scales
       if (this.originalPositions && this.originalScales) {
@@ -552,6 +608,28 @@ export class AnimationManager {
   }
 
   /**
+   * Check if infinite animation is currently active (either running or should resume)
+   */
+  public isInfiniteAnimationActive(): boolean {
+    return (
+      this.isInfiniteAnimationRunning || this.shouldResumeInfiniteAnimation
+    );
+  }
+
+  /**
+   * Log current animation state for debugging
+   */
+  public logAnimationState(): void {
+    console.log("🔍 Animation State:", {
+      isAnimating: this.isAnimating,
+      isInfiniteAnimationRunning: this.isInfiniteAnimationRunning,
+      shouldResumeInfiniteAnimation: this.shouldResumeInfiniteAnimation,
+      infiniteAnimationSpeed: this.infiniteAnimationSpeed,
+      originalInfiniteAnimationSpeed: this.originalInfiniteAnimationSpeed,
+    });
+  }
+
+  /**
    * Resume infinite individual tube backflip animation
    */
   public resumeInfiniteAnimation(tubesGroup: THREE.Group): void {
@@ -559,7 +637,88 @@ export class AnimationManager {
       console.log("🔄 Resuming infinite individual tube backflip animation...");
       this.triggerIndividualTubeBackflipAnimation(tubesGroup);
       this.shouldResumeInfiniteAnimation = false;
+      this.isInfiniteAnimationRunning = true;
+      // Keep the current speed setting when resuming
+      console.log(
+        `🔄 Infinite animation resumed at ${this.infiniteAnimationSpeed}x speed`
+      );
     }
+  }
+
+  /**
+   * Force restart the infinite animation (useful for ensuring it's running)
+   */
+  public forceRestartInfiniteAnimation(tubesGroup: THREE.Group): void {
+    console.log("🔄 Force restarting infinite animation...");
+    this.stopAnimation(); // Stop any current animation
+    this.isInfiniteAnimationRunning = true;
+    this.shouldResumeInfiniteAnimation = false;
+    this.triggerIndividualTubeBackflipAnimation(tubesGroup);
+    console.log("🔄 Infinite animation force restarted");
+  }
+
+  /**
+   * Initial page load animation - zoom in and spin the circle
+   * @param tubesGroup - The group containing the circle tubes
+   * @param duration - Animation duration in milliseconds (default: 3000ms)
+   */
+  public triggerInitialPageLoadAnimation(
+    tubesGroup: THREE.Group,
+    duration: number = 3000
+  ): void {
+    if (this.isAnimating) {
+      console.log(
+        "⚠️ Animation already in progress, stopping current animation..."
+      );
+      this.stopAnimation();
+    }
+
+    console.log("🌟 Starting initial page load animation...");
+    this.isAnimating = true;
+
+    const startTime = Date.now();
+    const startScale = 0.1; // Start very small
+    const endScale = 1.0; // End at normal size
+    const startRotation = 0;
+    const endRotation = Math.PI * 4; // 2 full rotations (720 degrees)
+
+    // Set initial state
+    tubesGroup.scale.setScalar(startScale);
+    tubesGroup.rotation.z = startRotation;
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Smooth easing function (ease-out)
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+      // Scale up from small to normal size
+      const currentScale = startScale + (endScale - startScale) * easedProgress;
+      tubesGroup.scale.setScalar(currentScale);
+
+      // Rotate while scaling
+      const currentRotation =
+        startRotation + (endRotation - startRotation) * easedProgress;
+      tubesGroup.rotation.z = currentRotation;
+
+      if (progress < 1) {
+        this.currentAnimationId = requestAnimationFrame(animate);
+      } else {
+        // Animation complete - ensure exact final state
+        tubesGroup.scale.setScalar(endScale);
+        tubesGroup.rotation.z = endRotation;
+        this.isAnimating = false;
+        this.currentAnimationId = undefined;
+        console.log("✅ Initial page load animation complete");
+
+        // Start the infinite animation after the entrance animation
+        this.triggerIndividualTubeBackflipAnimation(tubesGroup);
+        this.setShouldResumeInfiniteAnimation(true);
+      }
+    };
+
+    animate();
   }
 
   /**

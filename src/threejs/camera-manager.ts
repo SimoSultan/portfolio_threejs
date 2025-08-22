@@ -31,9 +31,9 @@ export class CameraManager {
   }
 
   fitCameraToObject(preserveDirection = true): void {
-    // Adjust object center for vertical centering (e.g., circle positioning)
+    // Adjust object center to move circle down slightly to avoid text clash
     const adjustedCenter = this.objectCenter.clone();
-    adjustedCenter.y += this.objectRadius * 0.06; // Shift up by 6% of radius
+    adjustedCenter.y -= this.objectRadius * 0.06; // Move down by 15% of radius
 
     // Compute distance to frame bounding sphere vertically and horizontally
     const fov = THREE.MathUtils.degToRad(this.camera.fov);
@@ -66,9 +66,9 @@ export class CameraManager {
   }
 
   onWindowResize(): void {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
+    // Don't call fitCameraToObject here as it overrides our mobile positioning
+    // The main.ts updateRendererSize() method will handle camera positioning
     this.camera.updateProjectionMatrix();
-    this.fitCameraToObject();
   }
 
   getControls(): OrbitControls {

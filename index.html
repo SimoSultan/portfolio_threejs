@@ -7,23 +7,21 @@
     <script type="module" src="src/main.ts"></script>
     <link href="src/styles.css" rel="stylesheet" />
   </head>
-  <body class="min-h-screen overflow-hidden bg-black text-white">
-    <div id="app" class="relative">
+  <body class="relative min-h-screen overflow-hidden bg-black text-white">
+    <div id="app" class="flex size-full items-center justify-center">
       <!-- Three.js Canvas -->
       <canvas
         id="threejs-canvas"
-        class="fixed inset-0 z-0 w-full"
-        style="height: 90vh"
+        class="fixed inset-0 z-0 h-[85vh] w-full"
       ></canvas>
 
       <!-- Content Overlay -->
       <div
-        id="fallback-content"
-        class="relative z-10 flex min-h-screen items-center justify-center"
+        class="relative z-10 px-4 py-8 sm:absolute sm:top-[40%] sm:translate-y-[-50%]"
       >
-        <div class="flex flex-col items-center gap-10">
+        <div class="flex flex-col items-center gap-6">
           <h1
-            class="mb-4 max-w-8/12 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-center text-6xl font-bold text-transparent"
+            class="w-full bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-center text-6xl font-bold text-transparent sm:text-8xl md:max-w-8/12"
           >
             Simon Curran
           </h1>

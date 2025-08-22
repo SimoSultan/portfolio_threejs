@@ -10,6 +10,7 @@
   "printWidth": 80,
   "bracketSpacing": true,
   "arrowParens": "avoid",
+  "useTabs": false,
   "importOrder": ["^@?\\w", "^[./]"],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,

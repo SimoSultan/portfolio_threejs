@@ -79,7 +79,7 @@ export function createTubeBetweenPoints(
     radius,
     radius,
     adjustedLength,
-    8
+    12
   );
   const mesh = new THREE.Mesh(geometry, material);
 

@@ -1,8 +1,6 @@
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
-import prettierConfig from "eslint-config-prettier";
-import prettier from "eslint-plugin-prettier";
 
 export default [
   // Global ignores (must be first)
@@ -50,18 +48,14 @@ export default [
         require: "readonly",
       },
     },
-    plugins: {
-      prettier: prettier,
-    },
+    plugins: {},
     rules: {
-      "prettier/prettier": "error",
       "no-console": "off",
       "prefer-const": "error",
       "no-var": "error",
       "no-unused-expressions": "error",
       eqeqeq: "error",
       curly: "error",
-      ...prettierConfig.rules,
     },
   },
   // TypeScript files
@@ -97,12 +91,8 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
-      prettier: prettier,
     },
     rules: {
-      // Prettier integration
-      "prettier/prettier": "error",
-
       // TypeScript specific rules
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -131,8 +121,7 @@ export default [
       eqeqeq: "error",
       curly: "error",
 
-      // Turn off rules that conflict with Prettier
-      ...prettierConfig.rules,
+      // Prettier handles formatting, ESLint handles code quality
     },
   },
 ];

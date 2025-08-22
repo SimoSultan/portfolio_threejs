@@ -14,7 +14,7 @@ export const COLORS = {
 } as const;
 
 export const MATERIAL_PROPERTIES = {
-  METALNESS: 0.8,
-  ROUGHNESS: 0.2,
-  EMISSIVE_INTENSITY: 0.3,
+  METALNESS: 0.9,
+  ROUGHNESS: 0.1,
+  EMISSIVE_INTENSITY: 0.4,
 } as const;

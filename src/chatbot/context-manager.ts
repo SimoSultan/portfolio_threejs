@@ -131,12 +131,20 @@ export class ContextManager {
 
         // Build a readable location string
         const parts = [];
-        if (address.city) parts.push(address.city);
-        else if (address.town) parts.push(address.town);
-        else if (address.village) parts.push(address.village);
+        if (address.city) {
+          parts.push(address.city);
+        } else if (address.town) {
+          parts.push(address.town);
+        } else if (address.village) {
+          parts.push(address.village);
+        }
 
-        if (address.state) parts.push(address.state);
-        if (address.country) parts.push(address.country);
+        if (address.state) {
+          parts.push(address.state);
+        }
+        if (address.country) {
+          parts.push(address.country);
+        }
 
         return parts.join(", ") || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
       }
@@ -176,7 +184,9 @@ export class ContextManager {
   }
 
   public formatContextForPrompt(): string {
-    if (!this.context) return "";
+    if (!this.context) {
+      return "";
+    }
 
     this.updateContext(); // Update time/date to current moment
 
