@@ -1,5 +1,5 @@
-import { getOllamaUrl, getOllamaEnvironment } from "./config";
-import { ContextManager, type ChatContext } from "./context-manager";
+import { getOllamaEnvironment, getOllamaUrl } from "./config";
+import { type ChatContext, ContextManager } from "./context-manager";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -119,7 +119,7 @@ export class Chatbot {
       return response;
     } finally {
       this.isGenerating = false;
-      
+
       // Stop the continuous wave animation when response is complete
       const stopAnimationEvent = new CustomEvent("stopAnimation", {
         detail: {
@@ -140,7 +140,7 @@ export class Chatbot {
       const context = this.contextManager.formatContextForPrompt();
       const contextualizedPrompt = `${context}\n\nUser Message: ${userMessage}`;
 
-      console.log('📍 Sending contextualized prompt:', contextualizedPrompt);
+      console.log("📍 Sending contextualized prompt:", contextualizedPrompt);
 
       const ollamaUrl = getOllamaUrl();
       const response = await fetch(`${ollamaUrl}/api/generate`, {

@@ -48,8 +48,8 @@ export function calculateBoundingSphere(objects: THREE.Object3D[]): {
 } {
   const box = new THREE.Box3();
 
-  objects.forEach((obj) => {
-    obj.traverse((child) => {
+  objects.forEach(obj => {
+    obj.traverse(child => {
       if (child instanceof THREE.Mesh) {
         box.expandByObject(child);
       }
@@ -75,17 +75,22 @@ export function createTubeBetweenPoints(
   const INCREASE_TUBE_LENGTH_FACTOR = 1.875; // Increased by 50% more (1.25 * 1.5)
   const adjustedLength = length * INCREASE_TUBE_LENGTH_FACTOR;
 
-  const geometry = new THREE.CylinderGeometry(radius, radius, adjustedLength, 8);
+  const geometry = new THREE.CylinderGeometry(
+    radius,
+    radius,
+    adjustedLength,
+    8
+  );
   const mesh = new THREE.Mesh(geometry, material);
 
   // Position the tube at the midpoint
   mesh.position.copy(start).add(direction.multiplyScalar(0.5));
-  
+
   // Calculate the angle to rotate the tube to align with the direction
   // This ensures all tubes have consistent orientation
   const angle = Math.atan2(direction.y, direction.x);
   mesh.rotation.z = angle;
-  
+
   // Ensure the tube is oriented correctly (cylinder default is along Y-axis)
   mesh.rotation.x = Math.PI / 2;
 

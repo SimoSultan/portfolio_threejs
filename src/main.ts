@@ -1,11 +1,12 @@
 import * as THREE from "three";
-import { CircleGeometry } from "./threejs/geometry";
+
+import { ChatUI } from "./chatbot";
+import { AnimationManager } from "./threejs/animation-manager";
 import { CameraManager } from "./threejs/camera-manager";
+import { COLORS } from "./threejs/constants";
+import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
 import { calculateBoundingSphere } from "./threejs/utils";
-import { COLORS } from "./threejs/constants";
-import { AnimationManager } from "./threejs/animation-manager";
-import { ChatUI } from "./chatbot";
 
 class PortfolioScene {
   private scene!: THREE.Scene;
@@ -65,7 +66,9 @@ class PortfolioScene {
     this.cameraManager.fitCameraToObject();
 
     // Start infinite individual tube backflip animation on page load
-    this.animationManager.triggerIndividualTubeBackflipAnimation(this.tubesGroup);
+    this.animationManager.triggerIndividualTubeBackflipAnimation(
+      this.tubesGroup
+    );
     this.animationManager.setShouldResumeInfiniteAnimation(true);
 
     // Initialize chatbot
@@ -91,14 +94,17 @@ class PortfolioScene {
     // Calculate bounding sphere for camera fitting - only for the tubes, not the floor
     const bounds = calculateBoundingSphere([this.tubesGroup]);
     console.log("Circle bounds:", bounds); // Debug logging
-    
+
     // Adjust bounds to focus only on the circle area, not the floor
     const adjustedBounds = {
       center: new THREE.Vector3(0, 0, 0), // Keep camera focused on circle center
-      radius: 1.15 // Increased by 15% to move camera slightly further away
+      radius: 1.15, // Increased by 15% to move camera slightly further away
     };
-    
-    this.cameraManager.setObjectBounds(adjustedBounds.center, adjustedBounds.radius);
+
+    this.cameraManager.setObjectBounds(
+      adjustedBounds.center,
+      adjustedBounds.radius
+    );
   }
 
   private animate(): void {
@@ -132,7 +138,7 @@ class PortfolioScene {
       if (this.animationManager && this.tubesGroup) {
         this.animationManager.stopAnimation();
         this.animationManager.resetTubesToOriginal(this.tubesGroup);
-        
+
         // Resume infinite animation if it should be resumed
         setTimeout(() => {
           this.animationManager.resumeInfiniteAnimation(this.tubesGroup);
@@ -162,11 +168,19 @@ class PortfolioScene {
         break;
       case "wave":
         this.animationManager.setShouldResumeInfiniteAnimation(true);
-        this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup, 2000, false); // Single cycle for manual trigger
+        this.animationManager.triggerMexicanWaveAnimation(
+          this.tubesGroup,
+          2000,
+          false
+        ); // Single cycle for manual trigger
         break;
       case "loadingWave":
         this.animationManager.setShouldResumeInfiniteAnimation(true);
-        this.animationManager.triggerMexicanWaveAnimation(this.tubesGroup, 2000, true); // Continuous wave for loading
+        this.animationManager.triggerMexicanWaveAnimation(
+          this.tubesGroup,
+          2000,
+          true
+        ); // Continuous wave for loading
         break;
       case "bounce":
         this.animationManager.setShouldResumeInfiniteAnimation(true);
@@ -182,10 +196,16 @@ class PortfolioScene {
         break;
       case "individualBackflip":
         this.animationManager.setShouldResumeInfiniteAnimation(true);
-        this.animationManager.triggerIndividualTubeBackflipAnimation(this.tubesGroup);
+        this.animationManager.triggerIndividualTubeBackflipAnimation(
+          this.tubesGroup
+        );
         break;
       case "continuousWave":
-        this.animationManager.triggerIndividualTubeBackflipAnimation(this.tubesGroup, 3000, true);
+        this.animationManager.triggerIndividualTubeBackflipAnimation(
+          this.tubesGroup,
+          3000,
+          true
+        );
         break;
       default:
         console.warn(`⚠️ Unknown animation type: ${animationType}`);
@@ -201,11 +221,11 @@ class PortfolioScene {
     }
 
     // Dispose of Three.js resources
-    this.scene.traverse((child) => {
+    this.scene.traverse(child => {
       if (child instanceof THREE.Mesh) {
         child.geometry.dispose();
         if (Array.isArray(child.material)) {
-          child.material.forEach((material) => material.dispose());
+          child.material.forEach(material => material.dispose());
         } else {
           child.material.dispose();
         }

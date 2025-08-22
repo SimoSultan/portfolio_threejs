@@ -1,30 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Software Engineer Portfolio</title>
     <script type="module" src="src/main.ts"></script>
-    <link href="src/styles.css" rel="stylesheet">
-</head>
-<body class="bg-black text-white min-h-screen overflow-hidden">
+    <link href="src/styles.css" rel="stylesheet" />
+  </head>
+  <body class="min-h-screen overflow-hidden bg-black text-white">
     <div id="app" class="relative">
-        <!-- Three.js Canvas -->
-        <canvas id="threejs-canvas" class="fixed inset-0 w-full z-0" style="height: 90vh;"></canvas>
-        
-        <!-- Content Overlay -->
-        <div id="fallback-content" class="relative z-10 min-h-screen flex items-center justify-center">
-            <div class="flex flex-col items-center gap-10">
-                <h1 class="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent max-w-8/12  text-center">
-                    Simon Curran
-                </h1>
-              
-                <div class="space-y-2 text-gray-400 text-center">
-                    <p>Welcome to my Portfolio.</p>
-                    <p>Ask a question to get started.</p>
-                </div>
-            </div>
+      <!-- Three.js Canvas -->
+      <canvas
+        id="threejs-canvas"
+        class="fixed inset-0 z-0 w-full"
+        style="height: 90vh"
+      ></canvas>
+
+      <!-- Content Overlay -->
+      <div
+        id="fallback-content"
+        class="relative z-10 flex min-h-screen items-center justify-center"
+      >
+        <div class="flex flex-col items-center gap-10">
+          <h1
+            class="mb-4 max-w-8/12 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-center text-6xl font-bold text-transparent"
+          >
+            Simon Curran
+          </h1>
+
+          <div class="space-y-2 text-center text-gray-400">
+            <p>Welcome to my Portfolio.</p>
+            <p>Ask a question to get started.</p>
+          </div>
         </div>
+      </div>
     </div>
-</body>
+  </body>
 </html>

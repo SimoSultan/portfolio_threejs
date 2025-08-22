@@ -10,6 +10,7 @@ export class AnimationManager {
   constructor(_scene: THREE.Scene) {
     // Scene parameter kept for future use (e.g., adding particles, effects)
     // Currently not used but will be useful for scene-wide animations
+    // Prefixed with underscore to indicate intentional non-use
   }
 
   /**
@@ -22,7 +23,9 @@ export class AnimationManager {
     duration: number = 2000
   ): void {
     if (this.isAnimating) {
-      console.log("⚠️ Animation already in progress, stopping current animation...");
+      console.log(
+        "⚠️ Animation already in progress, stopping current animation..."
+      );
       this.stopAnimation();
     }
 
@@ -51,7 +54,7 @@ export class AnimationManager {
         this.isAnimating = false;
         this.currentAnimationId = undefined;
         console.log("✅ Spin animation complete");
-        
+
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -72,11 +75,15 @@ export class AnimationManager {
     continuous: boolean = false
   ): void {
     if (this.isAnimating) {
-      console.log("⚠️ Animation already in progress, stopping current animation...");
+      console.log(
+        "⚠️ Animation already in progress, stopping current animation..."
+      );
       this.stopAnimation();
     }
 
-    console.log(`🌊 Starting Mexican wave animation (${continuous ? 'continuous' : 'single cycle'})...`);
+    console.log(
+      `🌊 Starting Mexican wave animation (${continuous ? "continuous" : "single cycle"})...`
+    );
     this.isAnimating = true;
 
     const startTime = Date.now();
@@ -85,7 +92,7 @@ export class AnimationManager {
     const originalScales: THREE.Vector3[] = [];
 
     // Store original positions and scales
-    tubes.forEach((tube) => {
+    tubes.forEach(tube => {
       originalPositions.push(tube.position.clone());
       originalScales.push(tube.scale.clone());
     });
@@ -98,7 +105,7 @@ export class AnimationManager {
       if (!this.isAnimating) return;
 
       const elapsed = Date.now() - startTime;
-      
+
       let progress: number;
       if (continuous) {
         // For continuous mode, loop the animation
@@ -113,39 +120,41 @@ export class AnimationManager {
         // The wave affects exactly 5 tubes at a time as it travels
         const wavePosition = progress * tubes.length; // Wave position around the circle
         let distanceFromWave = index - wavePosition; // Reversed for opposite direction
-        
+
         // Handle wrapping around the circle for clockwise movement
         if (distanceFromWave < 0) {
           distanceFromWave += tubes.length;
         }
-        
+
         // Wave affects exactly 7 tubes (0 to 6 distance)
         const waveWidth = 6; // 7 tubes: 0, 1, 2, 3, 4, 5, 6
         if (distanceFromWave <= waveWidth && distanceFromWave >= 0) {
           // Create proper wave effect: intensity increases from edges to center
           // Use a parabolic function to create a wave shape
           const normalizedDistance = distanceFromWave / waveWidth; // 0 to 1
-          
+
           // Create a wave shape: edges get lowest, center gets highest
           // Use a flatter bell curve that peaks in the middle
           // Power of 4 creates a flatter, more rounded bell curve
           const waveShape = 1 - Math.pow(2 * normalizedDistance - 1, 4);
-          
+
           // Apply the wave shape with proper scaling
           const waveIntensity = 0.08 * waveShape;
-          
+
           // Ensure radius only increases (never decreases)
           const radiusMultiplier = 1 + Math.max(0, waveIntensity);
-          
+
           // Move tube outward from center based on wave
           const direction = originalPositions[index].clone().normalize();
-          const newRadius = originalPositions[index].distanceTo(new THREE.Vector3(0, 0, 0)) * radiusMultiplier;
+          const newRadius =
+            originalPositions[index].distanceTo(new THREE.Vector3(0, 0, 0)) *
+            radiusMultiplier;
           tube.position.copy(direction.multiplyScalar(newRadius));
         } else {
           // Keep tubes at original position when not affected by wave
           tube.position.copy(originalPositions[index]);
         }
-        
+
         // Keep original scale - no individual tube scaling
         tube.scale.copy(originalScales[index]);
       });
@@ -165,7 +174,7 @@ export class AnimationManager {
         this.isAnimating = false;
         this.currentAnimationId = undefined;
         console.log("✅ Mexican wave animation complete");
-        
+
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -184,7 +193,9 @@ export class AnimationManager {
     duration: number = 2000
   ): void {
     if (this.isAnimating) {
-      console.log("⚠️ Animation already in progress, stopping current animation...");
+      console.log(
+        "⚠️ Animation already in progress, stopping current animation..."
+      );
       this.stopAnimation();
     }
 
@@ -197,7 +208,7 @@ export class AnimationManager {
     const centerPosition = new THREE.Vector3(0, 0, 0); // Circle center
 
     // Store original positions
-    tubes.forEach((tube) => {
+    tubes.forEach(tube => {
       originalPositions.push(tube.position.clone());
     });
 
@@ -237,7 +248,7 @@ export class AnimationManager {
         this.isAnimating = false;
         this.currentAnimationId = undefined;
         console.log("✅ Bounce animation complete");
-        
+
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -256,7 +267,9 @@ export class AnimationManager {
     duration: number = 2500
   ): void {
     if (this.isAnimating) {
-      console.log("⚠️ Animation already in progress, stopping current animation...");
+      console.log(
+        "⚠️ Animation already in progress, stopping current animation..."
+      );
       this.stopAnimation();
     }
 
@@ -293,7 +306,7 @@ export class AnimationManager {
         this.isAnimating = false;
         this.currentAnimationId = undefined;
         console.log("✅ Backflip animation complete");
-        
+
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -312,7 +325,9 @@ export class AnimationManager {
     duration: number = 3000
   ): void {
     if (this.isAnimating) {
-      console.log("⚠️ Animation already in progress, stopping current animation...");
+      console.log(
+        "⚠️ Animation already in progress, stopping current animation..."
+      );
       this.stopAnimation();
     }
 
@@ -343,7 +358,7 @@ export class AnimationManager {
         this.isAnimating = false;
         this.currentAnimationId = undefined;
         console.log("✅ Multi-axis spin animation complete");
-        
+
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -364,11 +379,15 @@ export class AnimationManager {
     continuous: boolean = true // Changed to true for infinite loop
   ): void {
     if (this.isAnimating) {
-      console.log("⚠️ Animation already in progress, stopping current animation...");
+      console.log(
+        "⚠️ Animation already in progress, stopping current animation..."
+      );
       this.stopAnimation();
     }
 
-    console.log(`🤸 Starting individual tube backflip animation (${continuous ? 'continuous' : 'single cycle'})...`);
+    console.log(
+      `🤸 Starting individual tube backflip animation (${continuous ? "continuous" : "single cycle"})...`
+    );
     this.isAnimating = true;
 
     const startTime = Date.now();
@@ -377,49 +396,60 @@ export class AnimationManager {
     const originalPositions: THREE.Vector3[] = [];
 
     // Store original rotations and positions
-    tubes.forEach((tube) => {
+    tubes.forEach(tube => {
       originalRotations.push(tube.rotation.clone());
       originalPositions.push(tube.position.clone());
     });
 
     // Store original positions and scales in the instance for reset
     this.originalPositions = originalPositions;
-    this.originalScales = originalRotations.map(() => new THREE.Vector3(1, 1, 1)); // Default scales
+    this.originalScales = originalRotations.map(
+      () => new THREE.Vector3(1, 1, 1)
+    ); // Default scales
 
     const animate = () => {
       if (!this.isAnimating) return;
 
       const elapsed = Date.now() - startTime;
-      
+
       tubes.forEach((tube, index) => {
         if (continuous) {
           // For continuous mode, use elapsed time directly for smooth continuous rotation
           const individualDelay = (index / tubes.length) * duration * 0.3; // Stagger the animation
           const adjustedElapsed = elapsed + individualDelay;
-          
+
           // Calculate continuous rotation based on elapsed time
           const rotationCycles = adjustedElapsed / duration;
           const continuousRotation = rotationCycles * Math.PI * 2;
-          
+
           // Apply continuous rotation
           tube.rotation.x = originalRotations[index].x + continuousRotation;
-          
+
           // Add slight wobble for more dynamic effect using continuous time
-          tube.rotation.z = originalRotations[index].z + Math.sin(adjustedElapsed * 0.004) * 0.1;
+          tube.rotation.z =
+            originalRotations[index].z +
+            Math.sin(adjustedElapsed * 0.004) * 0.1;
         } else {
           // For single cycle, use the original progress-based approach
           const progress = Math.min(elapsed / duration, 1);
           const individualDelay = (index / tubes.length) * 0.3;
-          const adjustedProgress = Math.max(0, Math.min(1, (progress - individualDelay) / (1 - individualDelay)));
-          
+          const adjustedProgress = Math.max(
+            0,
+            Math.min(1, (progress - individualDelay) / (1 - individualDelay))
+          );
+
           if (adjustedProgress > 0) {
             const easedIndividualProgress =
               adjustedProgress < 0.5
                 ? 2 * adjustedProgress * adjustedProgress
                 : 1 - Math.pow(-2 * adjustedProgress + 2, 2) / 2;
 
-            tube.rotation.x = originalRotations[index].x + Math.PI * 2 * easedIndividualProgress;
-            tube.rotation.z = originalRotations[index].z + Math.sin(adjustedProgress * Math.PI * 4) * 0.1;
+            tube.rotation.x =
+              originalRotations[index].x +
+              Math.PI * 2 * easedIndividualProgress;
+            tube.rotation.z =
+              originalRotations[index].z +
+              Math.sin(adjustedProgress * Math.PI * 4) * 0.1;
           }
         }
       });
@@ -452,12 +482,14 @@ export class AnimationManager {
       cancelAnimationFrame(this.currentAnimationId);
       this.currentAnimationId = undefined;
       this.isAnimating = false;
-      
+
       // Reset all tubes to their original positions and scales
       if (this.originalPositions && this.originalScales) {
-        console.log("⏹️ Animation stopped - tubes will be reset on next animation");
+        console.log(
+          "⏹️ Animation stopped - tubes will be reset on next animation"
+        );
       }
-      
+
       console.log("⏹️ Animation stopped");
     }
   }
@@ -470,9 +502,12 @@ export class AnimationManager {
     if (this.originalPositions && this.originalScales) {
       const tubes = tubesGroup.children as THREE.Mesh[];
       tubes.forEach((tube, index) => {
-        if (this.originalPositions && this.originalScales && 
-            index < this.originalPositions.length && 
-            index < this.originalScales.length) {
+        if (
+          this.originalPositions &&
+          this.originalScales &&
+          index < this.originalPositions.length &&
+          index < this.originalScales.length
+        ) {
           tube.position.copy(this.originalPositions[index]);
           tube.scale.copy(this.originalScales[index]);
         }
@@ -483,7 +518,7 @@ export class AnimationManager {
       const tubes = tubesGroup.children as THREE.Mesh[];
       const SEGMENTS = 96;
       const RADIUS = 1.5;
-      
+
       tubes.forEach((tube, index) => {
         const theta = (index / SEGMENTS) * Math.PI * 2;
         const x = Math.cos(theta) * RADIUS;

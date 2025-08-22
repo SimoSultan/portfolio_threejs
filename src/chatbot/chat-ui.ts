@@ -1,6 +1,5 @@
-import { Chatbot, type ChatMessage } from "./chatbot";
+import { type ChatMessage, Chatbot } from "./chatbot";
 import { AVAILABLE_MODELS, DEFAULT_MODEL, MODEL_METADATA } from "./models";
-import { getOllamaEnvironment, getOllamaUrl } from "./config";
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -45,7 +44,8 @@ export class ChatUI {
 
     // Chat messages container - takes up 90% of screen height
     this.chatContainer = document.createElement("div");
-    this.chatContainer.className = "overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3 flex-1 h-[80vh] md:h-[90vh]";
+    this.chatContainer.className =
+      "overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3 flex-1 h-[80vh] md:h-[90vh]";
 
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
@@ -56,31 +56,32 @@ export class ChatUI {
     // Model selector - compact transparent design
     this.modelSelector = document.createElement("div");
     this.modelSelector.id = "model-selector";
-    this.modelSelector.className = "flex items-center gap-2 text-xs md:text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors";
-    
+    this.modelSelector.className =
+      "flex items-center gap-2 text-xs md:text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors";
+
     // Create the model display text
     const modelText = document.createElement("span");
     modelText.id = "model-text";
     modelText.textContent = MODEL_METADATA[this.currentModelId].name;
-    
+
     // Create the up arrow
     const arrowIcon = document.createElement("span");
     arrowIcon.innerHTML = "▲";
     arrowIcon.className = "text-xs transition-transform duration-200";
     arrowIcon.id = "model-arrow";
-    
+
     this.modelSelector.appendChild(modelText);
     this.modelSelector.appendChild(arrowIcon);
-    
+
     // Create the dropdown options container
     this.createModelDropdown();
-    
+
     // Add click event to toggle dropdown
-    this.modelSelector.addEventListener("click", (e) => {
+    this.modelSelector.addEventListener("click", e => {
       e.stopPropagation();
       this.toggleModelDropdown();
     });
-    
+
     // Close dropdown when clicking outside
     document.addEventListener("click", () => {
       if (this.isDropdownOpen) {
@@ -98,13 +99,14 @@ export class ChatUI {
     this.createContextDisplay();
 
     this.modelSelectorContainer = document.createElement("div");
-    this.modelSelectorContainer.className = "flex w-full md:w-auto items-center gap-4";
+    this.modelSelectorContainer.className =
+      "flex w-full md:w-auto items-center gap-4";
     this.modelSelectorContainer.id = "model-selector-container";
-    
+
     // Model selector and status
     this.modelSelectorContainer.appendChild(this.modelSelector);
     this.modelSelectorContainer.appendChild(this.statusIndicator);
-    
+
     // Context display gets the remaining space
     this.modelSelectorContainer.appendChild(this.contextDisplay);
 
@@ -115,7 +117,7 @@ export class ChatUI {
     this.input.placeholder = "Ask me anything...";
     this.input.className =
       "flex-1 px-4 py-3 border-0 rounded-full text-sm md:text-base focus:outline-none focus:ring-0 bg-transparent placeholder-gray-500";
-    this.input.addEventListener("keypress", (e) => {
+    this.input.addEventListener("keypress", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         this.sendMessage();
@@ -217,8 +219,6 @@ export class ChatUI {
     // Don't auto-append to body - let main.ts handle positioning
   }
 
-
-
   private async initializeChatbot(): Promise<void> {
     try {
       console.log("🤖 ChatUI: Starting chatbot initialization...");
@@ -303,7 +303,7 @@ export class ChatUI {
     } finally {
       // Stop the wave animation - infinite animation will resume automatically
       window.dispatchEvent(new CustomEvent("stopAnimation"));
-      
+
       this.input.disabled = false;
       this.sendButton.disabled = false;
       this.updateStatus("Ready");
@@ -323,7 +323,7 @@ export class ChatUI {
         ? "bg-blue-500/20 backdrop-blur-sm text-gray-300 border border-blue-400/30"
         : "bg-blue-500/10 backdrop-blur-sm text-gray-300 border border-blue-400/20 chat-message"
     }`;
-    
+
     // For AI messages, render markdown; for user messages, use plain text
     if (message.role === "assistant") {
       bubble.innerHTML = this.renderMarkdown(message.content);
@@ -342,39 +342,57 @@ export class ChatUI {
     let rendered = content;
 
     // Handle line breaks and paragraphs
-    rendered = rendered.replace(/\n\n/g, '</p><p>');
-    rendered = rendered.replace(/\n/g, '<br>');
-    
+    rendered = rendered.replace(/\n\n/g, "</p><p>");
+    rendered = rendered.replace(/\n/g, "<br>");
+
     // Wrap in paragraph tags if not already wrapped
-    if (!rendered.startsWith('<p>')) {
+    if (!rendered.startsWith("<p>")) {
       rendered = `<p>${rendered}</p>`;
     }
 
     // Handle bold text (**text**)
-    rendered = rendered.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
+    rendered = rendered.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
     // Handle italic text (*text*)
-    rendered = rendered.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
+    rendered = rendered.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
     // Handle numbered lists (1. item) with better indentation
-    rendered = rendered.replace(/^(\d+\.\s+)(.*?)(?=\n\d+\.|$)/gm, '<ol><li>$2</li></ol>');
-    rendered = rendered.replace(/<\/ol>\n<ol>/g, '');
-    
+    rendered = rendered.replace(
+      /^(\d+\.\s+)(.*?)(?=\n\d+\.|$)/gm,
+      "<ol><li>$2</li></ol>"
+    );
+    rendered = rendered.replace(/<\/ol>\n<ol>/g, "");
+
     // Handle bullet points (- item or * item) with better indentation
-    rendered = rendered.replace(/^[-*]\s+(.*?)(?=\n[-*]|$)/gm, '<ul><li>$1</li></ul>');
-    rendered = rendered.replace(/<\/ul>\n<ul>/g, '');
-    
+    rendered = rendered.replace(
+      /^[-*]\s+(.*?)(?=\n[-*]|$)/gm,
+      "<ul><li>$1</li></ul>"
+    );
+    rendered = rendered.replace(/<\/ul>\n<ul>/g, "");
+
     // Handle indented text (4+ spaces or tabs)
-    rendered = rendered.replace(/^(\s{4,}|\t+)(.*?)(?=\n\S|$)/gm, '<div class="indented-text">$2</div>');
-    
+    rendered = rendered.replace(
+      /^(\s{4,}|\t+)(.*?)(?=\n\S|$)/gm,
+      '<div class="indented-text">$2</div>'
+    );
+
     // Handle blockquotes (> text)
-    rendered = rendered.replace(/^>\s+(.*?)(?=\n[^>]|$)/gm, '<blockquote class="blockquote">$1</blockquote>');
-    
+    rendered = rendered.replace(
+      /^>\s+(.*?)(?=\n[^>]|$)/gm,
+      '<blockquote class="blockquote">$1</blockquote>'
+    );
+
     // Handle code blocks (```code```)
-    rendered = rendered.replace(/```(.*?)```/gs, '<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>$1</code></pre>');
-    
+    rendered = rendered.replace(
+      /```(.*?)```/gs,
+      '<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>$1</code></pre>'
+    );
+
     // Handle inline code (`code`)
-    rendered = rendered.replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>');
+    rendered = rendered.replace(
+      /`(.*?)`/g,
+      '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>'
+    );
 
     return rendered;
   }
@@ -385,10 +403,6 @@ export class ChatUI {
   }
 
   private updateStatus(status: string): void {
-    const environment = getOllamaEnvironment();
-    const ollamaUrl = getOllamaUrl();
-    const isLocal = environment === "local";
-
     let dotColor = "bg-yellow-500";
     if (status === "Ready") {
       dotColor = "bg-green-500";
@@ -455,36 +469,37 @@ export class ChatUI {
 
   private createContextDisplay(): void {
     this.contextDisplay = document.createElement("div");
-    this.contextDisplay.className = "relative flex items-center gap-2 text-xs text-gray-600 cursor-pointer hover:text-gray-800 transition-colors flex-1 min-w-0 w-auto";
+    this.contextDisplay.className =
+      "relative flex items-center gap-2 text-xs text-gray-600 cursor-pointer hover:text-gray-800 transition-colors flex-1 min-w-0 w-auto";
     this.contextDisplay.id = "context-display";
-    
+
     // Create context summary (inline display)
     const contextSummary = document.createElement("div");
     contextSummary.className = "flex items-center gap-2 truncate";
     contextSummary.innerHTML = `<span>📍 Context</span><span class="text-gray-500">Loading...</span><span class="text-xs text-gray-600">▲</span>`;
     contextSummary.id = "context-summary";
-    
+
     this.contextDisplay.appendChild(contextSummary);
-    
+
     // Create the dropdown details container
     this.createContextDropdown();
-    
+
     // Add click event to toggle dropdown
-    this.contextDisplay.addEventListener("click", (e) => {
+    this.contextDisplay.addEventListener("click", e => {
       e.stopPropagation();
       this.toggleContextDropdown();
     });
-    
+
     // Close dropdown when clicking outside
     document.addEventListener("click", () => {
       if (this.isContextDropdownOpen) {
         this.toggleContextDropdown();
       }
     });
-    
+
     // Initial context display
     this.updateContextDisplay();
-    
+
     // Update context every minute
     setInterval(() => {
       this.updateContextDisplay();
@@ -494,19 +509,19 @@ export class ChatUI {
   private updateContextDisplay(): void {
     const contextSummary = document.getElementById("context-summary");
     if (!contextSummary) return;
-    
+
     // Ensure context is available
     this.chatbot.ensureContextAvailable();
     const context = this.chatbot.getCurrentContext();
-    
+
     if (context) {
       // Update inline summary
       contextSummary.innerHTML = `
         <span>📍 Context</span>
         <span class="text-gray-500 truncate">${context.location}</span>
-        <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? '▼' : '▲'}</span>
+        <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? "▼" : "▲"}</span>
       `;
-      
+
       // Update dropdown content if it exists and is open
       if (this.isContextDropdownOpen) {
         this.updateContextDropdownContent(context);
@@ -516,25 +531,27 @@ export class ChatUI {
       contextSummary.innerHTML = `
         <span>📍 Context</span>
         <span class="text-gray-500">Loading...</span>
-        <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? '▼' : '▲'}</span>
+        <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? "▼" : "▲"}</span>
       `;
     }
-    
-    console.log('📍 Context display updated:', context);
+
+    console.log("📍 Context display updated:", context);
   }
 
   private createContextDropdown(): void {
     this.contextDropdown = document.createElement("div");
-    this.contextDropdown.className = "absolute bottom-full left-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-64 p-3";
+    this.contextDropdown.className =
+      "absolute bottom-full left-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-64 p-3";
     this.contextDropdown.style.display = "none";
     this.contextDropdown.id = "context-dropdown";
-    
+
     // Add refresh location button
     const refreshButton = document.createElement("button");
     refreshButton.innerHTML = "🔄";
-    refreshButton.className = "absolute top-2 right-2 text-xs text-gray-400 hover:text-gray-200 transition-colors";
+    refreshButton.className =
+      "absolute top-2 right-2 text-xs text-gray-400 hover:text-gray-200 transition-colors";
     refreshButton.title = "Refresh Location";
-    refreshButton.addEventListener("click", async (e) => {
+    refreshButton.addEventListener("click", async e => {
       e.stopPropagation();
       refreshButton.innerHTML = "⏳";
       refreshButton.disabled = true;
@@ -548,9 +565,9 @@ export class ChatUI {
         refreshButton.disabled = false;
       }
     });
-    
+
     this.contextDropdown.appendChild(refreshButton);
-    
+
     // Position the dropdown relative to the context display
     this.contextDisplay.appendChild(this.contextDropdown);
   }
@@ -572,7 +589,7 @@ export class ChatUI {
   private updateContextArrow(isOpen: boolean): void {
     const contextSummary = document.getElementById("context-summary");
     if (contextSummary) {
-      const arrow = contextSummary.querySelector('span:last-child');
+      const arrow = contextSummary.querySelector("span:last-child");
       if (arrow) {
         arrow.innerHTML = isOpen ? "▼" : "▲";
       }
@@ -581,10 +598,10 @@ export class ChatUI {
 
   private updateContextDropdownContent(context: any): void {
     if (!this.contextDropdown) return;
-    
+
     // Find the refresh button to preserve it
-    const refreshButton = this.contextDropdown.querySelector('button');
-    
+    const refreshButton = this.contextDropdown.querySelector("button");
+
     this.contextDropdown.innerHTML = `
       <div class="font-semibold text-gray-400 mb-2">📍 Context Details</div>
       <div class="text-xs space-y-2 text-gray-300">
@@ -606,7 +623,7 @@ export class ChatUI {
         </div>
       </div>
     `;
-    
+
     // Re-add the refresh button
     if (refreshButton) {
       this.contextDropdown.appendChild(refreshButton);
@@ -615,24 +632,26 @@ export class ChatUI {
 
   private createModelDropdown(): void {
     this.modelDropdown = document.createElement("div");
-    this.modelDropdown.className = "absolute bottom-full left-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-48";
+    this.modelDropdown.className =
+      "absolute bottom-full left-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-48";
     this.modelDropdown.style.display = "none";
-    
+
     // Populate dropdown with model options
     Object.entries(MODEL_METADATA).forEach(([id, metadata]) => {
       const option = document.createElement("div");
-      option.className = "px-3 py-2 text-xs md:text-sm text-gray-300 hover:bg-gray-700/50 cursor-pointer transition-colors first:rounded-t-lg last:rounded-b-lg";
+      option.className =
+        "px-3 py-2 text-xs md:text-sm text-gray-300 hover:bg-gray-700/50 cursor-pointer transition-colors first:rounded-t-lg last:rounded-b-lg";
       option.textContent = `${metadata.name} (${metadata.size})`;
       option.dataset.modelId = id;
-      
+
       option.addEventListener("click", () => {
         this.selectModel(id);
         this.toggleModelDropdown();
       });
-      
+
       this.modelDropdown.appendChild(option);
     });
-    
+
     // Position the dropdown relative to the model selector
     this.modelSelector.style.position = "relative";
     this.modelSelector.appendChild(this.modelDropdown);
@@ -656,13 +675,13 @@ export class ChatUI {
 
   private selectModel(modelId: string): void {
     if (modelId === this.currentModelId) return;
-    
+
     this.currentModelId = modelId;
     const modelText = document.getElementById("model-text");
     if (modelText) {
       modelText.textContent = MODEL_METADATA[modelId].name;
     }
-    
+
     // Switch the model
     this.switchModel(modelId);
   }

@@ -46,37 +46,42 @@ portfolio/
 ## 🚀 Getting Started
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Set up Ollama (for AI chat):**
+
    ```bash
    # Download from https://ollama.ai/download
    # Or use Homebrew: brew install ollama
-   
+
    # Start Ollama
    ollama serve
-   
+
    # Download a model
    ollama pull gemma3:1b
    ```
 
 3. **Configure environment:**
+
    ```bash
    # Check current config
    ./src/scripts/switch-env.sh
-   
+
    # Switch to local
    ./src/scripts/switch-env.sh local
    ```
 
 4. **Start development server:**
+
    ```bash
    npm run dev
    ```
 
 5. **Build for production:**
+
    ```bash
    npm run build
    ```
@@ -145,4 +150,4 @@ portfolio/
 
 ---
 
-*This portfolio is a work in progress. More content and features coming soon!*
+_This portfolio is a work in progress. More content and features coming soon!_

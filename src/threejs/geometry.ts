@@ -1,6 +1,7 @@
 import * as THREE from "three";
-import { createTubeBetweenPoints } from "./utils";
+
 import { COLORS, MATERIAL_PROPERTIES } from "./constants";
+import { createTubeBetweenPoints } from "./utils";
 
 export class CircleGeometry {
   // Build a tube-based circle (smaller radius, thicker tubes)
