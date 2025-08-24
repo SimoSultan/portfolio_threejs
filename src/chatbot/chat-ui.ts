@@ -1,12 +1,6 @@
 import { type ChatMessage, Chatbot } from "./chatbot";
+import { type ChatContext } from "./context-manager";
 import { AVAILABLE_MODELS, DEFAULT_MODEL, MODEL_METADATA } from "./models";
-
-interface ContextData {
-  currentDate: string;
-  currentTime: string;
-  timezone: string;
-  location: string;
-}
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -19,6 +13,7 @@ export class ChatUI {
   private modelSelector!: HTMLDivElement;
   private modelSelectorContainer!: HTMLDivElement;
   private statusIndicator!: HTMLDivElement;
+  private tokenUsageIndicator!: HTMLDivElement;
   private contextDisplay!: HTMLDivElement;
   private modelDropdown!: HTMLDivElement;
   private contextDropdown!: HTMLDivElement;
@@ -36,6 +31,9 @@ export class ChatUI {
     );
     this.createUI();
     this.initializeChatbot();
+    // Initialize token usage display and load existing messages
+    this.updateTokenUsageDisplay();
+    this.loadExistingMessages();
   }
 
   private createUI(): void {
@@ -60,7 +58,7 @@ export class ChatUI {
     this.modelSelector = document.createElement("div");
     this.modelSelector.id = "model-selector";
     this.modelSelector.className =
-      "flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors w-[fit-content]";
+      "flex items-center gap-2 cursor-pointer hover:text-gray-800 transition-colors w-[fit-content]";
 
     // Create the model display text
     const modelText = document.createElement("span");
@@ -96,20 +94,26 @@ export class ChatUI {
 
     // Status indicator
     this.statusIndicator = document.createElement("div");
-    this.statusIndicator.className = "flex items-center gap-2 text-gray-600";
+    this.statusIndicator.className = "flex items-center gap-2";
     this.updateStatus("Initializing...");
+
+    // Token usage indicator
+    this.tokenUsageIndicator = document.createElement("div");
+    this.tokenUsageIndicator.id = "token-usage";
+    this.tokenUsageIndicator.className = "text-xs text-gray-400";
 
     // Context display
     this.createContextDisplay();
 
     this.modelSelectorContainer = document.createElement("div");
     this.modelSelectorContainer.className =
-      "flex w-full lg:w-2/5 items-center justify-around gap-4 text-sm sm:text-lg overflow-visible";
+      "flex w-full lg:w-2/5 items-center justify-around gap-4 text-sm sm:text-lg overflow-visible text-gray-400";
     this.modelSelectorContainer.id = "model-selector-container";
 
     // Model selector and status
     this.modelSelectorContainer.appendChild(this.modelSelector);
     this.modelSelectorContainer.appendChild(this.statusIndicator);
+    this.modelSelectorContainer.appendChild(this.tokenUsageIndicator);
 
     // Context display gets the remaining space
     this.modelSelectorContainer.appendChild(this.contextDisplay);
@@ -264,6 +268,9 @@ export class ChatUI {
         content: response,
         timestamp: new Date(),
       });
+
+      // Update token usage display
+      await this.updateTokenUsageDisplay();
     } catch (error) {
       console.error("Chat error:", error);
       this.addMessageToUI({
@@ -290,8 +297,8 @@ export class ChatUI {
     const bubble = document.createElement("div");
     bubble.className = `max-w-[80%] md:max-w-md px-4 py-2 rounded-2xl text-sm md:text-base ${
       message.role === "user"
-        ? "bg-blue-500/20 backdrop-blur-sm text-blue-200 border border-blue-400/30"
-        : "bg-blue-500/10 backdrop-blur-sm text-gray-300 border border-blue-400/20 chat-message"
+        ? "bg-emerald-500/30 backdrop-blur-sm text-emerald-200 border border-emerald-400/30"
+        : "bg-purple-500/10 backdrop-blur-sm text-purple-300 border border-purple-400/20 chat-message"
     }`;
 
     // For AI messages, render markdown; for user messages, use plain text
@@ -367,9 +374,10 @@ export class ChatUI {
     return rendered;
   }
 
-  private clearChat(): void {
+  private async clearChat(): Promise<void> {
     this.chatContainer.innerHTML = "";
-    this.chatbot.clearHistory();
+    await this.chatbot.clearHistory();
+    await this.updateTokenUsageDisplay();
   }
 
   private updateStatus(status: string): void {
@@ -393,6 +401,45 @@ export class ChatUI {
   public destroy(): void {
     if (this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
+    }
+  }
+
+  private async updateTokenUsageDisplay(): Promise<void> {
+    try {
+      const tokenUsage = await this.chatbot.getTokenUsage();
+      const tokenIndicator = document.getElementById("token-usage");
+
+      if (tokenIndicator) {
+        const percentage = Math.round(tokenUsage.percentage);
+        const colorClass =
+          percentage > 80
+            ? "text-red-400"
+            : percentage > 60
+              ? "text-yellow-400"
+              : "text-green-400";
+
+        tokenIndicator.innerHTML = `
+          <span class="text-xs ${colorClass}">
+            ${tokenUsage.used.toLocaleString()}/${tokenUsage.available.toLocaleString()} tokens (${percentage}%)
+          </span>
+        `;
+      }
+    } catch (error) {
+      console.error("Failed to update token usage display:", error);
+    }
+  }
+
+  private async loadExistingMessages(): Promise<void> {
+    try {
+      const messages = await this.chatbot.getMessages();
+      messages.forEach(message => {
+        this.addMessageToUI(message);
+      });
+
+      // Update token usage after loading messages
+      await this.updateTokenUsageDisplay();
+    } catch (error) {
+      console.error("Failed to load existing messages:", error);
     }
   }
 
@@ -427,7 +474,7 @@ export class ChatUI {
   private createContextDisplay(): void {
     this.contextDisplay = document.createElement("div");
     this.contextDisplay.className =
-      "relative flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors min-w-0 w-auto overflow-visible";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-800 transition-colors min-w-0 w-auto overflow-visible";
     this.contextDisplay.id = "context-display";
 
     // Create context summary (inline display)
@@ -462,8 +509,7 @@ export class ChatUI {
       return;
     }
 
-    // Ensure context is available
-    this.chatbot.ensureContextAvailable();
+    // Get current context
     const context = this.chatbot.getCurrentContext();
 
     if (context) {
@@ -568,13 +614,15 @@ export class ChatUI {
     }
   }
 
-  private updateContextDropdownContent(context: ContextData): void {
+  private updateContextDropdownContent(context: ChatContext): void {
     if (!this.contextDropdown) {
       return;
     }
 
-    // Find the refresh button to preserve it
-    const refreshButton = this.contextDropdown.querySelector("button");
+    // Preserve the refresh location button
+    const refreshButton = this.contextDropdown.querySelector(
+      ".absolute.top-2.right-2.text-xs.text-gray-400.hover\\:text-gray-200.transition-colors"
+    );
 
     this.contextDropdown.innerHTML = `
       <div class="font-semibold text-gray-400 mb-2">📍 Context Details</div>
@@ -591,14 +639,24 @@ export class ChatUI {
           <span>🌍</span>
           <span>${context.timezone}</span>
         </div>
-        <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2">
           <span>📍</span>
           <span class="break-words">${context.location}</span>
         </div>
+        ${
+          context.coordinates
+            ? `
+        <div class="flex items-center gap-2">
+          <span>🌐</span>
+          <span class="break-words text-blue-300">Coordinates: ${context.coordinates.lat.toFixed(4)}, ${context.coordinates.lng.toFixed(4)}</span>
+        </div>
+        `
+            : ""
+        }
       </div>
     `;
 
-    // Re-add the refresh button
+    // Re-add the refresh location button
     if (refreshButton) {
       this.contextDropdown.appendChild(refreshButton);
     }

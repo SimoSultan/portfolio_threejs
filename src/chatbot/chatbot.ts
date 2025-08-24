@@ -16,7 +16,6 @@ export interface ModelConfig {
 
 export class Chatbot {
   private modelConfig: ModelConfig;
-  private messages: ChatMessage[] = [];
   private isGenerating = false;
   private isOllamaAvailable: boolean = false;
   private contextManager: ContextManager;
@@ -87,12 +86,8 @@ export class Chatbot {
       throw new Error("Already generating response");
     }
 
-    // Add user message to history
-    this.messages.push({
-      role: "user",
-      content: userMessage,
-      timestamp: new Date(),
-    });
+    // Add user message to context storage
+    await this.contextManager.addMessage("user", userMessage);
 
     this.isGenerating = true;
 
@@ -109,12 +104,11 @@ export class Chatbot {
       // Use Ollama for AI responses
       const response = await this.generateOllamaResponse(userMessage);
 
-      // Add assistant response to history
-      this.messages.push({
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
-      });
+      // Add assistant response to context storage
+      await this.contextManager.addMessage("assistant", response);
+
+      // Clean up old messages to stay within token limits
+      await this.contextManager.cleanupOldMessages();
 
       return response;
     } finally {
@@ -138,9 +132,26 @@ export class Chatbot {
 
       // Get current context and format it for the prompt
       const context = this.contextManager.formatContextForPrompt();
-      const contextualizedPrompt = `${context}\n\nUser Message: ${userMessage}`;
 
-      console.log("📍 Sending contextualized prompt:", contextualizedPrompt);
+      // Get conversation messages for context
+      let conversationMessages: any[] = [];
+      try {
+        conversationMessages =
+          await this.contextManager.getConversationMessages();
+      } catch (contextError) {
+        console.error("Error getting conversation messages:", contextError);
+        conversationMessages = [];
+      }
+
+      // Build a conversation history string with timestamps for date context
+      const conversationHistory = conversationMessages
+        .map(
+          msg =>
+            `${msg.role === "user" ? "User" : "Assistant"} (${msg.timestamp.toLocaleString()}): ${msg.content}`
+        )
+        .join("\n\n");
+
+      const contextualizedPrompt = `${context}\n\nConversation History:\n${conversationHistory}\n\nUser Message: ${userMessage}`;
 
       const ollamaUrl = getOllamaUrl();
       const response = await fetch(`${ollamaUrl}/api/generate`, {
@@ -168,16 +179,28 @@ export class Chatbot {
       return data.response || "Sorry, I couldn't generate a response.";
     } catch (error) {
       console.error("❌ Ollama API error:", error);
+      if (error instanceof Error) {
+        console.error("❌ Error details:", {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        });
+      }
       return "Sorry, I couldn't generate a response. Please make sure Ollama is running and the model is available.";
     }
   }
 
-  getMessages(): ChatMessage[] {
-    return [...this.messages];
+  async getMessages(): Promise<ChatMessage[]> {
+    const storedMessages = await this.contextManager.getConversationMessages();
+    return storedMessages.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+      timestamp: msg.timestamp,
+    }));
   }
 
-  clearHistory(): void {
-    this.messages = [];
+  async clearHistory(): Promise<void> {
+    await this.contextManager.clearAllData();
   }
 
   updateModelConfig(newConfig: ModelConfig): void {
@@ -200,11 +223,41 @@ export class Chatbot {
     return this.contextManager.getContext();
   }
 
+  // New methods for enhanced context management
   async refreshLocation(): Promise<void> {
     await this.contextManager.refreshLocation();
   }
 
+  async getMessageHistoryWithDates(): Promise<
+    Array<{
+      role: string;
+      content: string;
+      timestamp: Date;
+      dateString: string;
+      timeString: string;
+    }>
+  > {
+    return await this.contextManager.getMessageHistoryWithDates();
+  }
+
+  getDateContext(): string {
+    return this.contextManager.getDateContext();
+  }
+
   ensureContextAvailable(): void {
     this.contextManager.ensureContextAvailable();
+  }
+
+  // Token management methods
+  async getTokenUsage(): Promise<{
+    used: number;
+    available: number;
+    percentage: number;
+  }> {
+    return await this.contextManager.getTokenUsage();
+  }
+
+  async cleanupOldMessages(): Promise<void> {
+    await this.contextManager.cleanupOldMessages();
   }
 }
