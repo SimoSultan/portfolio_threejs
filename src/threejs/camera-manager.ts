@@ -69,6 +69,12 @@ export class CameraManager {
     // Don't call fitCameraToObject here as it overrides our mobile positioning
     // The main.ts updateRendererSize() method will handle camera positioning
     this.camera.updateProjectionMatrix();
+
+    // Ensure controls are updated after camera changes
+    this.controls.update();
+
+    // Log camera update for debugging
+    console.log("📷 Camera updated for window resize");
   }
 
   getControls(): OrbitControls {

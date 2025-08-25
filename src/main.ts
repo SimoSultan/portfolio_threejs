@@ -17,6 +17,7 @@ class PortfolioScene {
   private animationManager!: AnimationManager;
   private animationId!: number;
   private chatUI!: ChatUI;
+  private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.init();
@@ -93,13 +94,31 @@ class PortfolioScene {
     const canvas = document.getElementById(
       "threejs-canvas"
     ) as HTMLCanvasElement;
+
+    // Get the actual canvas element dimensions
     const canvasRect = canvas.getBoundingClientRect();
-    return { width: canvasRect.width, height: canvasRect.height };
+
+    // Use the actual canvas dimensions, not the CSS dimensions
+    const width = canvas.clientWidth || canvasRect.width;
+    const height = canvas.clientHeight || canvasRect.height;
+
+    // Ensure minimum dimensions
+    const minWidth = 100;
+    const minHeight = 100;
+
+    return {
+      width: Math.max(width, minWidth),
+      height: Math.max(height, minHeight),
+    };
   }
 
   private updateRendererSize(): void {
     const { width, height } = this.getCanvasDimensions();
-    this.renderer.setSize(width, height);
+
+    // Update renderer size
+    this.renderer.setSize(width, height, false);
+
+    // Update camera aspect ratio
     this.camera.aspect = width / height;
 
     // Adjust camera position for mobile devices
@@ -113,8 +132,28 @@ class PortfolioScene {
       this.camera.position.z = 2.3; // Desktop: original Z position
     }
 
+    // Update camera projection matrix
     this.camera.updateProjectionMatrix();
+
+    // Force a render to ensure the canvas updates immediately
+    this.renderer.render(this.scene, this.camera);
   }
+
+  private handleResize = (): void => {
+    // Debounced resize handler to prevent excessive calls
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+
+    this.resizeTimeout = setTimeout(() => {
+      this.updateRendererSize();
+      this.cameraManager.onWindowResize();
+
+      // Log resize for debugging
+      const { width, height } = this.getCanvasDimensions();
+      console.log(`🔄 Canvas resized to: ${width}x${height}`);
+    }, 100);
+  };
 
   private buildCircle(): void {
     this.tubesGroup = CircleGeometry.buildCircle();
@@ -149,9 +188,21 @@ class PortfolioScene {
   }
 
   private setupEventListeners(): void {
-    window.addEventListener("resize", () => {
-      this.cameraManager.onWindowResize();
-      this.updateRendererSize();
+    // Enhanced resize event listener with debouncing
+    window.addEventListener("resize", this.handleResize);
+
+    // Also listen for orientation change on mobile devices
+    window.addEventListener("orientationchange", () => {
+      // Wait for orientation change to complete
+      setTimeout(() => {
+        this.handleResize();
+      }, 200);
+    });
+
+    // Listen for custom canvas resize events
+    window.addEventListener("canvasResize", () => {
+      console.log("🔄 Custom canvas resize event received");
+      this.handleResize();
     });
 
     // Listen for animation trigger events from chat UI
@@ -248,7 +299,44 @@ class PortfolioScene {
 
   // Legacy triggerCircleAnimation method removed - use triggerAnimation instead
 
+  // Public method to manually trigger canvas resize
+  public forceResize(): void {
+    console.log("🔄 Force resizing canvas...");
+    this.handleResize();
+  }
+
+  // Method to validate and fix canvas dimensions if they're incorrect
+  public validateCanvasDimensions(): boolean {
+    const canvas = document.getElementById(
+      "threejs-canvas"
+    ) as HTMLCanvasElement;
+    const { width, height } = this.getCanvasDimensions();
+    const actualWidth = canvas.width;
+    const actualHeight = canvas.height;
+
+    // Check if canvas dimensions are correct
+    if (
+      Math.abs(width - actualWidth) > 1 ||
+      Math.abs(height - actualHeight) > 1
+    ) {
+      console.warn(
+        `⚠️ Canvas dimensions mismatch detected. Expected: ${width}x${height}, Actual: ${actualWidth}x${actualHeight}`
+      );
+      this.forceResize();
+      return false;
+    }
+
+    console.log("✅ Canvas dimensions are correct");
+    return true;
+  }
+
   public dispose(): void {
+    // Clear resize timeout
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = null;
+    }
+
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
     }

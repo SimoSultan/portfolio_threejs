@@ -96,3 +96,21 @@ export function createTubeBetweenPoints(
 
   return mesh;
 }
+
+/**
+ * Manually triggers a canvas resize update
+ * This can be called when the canvas gets stuck or needs to be refreshed
+ */
+export function triggerCanvasResize(): void {
+  // Dispatch a custom resize event that the main scene will handle
+  const resizeEvent = new Event("resize");
+  window.dispatchEvent(resizeEvent);
+
+  // Also dispatch a custom event that can be listened to specifically
+  const customResizeEvent = new CustomEvent("canvasResize", {
+    detail: { timestamp: Date.now() },
+  });
+  window.dispatchEvent(customResizeEvent);
+
+  console.log("🔄 Canvas resize manually triggered");
+}

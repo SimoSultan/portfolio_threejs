@@ -163,9 +163,11 @@ export class ContextManager {
   // Clear old messages to free up space
   public async cleanupOldMessages(): Promise<void> {
     const stored = await this.storage.loadContext();
-    if (!stored) return;
+    if (!stored) {
+      return;
+    }
 
-    let messages = [...stored.messages];
+    const messages = [...stored.messages];
     let totalTokens = stored.totalTokens;
 
     // Remove oldest messages until we're under the limit
@@ -474,7 +476,9 @@ Please consider this context when responding to the user's message.`;
 
   // Save context to storage
   private async saveContext(): Promise<void> {
-    if (!this.context) return;
+    if (!this.context) {
+      return;
+    }
 
     const stored = await this.storage.loadContext();
     const messages = stored?.messages || [];

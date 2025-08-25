@@ -50,12 +50,13 @@ export default [
     },
     plugins: {},
     rules: {
-      "no-console": "off",
+      "no-console": "warn",
       "prefer-const": "error",
       "no-var": "error",
       "no-unused-expressions": "error",
       eqeqeq: "error",
-      curly: "error",
+      curly: ["error", "multi-line", "consistent"],
+      "no-eslint-disable": "error",
     },
   },
   // TypeScript files
@@ -119,7 +120,8 @@ export default [
       "no-var": "error",
       "no-unused-expressions": "error",
       eqeqeq: "error",
-      curly: "error",
+      curly: ["error", "multi-line", "consistent"],
+      "no-eslint-disable": "error",
 
       // Prettier handles formatting, ESLint handles code quality
     },
