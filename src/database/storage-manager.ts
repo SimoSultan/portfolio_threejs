@@ -1,4 +1,8 @@
-import { ChatContext, ContextStorage, StoredMessage } from "./context-manager";
+import {
+  ChatContext,
+  ContextStorage,
+  StoredMessage,
+} from "../chatbot/context-manager";
 import { DatabaseManager } from "./db-manager";
 
 /**

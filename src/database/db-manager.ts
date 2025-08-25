@@ -1,4 +1,4 @@
-import { ContextStorage, StoredMessage } from "./context-manager";
+import { ContextStorage } from "../chatbot/context-manager";
 
 /**
  * Database Manager - Handles raw database operations

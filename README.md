@@ -33,8 +33,13 @@ portfolio/
 │   ├── chatbot/               # AI chat integration
 │   │   ├── chatbot.ts         # Core LLM logic
 │   │   ├── chat-ui.ts         # Chat interface
+│   │   ├── context-manager.ts # Chat context and state management
 │   │   ├── models.ts          # Model configurations
 │   │   └── config.ts          # Environment configuration
+│   ├── database/              # Database and storage management
+│   │   ├── db-manager.ts      # Core database operations (IndexedDB/localStorage)
+│   │   ├── storage-manager.ts # Storage business logic and message management
+│   │   └── index.ts           # Database exports and types
 │   ├── scripts/               # Utility scripts
 │   │   └── switch-env.sh      # Environment switcher
 │   └── main.ts                # Main application entry point
@@ -104,6 +109,8 @@ portfolio/
 - ✅ Environment-based configuration (local/remote)
 - ✅ Modular animation system
 - ✅ Clean code architecture
+- ✅ Database persistence with IndexedDB/localStorage
+- ✅ Message storage and context management
 - 🔄 Portfolio content (coming soon)
 - 🔄 Project showcase (coming soon)
 - 🔄 Contact form (coming soon)
@@ -118,6 +125,7 @@ portfolio/
 - **Ollama integration:** Local AI model support
 - **Environment switching:** Easy local/remote server switching
 - **Animation testing:** Built-in animation test button
+- **Database architecture:** Clean separation of database logic in dedicated directory
 
 ## 🚀 AI Chat Features
 
@@ -126,6 +134,18 @@ portfolio/
 - **Model management** with easy model swapping
 - **Fallback system** for offline functionality
 - **Real-time chat** with AI responses
+
+## 💾 Database Architecture
+
+- **Modular database design** with clear separation of concerns
+- **IndexedDB support** with localStorage fallback for offline functionality
+- **Message persistence** with automatic context management
+- **Storage optimization** with token counting and metadata tracking
+- **Database operations:**
+  - Message storage and retrieval
+  - Context persistence across sessions
+  - Search and filtering capabilities
+  - Automatic data cleanup and optimization
 
 ## 🎬 Animation System
 
