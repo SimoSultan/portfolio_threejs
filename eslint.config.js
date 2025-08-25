@@ -115,7 +115,7 @@ export default [
       "@typescript-eslint/no-non-null-assertion": "warn",
 
       // General JavaScript/TypeScript rules
-      "no-console": "off",
+      "no-console": "warn",
       "prefer-const": "error",
       "no-var": "error",
       "no-unused-expressions": "error",

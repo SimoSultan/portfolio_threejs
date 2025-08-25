@@ -1,3 +1,5 @@
+import { StorageManager } from "./storage-manager";
+
 export interface ChatContext {
   currentDate: string;
   currentTime: string;
@@ -10,8 +12,10 @@ export interface ChatContext {
 export interface StoredMessage {
   role: "user" | "assistant";
   content: string;
+  summary?: string; // Optional summary for long messages
   timestamp: Date;
   tokenCount: number;
+  isSummarized: boolean; // Flag to indicate if message was summarized
 }
 
 export interface ContextStorage {
@@ -30,6 +34,8 @@ export class ContextManager {
   private readonly RESERVE_TOKENS = 2000; // Reserve tokens for context and new messages
   private readonly MAX_MESSAGE_TOKENS = 8000; // Max tokens per individual message
   private readonly MAX_CONVERSATION_LENGTH = 50; // Max number of messages to keep
+  private MESSAGE_SUMMARY_THRESHOLD = 2000; // Characters threshold for summarization
+  private SUMMARY_MAX_LENGTH = 500; // Maximum length for summaries
 
   constructor(onContextUpdate?: () => void) {
     this.onContextUpdateCallback = onContextUpdate;
@@ -101,18 +107,61 @@ export class ContextManager {
     return Math.ceil(text.length / 4);
   }
 
-  // Add a new message to storage with smart truncation
+  // Create a summary of a long message to save on storage and tokens
+  private createMessageSummary(content: string): string {
+    // Simple summarization: take first and last parts of the message
+    if (content.length <= this.SUMMARY_MAX_LENGTH) {
+      return content;
+    }
+
+    const halfLength = Math.floor(this.SUMMARY_MAX_LENGTH / 2);
+    const firstPart = content.substring(0, halfLength);
+    const lastPart = content.substring(content.length - halfLength);
+
+    // Find the last complete sentence in the first part
+    const lastSentenceEnd = firstPart.lastIndexOf(".");
+    const firstPartClean =
+      lastSentenceEnd > 0
+        ? firstPart.substring(0, lastSentenceEnd + 1)
+        : firstPart;
+
+    // Find the first complete sentence in the last part
+    const firstSentenceStart = lastPart.indexOf(".");
+    const lastPartClean =
+      firstSentenceStart > 0
+        ? lastPart.substring(firstSentenceStart + 1)
+        : lastPart;
+
+    return `${firstPartClean}... [summarized] ...${lastPartClean}`;
+  }
+
+  // Check if a message should be summarized based on length
+  private shouldSummarizeMessage(content: string): boolean {
+    return content.length > this.MESSAGE_SUMMARY_THRESHOLD;
+  }
+
+  // Add a new message to storage with smart truncation and summarization
   public async addMessage(
     role: "user" | "assistant",
     content: string
   ): Promise<void> {
     const tokenCount = this.estimateTokenCount(content);
+    let finalContent = content;
+    let summary: string | undefined;
+    let isSummarized = false;
 
-    // Truncate message if it's too long
-    let truncatedContent = content;
-    if (tokenCount > this.MAX_MESSAGE_TOKENS) {
+    // Check if message should be summarized
+    if (this.shouldSummarizeMessage(content)) {
+      summary = this.createMessageSummary(content);
+      finalContent = summary;
+      isSummarized = true;
+      console.log(
+        `📝 Message summarized from ${content.length} to ${summary.length} characters`
+      );
+    } else if (tokenCount > this.MAX_MESSAGE_TOKENS) {
+      // Fallback to truncation if summarization isn't needed but message is too long
       const maxChars = this.MAX_MESSAGE_TOKENS * 4;
-      truncatedContent = content.substring(0, maxChars) + "... [truncated]";
+      finalContent = content.substring(0, maxChars) + "... [truncated]";
       console.warn(
         `⚠️ Message truncated from ${tokenCount} to ${this.MAX_MESSAGE_TOKENS} tokens`
       );
@@ -120,9 +169,11 @@ export class ContextManager {
 
     const message: StoredMessage = {
       role,
-      content: truncatedContent,
+      content: finalContent,
+      summary: summary,
       timestamp: new Date(),
-      tokenCount: this.estimateTokenCount(truncatedContent),
+      tokenCount: this.estimateTokenCount(finalContent),
+      isSummarized,
     };
 
     await this.storage.addMessage(message);
@@ -158,6 +209,221 @@ export class ContextManager {
       `📊 Conversation: ${conversationMessages.length} messages, ${totalTokens} tokens`
     );
     return conversationMessages;
+  }
+
+  // Get the full content of a message, including original content if it was summarized
+  public async getMessageFullContent(
+    messageId: string
+  ): Promise<string | null> {
+    const stored = await this.storage.loadContext();
+    if (!stored) return null;
+
+    const message = stored.messages.find(
+      msg =>
+        msg.timestamp.toISOString() === messageId ||
+        msg.content.substring(0, 50) === messageId.substring(0, 50)
+    );
+
+    if (!message) return null;
+
+    // If message was summarized, return the summary (original content is not stored to save space)
+    // In a real implementation, you might want to store the original content separately
+    if (message.isSummarized) {
+      console.log("📝 Message was summarized, returning summary content");
+      return message.content; // This is the summary
+    }
+
+    return message.content;
+  }
+
+  // Get summary statistics for the conversation
+  public async getSummaryStatistics(): Promise<{
+    totalMessages: number;
+    summarizedMessages: number;
+    totalTokens: number;
+    savedTokens: number;
+    averageMessageLength: number;
+  }> {
+    const stored = await this.storage.loadContext();
+    if (!stored) {
+      return {
+        totalMessages: 0,
+        summarizedMessages: 0,
+        totalTokens: 0,
+        savedTokens: 0,
+        averageMessageLength: 0,
+      };
+    }
+
+    const messages = stored.messages;
+    const summarizedMessages = messages.filter(msg => msg.isSummarized).length;
+    const totalTokens = stored.totalTokens;
+
+    // Estimate saved tokens (rough calculation)
+    const savedTokens = summarizedMessages * 1000; // Rough estimate of tokens saved per summary
+
+    const averageMessageLength =
+      messages.length > 0
+        ? messages.reduce((sum, msg) => sum + msg.content.length, 0) /
+          messages.length
+        : 0;
+
+    return {
+      totalMessages: messages.length,
+      summarizedMessages,
+      totalTokens,
+      savedTokens,
+      averageMessageLength: Math.round(averageMessageLength),
+    };
+  }
+
+  // Public method to get summarization settings
+  public getSummarizationSettings(): {
+    threshold: number;
+    maxLength: number;
+    enabled: boolean;
+  } {
+    return {
+      threshold: this.MESSAGE_SUMMARY_THRESHOLD,
+      maxLength: this.SUMMARY_MAX_LENGTH,
+      enabled: true,
+    };
+  }
+
+  // Public method to update summarization settings
+  public updateSummarizationSettings(
+    threshold?: number,
+    maxLength?: number
+  ): void {
+    if (threshold !== undefined) {
+      this.MESSAGE_SUMMARY_THRESHOLD = threshold;
+      console.log(
+        `📝 Updated summarization threshold to ${threshold} characters`
+      );
+    }
+
+    if (maxLength !== undefined) {
+      this.SUMMARY_MAX_LENGTH = maxLength;
+      console.log(`📝 Updated summary max length to ${maxLength} characters`);
+    }
+  }
+
+  // Get comprehensive storage and message statistics
+  public async getComprehensiveStats(): Promise<{
+    storage: Awaited<ReturnType<StorageManager["getStorageStats"]>>;
+    summarization: Awaited<ReturnType<ContextManager["getSummaryStatistics"]>>;
+  }> {
+    const [storage, summarization] = await Promise.all([
+      this.storage.getStorageStats(),
+      this.getSummaryStatistics(),
+    ]);
+
+    return { storage, summarization };
+  }
+
+  // Search messages by content
+  public async searchMessages(query: string): Promise<StoredMessage[]> {
+    return await this.storage.searchMessages(query);
+  }
+
+  // Get messages by role
+  public async getMessagesByRole(
+    role: "user" | "assistant"
+  ): Promise<StoredMessage[]> {
+    return await this.storage.getMessagesByRole(role);
+  }
+
+  // Get messages within a date range
+  public async getMessagesByDateRange(
+    startDate: Date,
+    endDate: Date
+  ): Promise<StoredMessage[]> {
+    return await this.storage.getMessagesByDateRange(startDate, endDate);
+  }
+
+  // Advanced cleanup with multiple criteria
+  public async advancedCleanup(options: {
+    maxMessages?: number;
+    maxTokens?: number;
+    maxAge?: number; // in days
+    preserveSummarized?: boolean; // keep summarized messages
+  }): Promise<{
+    removedMessages: number;
+    removedTokens: number;
+    cleanupType: string;
+  }> {
+    // First, run the storage manager cleanup
+    const storageResult = await this.storage.cleanupOldMessages({
+      maxMessages: options.maxMessages,
+      maxTokens: options.maxTokens,
+      maxAge: options.maxAge,
+    });
+
+    // Then run our own cleanup for summarization
+    if (options.preserveSummarized !== false) {
+      await this.cleanupOldMessages();
+    }
+
+    return {
+      ...storageResult,
+      cleanupType: "advanced",
+    };
+  }
+
+  // Export conversation data
+  public async exportConversation(): Promise<
+    ReturnType<StorageManager["exportConversation"]>
+  > {
+    return await this.storage.exportConversation();
+  }
+
+  // Import conversation data
+  public async importConversation(
+    data: Parameters<StorageManager["importConversation"]>[0]
+  ): Promise<void> {
+    await this.storage.importConversation(data);
+
+    // Reload context after import
+    const stored = await this.storage.loadContext();
+    if (stored) {
+      this.context = stored.context;
+    }
+  }
+
+  // Test method to demonstrate summarization functionality
+  public async testSummarization(): Promise<void> {
+    console.log("🧪 Testing message summarization system...");
+
+    // Create a test long message
+    const longMessage =
+      "This is a very long message that exceeds the summarization threshold. ".repeat(
+        100
+      );
+    console.log(`📝 Test message length: ${longMessage.length} characters`);
+
+    // Test if it should be summarized
+    const shouldSummarize = this.shouldSummarizeMessage(longMessage);
+    console.log(`📝 Should summarize: ${shouldSummarize}`);
+
+    if (shouldSummarize) {
+      const summary = this.createMessageSummary(longMessage);
+      console.log(`📝 Summary created: ${summary.length} characters`);
+      console.log(`📝 Summary preview: ${summary.substring(0, 100)}...`);
+
+      // Test token savings
+      const originalTokens = this.estimateTokenCount(longMessage);
+      const summaryTokens = this.estimateTokenCount(summary);
+      const tokensSaved = originalTokens - summaryTokens;
+      console.log(
+        `📝 Tokens saved: ${tokensSaved} (${originalTokens} → ${summaryTokens})`
+      );
+    }
+
+    // Show current settings
+    const settings = this.getSummarizationSettings();
+    console.log(
+      `📝 Current settings: threshold=${settings.threshold}, maxLength=${settings.maxLength}`
+    );
   }
 
   // Clear old messages to free up space
@@ -205,6 +471,74 @@ export class ContextManager {
       totalTokens,
       lastUpdated: new Date(),
     });
+  }
+
+  // Manually trigger summarization of existing long messages
+  public async summarizeExistingMessages(): Promise<{
+    summarized: number;
+    savedTokens: number;
+  }> {
+    const stored = await this.storage.loadContext();
+    if (!stored) {
+      return { summarized: 0, savedTokens: 0 };
+    }
+
+    let summarized = 0;
+    let savedTokens = 0;
+    const messages = [...stored.messages];
+
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+
+      // Skip already summarized messages
+      if (message.isSummarized) continue;
+
+      // Check if message should be summarized
+      if (this.shouldSummarizeMessage(message.content)) {
+        const originalTokens = message.tokenCount;
+        const summary = this.createMessageSummary(message.content);
+
+        // Update message with summary
+        messages[i] = {
+          ...message,
+          content: summary,
+          summary: summary,
+          tokenCount: this.estimateTokenCount(summary),
+          isSummarized: true,
+        };
+
+        const newTokens = messages[i].tokenCount;
+        const tokensSaved = originalTokens - newTokens;
+
+        savedTokens += tokensSaved;
+        summarized++;
+
+        console.log(
+          `📝 Summarized existing message: saved ${tokensSaved} tokens`
+        );
+      }
+    }
+
+    // Update storage with summarized messages
+    if (summarized > 0) {
+      const newTotalTokens = messages.reduce(
+        (sum, msg) => sum + msg.tokenCount,
+        0
+      );
+
+      await this.storage.saveContext({
+        messages,
+        context: stored.context,
+        totalTokens: newTotalTokens,
+        lastUpdated: new Date(),
+      });
+
+      console.log(
+        `📝 Summarized ${summarized} messages, saved ${savedTokens} tokens total`
+      );
+    }
+
+    return { summarized, savedTokens };
   }
 
   // Get current token usage
@@ -502,236 +836,14 @@ Please consider this context when responding to the user's message.`;
   // Test database connection
   private async testDatabaseConnection(): Promise<void> {
     try {
-      // Test the storage directly without going through the normal message flow
-      const testData: ContextStorage = {
-        messages: [
-          {
-            role: "assistant",
-            content: "Test message for database verification",
-            timestamp: new Date(),
-            tokenCount: 10,
-          },
-        ],
-        context: this.context || {
-          currentDate: new Date().toLocaleDateString(),
-          currentTime: new Date().toLocaleTimeString(),
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          location: "Brisbane, Australia",
-        },
-        totalTokens: 10,
-        lastUpdated: new Date(),
-      };
-
-      // Save test data directly to storage
-      await this.storage.saveContext(testData);
-
-      // Try to load it back
-      const loaded = await this.storage.loadContext();
-      if (loaded && loaded.messages.length > 0) {
-        // Clean up test data after verification
-        await this.storage.clearAll();
+      const success = await this.storage.testStorage();
+      if (success) {
+        console.log("✅ Database connection test passed");
+      } else {
+        console.warn("⚠️ Database connection test failed");
       }
     } catch (error) {
-      console.error("Database connection test failed:", error);
-    }
-  }
-}
-
-// Cross-browser storage manager
-class StorageManager {
-  private readonly STORAGE_KEY = "portfolio_chat_context";
-  private useIndexedDB: boolean = false;
-
-  constructor() {
-    this.checkStorageSupport();
-  }
-
-  private checkStorageSupport(): void {
-    // Check if IndexedDB is available
-    if (typeof window !== "undefined" && "indexedDB" in window) {
-      this.useIndexedDB = true;
-    }
-  }
-
-  async saveContext(data: ContextStorage): Promise<void> {
-    if (this.useIndexedDB) {
-      await this.saveToIndexedDB(data);
-    } else {
-      this.saveToLocalStorage(data);
-    }
-  }
-
-  async loadContext(): Promise<ContextStorage | null> {
-    if (this.useIndexedDB) {
-      return await this.loadFromIndexedDB();
-    } else {
-      return this.loadFromLocalStorage();
-    }
-  }
-
-  async addMessage(message: StoredMessage): Promise<void> {
-    let existing = await this.loadContext();
-
-    // If no context exists, create initial context
-    if (!existing) {
-      existing = {
-        messages: [],
-        context: {
-          currentDate: new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
-          currentTime: new Date().toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZoneName: "short",
-          }),
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          location: "Brisbane, Australia",
-        },
-        totalTokens: 0,
-        lastUpdated: new Date(),
-      };
-      console.log("💾 Creating initial context for first message");
-    }
-
-    existing.messages.push(message);
-    existing.totalTokens += message.tokenCount;
-    existing.lastUpdated = new Date();
-
-    await this.saveContext(existing);
-  }
-
-  async clearAll(): Promise<void> {
-    if (this.useIndexedDB) {
-      await this.clearIndexedDB();
-    } else {
-      localStorage.removeItem(this.STORAGE_KEY);
-    }
-  }
-
-  // IndexedDB methods
-  private async saveToIndexedDB(data: ContextStorage): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (typeof window === "undefined" || !("indexedDB" in window)) {
-        reject(new Error("IndexedDB not available"));
-        return;
-      }
-
-      // Force database upgrade by incrementing version
-      const request = (window as any).indexedDB.open("PortfolioChat", 2);
-
-      request.onerror = () => reject(request.error);
-
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains("context")) {
-          db.createObjectStore("context", { keyPath: "id" });
-        }
-      };
-
-      request.onsuccess = () => {
-        const db = request.result;
-
-        if (!db.objectStoreNames.contains("context")) {
-          try {
-            db.createObjectStore("context", { keyPath: "id" });
-          } catch {
-            reject(new Error("Failed to create object store"));
-            return;
-          }
-        }
-
-        const transaction = db.transaction(["context"], "readwrite");
-        const store = transaction.objectStore("context");
-
-        // Add an id field to the data for IndexedDB
-        const dataWithId = { ...data, id: "context" };
-        const saveRequest = store.put(dataWithId);
-        saveRequest.onsuccess = () => resolve();
-        saveRequest.onerror = () => reject(saveRequest.error);
-      };
-    });
-  }
-
-  private async loadFromIndexedDB(): Promise<ContextStorage | null> {
-    return new Promise((resolve, reject) => {
-      if (typeof window === "undefined" || !("indexedDB" in window)) {
-        reject(new Error("IndexedDB not available"));
-        return;
-      }
-
-      const request = (window as any).indexedDB.open("PortfolioChat", 2);
-
-      request.onerror = () => reject(request.error);
-
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains("context")) {
-          db.createObjectStore("context", { keyPath: "id" });
-        }
-      };
-
-      request.onsuccess = () => {
-        const db = request.result;
-
-        if (!db.objectStoreNames.contains("context")) {
-          resolve(null);
-          return;
-        }
-
-        const transaction = db.transaction(["context"], "readonly");
-        const store = transaction.objectStore("context");
-
-        const getRequest = store.get("context");
-        getRequest.onsuccess = () => resolve(getRequest.result || null);
-        getRequest.onerror = () => reject(getRequest.error);
-      };
-    });
-  }
-
-  private async clearIndexedDB(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (typeof window === "undefined" || !("indexedDB" in window)) {
-        reject(new Error("IndexedDB not available"));
-        return;
-      }
-
-      const request = (window as any).indexedDB.deleteDatabase("PortfolioChat");
-      request.onsuccess = () => {
-        resolve();
-      };
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  // localStorage fallback methods
-  private saveToLocalStorage(data: ContextStorage): void {
-    try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-    } catch (error) {
-      console.error("❌ Error saving to localStorage:", error);
-    }
-  }
-
-  private loadFromLocalStorage(): ContextStorage | null {
-    try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      if (!stored) return null;
-
-      const data = JSON.parse(stored);
-      // Convert date strings back to Date objects
-      data.lastUpdated = new Date(data.lastUpdated);
-      data.messages.forEach((msg: any) => {
-        msg.timestamp = new Date(msg.timestamp);
-      });
-
-      return data;
-    } catch (error) {
-      console.error("❌ Error loading from localStorage:", error);
-      return null;
+      console.error("❌ Database connection test failed:", error);
     }
   }
 }

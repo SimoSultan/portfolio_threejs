@@ -205,6 +205,12 @@ class PortfolioScene {
       this.handleResize();
     });
 
+    // Listen for summarization demonstration events
+    window.addEventListener("demonstrateSummarization", () => {
+      console.log("📝 Summarization demonstration event received");
+      this.demonstrateSummarization();
+    });
+
     // Listen for animation trigger events from chat UI
     window.addEventListener("triggerAnimation", (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -328,6 +334,32 @@ class PortfolioScene {
 
     console.log("✅ Canvas dimensions are correct");
     return true;
+  }
+
+  // Demonstrate the message summarization system
+  private demonstrateSummarization(): void {
+    console.log("📝 Demonstrating message summarization system...");
+
+    // Test the summarization system if we have access to the context manager
+    if (this.chatUI) {
+      // Access the context manager through the chat UI
+      const contextManager = (this.chatUI as any).contextManager;
+      if (
+        contextManager &&
+        typeof contextManager.testSummarization === "function"
+      ) {
+        contextManager.testSummarization();
+      } else {
+        console.log("📝 Context manager not accessible for testing");
+      }
+    }
+
+    console.log("📝 Message summarization system is now active!");
+    console.log(
+      "📝 Long messages (>2000 chars) will be automatically summarized"
+    );
+    console.log("📝 Summaries are limited to 500 characters to save on tokens");
+    console.log("📝 Use the chatbot to test the summarization system");
   }
 
   public dispose(): void {

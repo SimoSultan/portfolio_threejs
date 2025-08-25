@@ -114,3 +114,17 @@ export function triggerCanvasResize(): void {
 
   console.log("🔄 Canvas resize manually triggered");
 }
+
+/**
+ * Utility function to demonstrate message summarization
+ * This can be called to test the summarization system
+ */
+export function demonstrateMessageSummarization(): void {
+  // Dispatch a custom event to trigger summarization demonstration
+  const summarizationEvent = new CustomEvent("demonstrateSummarization", {
+    detail: { timestamp: Date.now() },
+  });
+  window.dispatchEvent(summarizationEvent);
+
+  console.log("📝 Message summarization demonstration triggered");
+}
