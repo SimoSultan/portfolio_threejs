@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AnimationManager } from "../animation";
+import { cleanupAnimationFrames } from "../../test-setup";
 
 // Mock Three.js
 vi.mock("three");
@@ -12,8 +13,14 @@ describe("AnimationManager", () => {
   let animationManager: AnimationManager;
 
   beforeEach(() => {
+    // Setup fake timers
+    vi.useFakeTimers();
+    
     // Reset mocks
     vi.clearAllMocks();
+    
+    // Clean up any pending animation frames
+    cleanupAnimationFrames();
 
     // Mock Scene
     mockScene = {
@@ -45,23 +52,24 @@ describe("AnimationManager", () => {
       remove: vi.fn(),
     };
 
-    // Mock requestAnimationFrame
-    global.requestAnimationFrame = vi.fn(cb => {
-      setTimeout(cb, 0);
-      return 123;
-    });
-
-    // Mock cancelAnimationFrame
-    global.cancelAnimationFrame = vi.fn();
-
     animationManager = new AnimationManager(mockScene);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Clean up any running animations
-    animationManager.stopAnimation();
-    // Clear any pending timeouts
+    if (animationManager) {
+      animationManager.stopAnimation();
+    }
+    
+    // Run all pending timers and animation frames
+    await vi.runAllTimersAsync();
+    
+    // Clear any pending timeouts and animation frames
     vi.clearAllTimers();
+    cleanupAnimationFrames();
+    
+    // Restore real timers
+    vi.useRealTimers();
   });
 
   describe("constructor", () => {
@@ -318,7 +326,10 @@ describe("AnimationManager", () => {
       animationManager.triggerSpinAnimation(mockTubesGroup, 10);
       expect(animationManager.isAnimationRunning()).toBe(true);
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Advance timers by 50ms to simulate time passing
+      vi.advanceTimersByTime(50);
+      await vi.runAllTimersAsync();
+      
       expect(animationManager.isAnimationRunning()).toBe(false);
     });
 
@@ -498,8 +509,9 @@ describe("AnimationManager", () => {
       // Trigger animation that will complete
       animationManager.triggerSpinAnimation(mockTubesGroup, 10);
 
-      // Wait for completion
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Advance timers by 50ms to simulate time passing
+      vi.advanceTimersByTime(50);
+      await vi.runAllTimersAsync();
 
       // Should have resumed infinite animation
       expect(animationManager.isInfiniteAnimationActive()).toBe(true);
@@ -512,8 +524,9 @@ describe("AnimationManager", () => {
       // Trigger animation that will complete
       animationManager.triggerSpinAnimation(mockTubesGroup, 10);
 
-      // Wait for completion
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Advance timers by 50ms to simulate time passing
+      vi.advanceTimersByTime(50);
+      await vi.runAllTimersAsync();
 
       // Should not have resumed infinite animation
       expect(animationManager.isInfiniteAnimationActive()).toBe(false);

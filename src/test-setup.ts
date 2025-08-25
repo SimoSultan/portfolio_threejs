@@ -1,5 +1,21 @@
 // Test setup for Vitest
-import { vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
+
+// Suppress console errors during tests to avoid noise
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+beforeEach(() => {
+  // Suppress expected errors during tests
+  console.error = vi.fn();
+  console.warn = vi.fn();
+});
+
+afterEach(() => {
+  // Restore console methods
+  console.error = originalConsoleError;
+  console.warn = originalConsoleWarn;
+});
 
 // Mock Three.js for testing
 vi.mock("three", () => {
@@ -70,6 +86,34 @@ Object.defineProperty(window, "getComputedStyle", {
   }),
 });
 
-// Mock requestAnimationFrame
-global.requestAnimationFrame = vi.fn(cb => setTimeout(cb, 0));
-global.cancelAnimationFrame = vi.fn();
+// Improved requestAnimationFrame mock with better cleanup
+const originalRequestAnimationFrame = global.requestAnimationFrame;
+const originalCancelAnimationFrame = global.cancelAnimationFrame;
+
+let animationFrameId = 0;
+const activeAnimationFrames = new Set<number>();
+
+global.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
+  animationFrameId++;
+  activeAnimationFrames.add(animationFrameId);
+  
+  // Use setTimeout to simulate async behavior
+  setTimeout(() => {
+    if (activeAnimationFrames.has(animationFrameId)) {
+      callback(performance.now());
+      activeAnimationFrames.delete(animationFrameId);
+    }
+  }, 0);
+  
+  return animationFrameId;
+});
+
+global.cancelAnimationFrame = vi.fn((handle: number) => {
+  activeAnimationFrames.delete(handle);
+});
+
+// Cleanup function for tests
+export const cleanupAnimationFrames = () => {
+  activeAnimationFrames.clear();
+  animationFrameId = 0;
+};
