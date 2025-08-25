@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AnimationManager } from "../animation-manager";
+import { AnimationManager } from "../animation";
 
 // Mock Three.js
 vi.mock("three");

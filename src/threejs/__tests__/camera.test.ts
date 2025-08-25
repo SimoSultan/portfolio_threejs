@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as THREE from "three";
-import { CameraManager } from "../camera-manager";
+import { CameraManager } from "../camera";
 
 // Mock Three.js
 vi.mock("three");

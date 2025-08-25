@@ -7,4 +7,4 @@ export type { OllamaConfig } from "./config";
 
 // Database exports
 export { DatabaseManager, StorageManager } from "../database";
-export type { ContextStorage, StoredMessage } from "./context-manager";
+export type { ContextStorage, StoredMessage } from "./context";

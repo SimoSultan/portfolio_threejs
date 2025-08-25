@@ -2,8 +2,8 @@ import {
   ChatContext,
   ContextStorage,
   StoredMessage,
-} from "../chatbot/context-manager";
-import { DatabaseManager } from "./db-manager";
+} from "../chatbot/context";
+import { DatabaseManager } from "./database";
 
 /**
  * Storage Manager - Middleware between Database and Chatbot

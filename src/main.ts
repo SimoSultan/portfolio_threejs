@@ -1,8 +1,8 @@
 import * as THREE from "three";
 
 import { ChatUI } from "./chatbot";
-import { AnimationManager } from "./threejs/animation-manager";
-import { CameraManager } from "./threejs/camera-manager";
+import { AnimationManager } from "./threejs/animation";
+import { CameraManager } from "./threejs/camera";
 import { COLORS } from "./threejs/constants";
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";

@@ -4,9 +4,9 @@
 
 The chatbot system now uses a three-layer architecture for better separation of concerns, maintainability, and extensibility:
 
-1. **Database Manager** (`db-manager.ts`) - Raw database operations
-2. **Storage Manager** (`storage-manager.ts`) - Business logic middleware
-3. **Context Manager** (`context-manager.ts`) - Chatbot business logic
+1. **Database Manager** (`database.ts`) - Raw database operations
+2. **Storage Manager** (`storage.ts`) - Business logic middleware
+3. **Context Manager** (`context.ts`) - Chatbot business logic
 
 ## Architecture Diagram
 
@@ -24,7 +24,7 @@ The chatbot system now uses a three-layer architecture for better separation of 
 
 ## Layer Responsibilities
 
-### 1. Database Manager (`db-manager.ts`)
+### 1. Database Manager (`database.ts`)
 
 **Purpose**: Handles raw database operations and storage abstraction
 
@@ -56,7 +56,7 @@ class DatabaseManager {
 - **Connection Testing**: Automatic health checks
 - **Size Monitoring**: Storage usage tracking
 
-### 2. Storage Manager (`storage-manager.ts`)
+### 2. Storage Manager (`storage.ts`)
 
 **Purpose**: Middleware between database and business logic
 
@@ -94,7 +94,7 @@ class StorageManager {
 - **Message Analytics**: Comprehensive statistics
 - **Role-based Access**: Filter messages by user/assistant
 
-### 3. Context Manager (`context-manager.ts`)
+### 3. Context Manager (`context.ts`)
 
 **Purpose**: High-level chatbot business logic
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DatabaseManager } from "../db-manager";
+import { DatabaseManager } from "../database";
 
 describe("DatabaseManager", () => {
   it("should have the expected class structure", () => {

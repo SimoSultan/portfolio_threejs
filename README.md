@@ -26,19 +26,19 @@ portfolio/
 │   │   ├── constants.ts       # Colors, materials, geometry constants
 │   │   ├── utils.ts           # Utility functions and calculations
 │   │   ├── geometry.ts        # 3D circle creation
-│   │   ├── camera-manager.ts  # Camera controls and positioning
+│   │   ├── camera.ts  # Camera controls and positioning
 │   │   ├── lighting.ts        # Scene lighting setup
-│   │   └── animation-manager.ts # Animation system and effects
+│   │   └── animation.ts # Animation system and effects
 │   ├── views/                 # UI view components
 │   ├── chatbot/               # AI chat integration
 │   │   ├── chatbot.ts         # Core LLM logic
 │   │   ├── chat-ui.ts         # Chat interface
-│   │   ├── context-manager.ts # Chat context and state management
+│   │   ├── context.ts # Chat context and state management
 │   │   ├── models.ts          # Model configurations
 │   │   └── config.ts          # Environment configuration
 │   ├── database/              # Database and storage management
-│   │   ├── db-manager.ts      # Core database operations (IndexedDB/localStorage)
-│   │   ├── storage-manager.ts # Storage business logic and message management
+│   │   ├── database.ts      # Core database operations (IndexedDB/localStorage)
+│   │   ├── storage.ts # Storage business logic and message management
 │   │   └── index.ts           # Database exports and types
 │   ├── scripts/               # Utility scripts
 │   │   └── switch-env.sh      # Environment switcher

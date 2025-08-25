@@ -1,4 +1,4 @@
-import { StorageManager } from "../database/storage-manager";
+import { StorageManager } from "../database/storage";
 
 export interface ChatContext {
   currentDate: string;

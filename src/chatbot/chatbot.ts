@@ -1,5 +1,5 @@
 import { getOllamaEnvironment, getOllamaUrl } from "./config";
-import { type ChatContext, ContextManager } from "./context-manager";
+import { type ChatContext, ContextManager } from "./context";
 
 export interface ChatMessage {
   role: "user" | "assistant";

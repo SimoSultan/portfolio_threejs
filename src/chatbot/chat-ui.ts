@@ -1,5 +1,5 @@
 import { type ChatMessage, Chatbot } from "./chatbot";
-import { type ChatContext } from "./context-manager";
+import { type ChatContext } from "./context";
 import { AVAILABLE_MODELS, DEFAULT_MODEL, MODEL_METADATA } from "./models";
 
 export class ChatUI {

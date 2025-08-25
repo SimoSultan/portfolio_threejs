@@ -1,3 +1,3 @@
-export { DatabaseManager } from "./db-manager";
-export { StorageManager } from "./storage-manager";
-export type { ContextStorage, StoredMessage } from "../chatbot/context-manager";
+export { DatabaseManager } from "./database";
+export { StorageManager } from "./storage";
+export type { ContextStorage, StoredMessage } from "../chatbot/context";

@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ContextStorage, StoredMessage } from "../../chatbot/context-manager";
-import { DatabaseManager } from "../db-manager";
-import { StorageManager } from "../storage-manager";
+import { ContextStorage, StoredMessage } from "../../chatbot/context";
+import { DatabaseManager } from "../database";
+import { StorageManager } from "../storage";
 
 // Mock the DatabaseManager
-vi.mock("../db-manager");
+vi.mock("../database");
 const MockDatabaseManager = vi.mocked(DatabaseManager);
 
 describe("StorageManager", () => {
