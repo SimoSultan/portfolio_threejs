@@ -21,19 +21,9 @@ export class AnimationManager {
    * @param speedMultiplier - Speed multiplier (default: 3.0 for 3x speed)
    */
   public speedUpInfiniteAnimation(speedMultiplier: number = 3.0): void {
-    console.log("🚀 Attempting to speed up infinite animation...");
-    this.logAnimationState();
-
     // Check if infinite animation is active (either running or should resume)
     if (this.isInfiniteAnimationActive()) {
       this.infiniteAnimationSpeed = speedMultiplier;
-      console.log(
-        `🚀 Infinite animation speed increased to ${speedMultiplier}x`
-      );
-    } else {
-      console.log(
-        "⚠️ Cannot speed up infinite animation - not currently active"
-      );
     }
   }
 
@@ -41,11 +31,7 @@ export class AnimationManager {
    * Resume infinite animation at original speed when chatbot responds
    */
   public resumeInfiniteAnimationSpeed(): void {
-    console.log("🔄 Attempting to resume infinite animation speed...");
-    this.logAnimationState();
-
     this.infiniteAnimationSpeed = this.originalInfiniteAnimationSpeed;
-    console.log("🔄 Infinite animation speed restored to normal");
   }
 
   /**
@@ -58,13 +44,9 @@ export class AnimationManager {
     duration: number = 2000
   ): void {
     if (this.isAnimating) {
-      console.log(
-        "⚠️ Animation already in progress, stopping current animation..."
-      );
       this.stopAnimation();
     }
 
-    console.log("🌀 Starting spin animation...");
     this.isAnimating = true;
 
     // Store original rotation
@@ -88,7 +70,6 @@ export class AnimationManager {
         tubesGroup.rotation.copy(originalRotation);
         this.isAnimating = false;
         this.currentAnimationId = undefined;
-        console.log("✅ Spin animation complete");
 
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
@@ -110,15 +91,9 @@ export class AnimationManager {
     continuous: boolean = false
   ): void {
     if (this.isAnimating) {
-      console.log(
-        "⚠️ Animation already in progress, stopping current animation..."
-      );
       this.stopAnimation();
     }
 
-    console.log(
-      `🌊 Starting Mexican wave animation (${continuous ? "continuous" : "single cycle"})...`
-    );
     this.isAnimating = true;
 
     const startTime = Date.now();
@@ -210,8 +185,6 @@ export class AnimationManager {
         });
         this.isAnimating = false;
         this.currentAnimationId = undefined;
-        console.log("✅ Mexican wave animation complete");
-
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -230,13 +203,9 @@ export class AnimationManager {
     duration: number = 2000
   ): void {
     if (this.isAnimating) {
-      console.log(
-        "⚠️ Animation already in progress, stopping current animation..."
-      );
       this.stopAnimation();
     }
 
-    console.log("🦘 Starting bounce animation...");
     this.isAnimating = true;
 
     const startTime = Date.now();
@@ -284,8 +253,6 @@ export class AnimationManager {
         });
         this.isAnimating = false;
         this.currentAnimationId = undefined;
-        console.log("✅ Bounce animation complete");
-
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -304,13 +271,9 @@ export class AnimationManager {
     duration: number = 2500
   ): void {
     if (this.isAnimating) {
-      console.log(
-        "⚠️ Animation already in progress, stopping current animation..."
-      );
       this.stopAnimation();
     }
 
-    console.log("🤸 Starting backflip animation...");
     this.isAnimating = true;
 
     const startTime = Date.now();
@@ -342,8 +305,6 @@ export class AnimationManager {
         tubesGroup.position.copy(originalPosition);
         this.isAnimating = false;
         this.currentAnimationId = undefined;
-        console.log("✅ Backflip animation complete");
-
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -362,13 +323,9 @@ export class AnimationManager {
     duration: number = 3000
   ): void {
     if (this.isAnimating) {
-      console.log(
-        "⚠️ Animation already in progress, stopping current animation..."
-      );
       this.stopAnimation();
     }
 
-    console.log("🎡 Starting multi-axis spin animation...");
     this.isAnimating = true;
 
     const startTime = Date.now();
@@ -394,8 +351,6 @@ export class AnimationManager {
         tubesGroup.rotation.copy(originalRotation);
         this.isAnimating = false;
         this.currentAnimationId = undefined;
-        console.log("✅ Multi-axis spin animation complete");
-
         // Resume infinite animation if needed
         this.resumeInfiniteAnimation(tubesGroup);
       }
@@ -416,15 +371,9 @@ export class AnimationManager {
     continuous: boolean = true // Changed to true for infinite loop
   ): void {
     if (this.isAnimating) {
-      console.log(
-        "⚠️ Animation already in progress, stopping current animation..."
-      );
       this.stopAnimation();
     }
 
-    console.log(
-      `🤸 Starting individual tube backflip animation (${continuous ? "continuous" : "single loop"})...`
-    );
     this.isAnimating = true;
     this.isInfiniteAnimationRunning = continuous;
 
@@ -520,7 +469,6 @@ export class AnimationManager {
         });
         this.isAnimating = false;
         this.currentAnimationId = undefined;
-        console.log("✅ Individual tube backflip animation complete");
       }
     };
 
@@ -541,12 +489,8 @@ export class AnimationManager {
 
       // Reset all tubes to their original positions and scales
       if (this.originalPositions && this.originalScales) {
-        console.log(
-          "⏹️ Animation stopped - tubes will be reset on next animation"
-        );
+        // Tubes will be reset on next animation
       }
-
-      console.log("⏹️ Animation stopped");
     }
   }
 
@@ -568,7 +512,7 @@ export class AnimationManager {
           tube.scale.copy(this.originalScales[index]);
         }
       });
-      console.log("🔄 Tubes reset to original positions and scales");
+      // Tubes reset to original positions and scales
     } else {
       // Fallback: reset to default circle positions
       const tubes = tubesGroup.children as THREE.Mesh[];
@@ -582,7 +526,7 @@ export class AnimationManager {
         tube.position.set(x, y, 0);
         tube.scale.setScalar(1);
       });
-      console.log("🔄 Tubes reset to default circle positions");
+      // Tubes reset to default circle positions
     }
   }
 
@@ -620,13 +564,7 @@ export class AnimationManager {
    * Log current animation state for debugging
    */
   public logAnimationState(): void {
-    console.log("🔍 Animation State:", {
-      isAnimating: this.isAnimating,
-      isInfiniteAnimationRunning: this.isInfiniteAnimationRunning,
-      shouldResumeInfiniteAnimation: this.shouldResumeInfiniteAnimation,
-      infiniteAnimationSpeed: this.infiniteAnimationSpeed,
-      originalInfiniteAnimationSpeed: this.originalInfiniteAnimationSpeed,
-    });
+    // Animation state logging removed
   }
 
   /**
@@ -634,14 +572,10 @@ export class AnimationManager {
    */
   public resumeInfiniteAnimation(tubesGroup: THREE.Group): void {
     if (this.shouldResumeInfiniteAnimation) {
-      console.log("🔄 Resuming infinite individual tube backflip animation...");
       this.triggerIndividualTubeBackflipAnimation(tubesGroup);
       this.shouldResumeInfiniteAnimation = false;
       this.isInfiniteAnimationRunning = true;
       // Keep the current speed setting when resuming
-      console.log(
-        `🔄 Infinite animation resumed at ${this.infiniteAnimationSpeed}x speed`
-      );
     }
   }
 
@@ -649,12 +583,10 @@ export class AnimationManager {
    * Force restart the infinite animation (useful for ensuring it's running)
    */
   public forceRestartInfiniteAnimation(tubesGroup: THREE.Group): void {
-    console.log("🔄 Force restarting infinite animation...");
     this.stopAnimation(); // Stop any current animation
     this.isInfiniteAnimationRunning = true;
     this.shouldResumeInfiniteAnimation = false;
     this.triggerIndividualTubeBackflipAnimation(tubesGroup);
-    console.log("🔄 Infinite animation force restarted");
   }
 
   /**
@@ -667,13 +599,9 @@ export class AnimationManager {
     duration: number = 3000
   ): void {
     if (this.isAnimating) {
-      console.log(
-        "⚠️ Animation already in progress, stopping current animation..."
-      );
       this.stopAnimation();
     }
 
-    console.log("🌟 Starting initial page load animation...");
     this.isAnimating = true;
 
     const startTime = Date.now();
@@ -710,7 +638,6 @@ export class AnimationManager {
         tubesGroup.rotation.z = endRotation;
         this.isAnimating = false;
         this.currentAnimationId = undefined;
-        console.log("✅ Initial page load animation complete");
 
         // Start the infinite animation after the entrance animation
         this.triggerIndividualTubeBackflipAnimation(tubesGroup);
