@@ -150,8 +150,7 @@ class PortfolioScene {
       this.cameraManager.onWindowResize();
 
       // Log resize for debugging
-      const { width, height } = this.getCanvasDimensions();
-      console.log(`🔄 Canvas resized to: ${width}x${height}`);
+      this.getCanvasDimensions();
     }, 100);
   };
 
@@ -163,7 +162,6 @@ class PortfolioScene {
 
     // Calculate bounding sphere for camera fitting - only for the tubes, not the floor
     const bounds = calculateBoundingSphere([this.tubesGroup]);
-    console.log("Circle bounds:", bounds); // Debug logging
 
     // Adjust bounds to focus only on the circle area, not the floor
     const adjustedBounds = {
@@ -201,26 +199,23 @@ class PortfolioScene {
 
     // Listen for custom canvas resize events
     window.addEventListener("canvasResize", () => {
-      console.log("🔄 Custom canvas resize event received");
       this.handleResize();
     });
 
     // Listen for summarization demonstration events
     window.addEventListener("demonstrateSummarization", () => {
-      console.log("📝 Summarization demonstration event received");
       this.demonstrateSummarization();
     });
 
     // Listen for animation trigger events from chat UI
     window.addEventListener("triggerAnimation", (event: Event) => {
       const customEvent = event as CustomEvent;
-      console.log("🎬 Animation triggered:", customEvent.detail);
+
       this.triggerAnimation(customEvent.detail.type);
     });
 
     // Listen for animation stop events from chatbot
     window.addEventListener("stopAnimation", () => {
-      console.log("⏹️ Stopping animation...");
       if (this.animationManager && this.tubesGroup) {
         this.animationManager.stopAnimation();
         this.animationManager.resetTubesToOriginal(this.tubesGroup);
@@ -234,16 +229,12 @@ class PortfolioScene {
 
     // Legacy event listener for backward compatibility
     window.addEventListener("testAnimation", () => {
-      console.log("🎬 Legacy animation test triggered");
       this.triggerAnimation("spin");
     });
   }
 
   private triggerAnimation(animationType: string): void {
     if (!this.tubesGroup || !this.animationManager) {
-      console.warn(
-        "⚠️ Cannot trigger animation - tubes group or animation manager not ready"
-      );
       return;
     }
 
@@ -298,7 +289,6 @@ class PortfolioScene {
         );
         break;
       default:
-        console.warn(`⚠️ Unknown animation type: ${animationType}`);
         break;
     }
   }
@@ -307,7 +297,6 @@ class PortfolioScene {
 
   // Public method to manually trigger canvas resize
   public forceResize(): void {
-    console.log("🔄 Force resizing canvas...");
     this.handleResize();
   }
 
@@ -325,21 +314,15 @@ class PortfolioScene {
       Math.abs(width - actualWidth) > 1 ||
       Math.abs(height - actualHeight) > 1
     ) {
-      console.warn(
-        `⚠️ Canvas dimensions mismatch detected. Expected: ${width}x${height}, Actual: ${actualWidth}x${actualHeight}`
-      );
       this.forceResize();
       return false;
     }
 
-    console.log("✅ Canvas dimensions are correct");
     return true;
   }
 
   // Demonstrate the message summarization system
   private demonstrateSummarization(): void {
-    console.log("📝 Demonstrating message summarization system...");
-
     // Test the summarization system if we have access to the context manager
     if (this.chatUI) {
       // Access the context manager through the chat UI
@@ -350,16 +333,8 @@ class PortfolioScene {
       ) {
         contextManager.testSummarization();
       } else {
-        console.log("📝 Context manager not accessible for testing");
       }
     }
-
-    console.log("📝 Message summarization system is now active!");
-    console.log(
-      "📝 Long messages (>2000 chars) will be automatically summarized"
-    );
-    console.log("📝 Summaries are limited to 500 characters to save on tokens");
-    console.log("📝 Use the chatbot to test the summarization system");
   }
 
   public dispose(): void {

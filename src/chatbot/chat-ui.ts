@@ -165,7 +165,6 @@ export class ChatUI {
     this.sendButton.className =
       "p-2 text-gray-400 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 hover:bg-gray-600 rounded-full transition-colors";
     this.sendButton.addEventListener("click", () => {
-      console.log("📤 Send button clicked, calling sendMessage()");
       this.sendMessage();
     });
 
@@ -188,9 +187,8 @@ export class ChatUI {
 
   private async initializeChatbot(): Promise<void> {
     try {
-      console.log("🤖 ChatUI: Starting chatbot initialization...");
       await this.chatbot.initialize();
-      console.log("✅ ChatUI: Chatbot initialized successfully!");
+
       this.updateStatus("Ready");
       this.input.disabled = false;
       this.sendButton.disabled = false;
@@ -233,11 +231,8 @@ export class ChatUI {
 
   private async sendMessage(): Promise<void> {
     const message = this.input.value.trim();
-    console.log("📤 sendMessage called with:", message);
-    console.log("📤 chatbot.isReady():", this.chatbot.isReady());
 
     if (!message || !this.chatbot.isReady()) {
-      console.log("📤 Message or chatbot not ready, returning");
       return;
     }
 
@@ -444,8 +439,6 @@ export class ChatUI {
   }
 
   private triggerAnimation(animationType: string): void {
-    console.log(`🎬 Triggering ${animationType} animation...`);
-
     // Dispatch custom event for main.ts to listen to
     const animationEvent = new CustomEvent("triggerAnimation", {
       detail: {
@@ -531,8 +524,6 @@ export class ChatUI {
         <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? "▼" : "▲"}</span>
       `;
     }
-
-    console.log("📍 Context display updated:", context);
   }
 
   private createContextDropdown(): void {
@@ -585,11 +576,6 @@ export class ChatUI {
       this.isContextDropdownOpen = true;
       return;
     }
-
-    console.log(
-      "🐛 Context dropdown toggle called, current state:",
-      this.isContextDropdownOpen
-    );
 
     if (this.isContextDropdownOpen) {
       this.contextDropdown.style.display = "none";
@@ -813,11 +799,6 @@ export class ChatUI {
     // Position the dropdown relative to the debug button
     this.debugButton.style.position = "relative";
     this.debugButton.appendChild(this.debugDropdown);
-
-    console.log(
-      "🐛 Debug dropdown created and attached to button:",
-      this.debugButton
-    );
   }
 
   private toggleDebugDropdown({
@@ -836,18 +817,12 @@ export class ChatUI {
       return;
     }
 
-    console.log(
-      "🐛 Debug dropdown toggle called, current state:",
-      this.isDebugDropdownOpen
-    );
     if (this.isDebugDropdownOpen) {
       this.debugDropdown.style.display = "none";
       this.isDebugDropdownOpen = false;
-      console.log("🐛 Debug dropdown closed");
     } else {
       this.debugDropdown.style.display = "block";
       this.isDebugDropdownOpen = true;
-      console.log("🐛 Debug dropdown opened");
     }
   }
 }

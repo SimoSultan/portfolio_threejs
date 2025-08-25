@@ -111,8 +111,6 @@ export function triggerCanvasResize(): void {
     detail: { timestamp: Date.now() },
   });
   window.dispatchEvent(customResizeEvent);
-
-  console.log("🔄 Canvas resize manually triggered");
 }
 
 /**
@@ -125,6 +123,4 @@ export function demonstrateMessageSummarization(): void {
     detail: { timestamp: Date.now() },
   });
   window.dispatchEvent(summarizationEvent);
-
-  console.log("📝 Message summarization demonstration triggered");
 }

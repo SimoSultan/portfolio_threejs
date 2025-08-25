@@ -69,7 +69,6 @@ export class CircleGeometry {
       tubeCount++;
     }
 
-    console.log(`Created ${tubeCount} tubes to form a circle`);
     return group;
   }
 }

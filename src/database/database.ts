@@ -20,9 +20,7 @@ export class DatabaseManager {
   private checkStorageSupport(): void {
     if (typeof window !== "undefined" && "indexedDB" in window) {
       this.useIndexedDB = true;
-      console.log("💾 Using IndexedDB for storage");
     } else {
-      console.log("💾 Using localStorage fallback");
     }
   }
 

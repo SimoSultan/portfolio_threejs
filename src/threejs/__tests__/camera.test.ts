@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as THREE from "three";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { CameraManager } from "../camera";
 
 // Mock Three.js
@@ -29,14 +30,14 @@ describe("CameraManager", () => {
 
     // Mock Camera
     mockCamera = {
-      position: { 
-        copy: vi.fn(), 
+      position: {
+        copy: vi.fn(),
         clone: vi.fn().mockReturnThis(),
         sub: vi.fn().mockReturnThis(),
         normalize: vi.fn().mockReturnThis(),
-        x: 0, 
-        y: 0, 
-        z: 10 
+        x: 0,
+        y: 0,
+        z: 10,
       },
       fov: 75,
       aspect: 1,
@@ -64,7 +65,7 @@ describe("CameraManager", () => {
 
     // Mock MathUtils
     (THREE.MathUtils as any) = {
-      degToRad: vi.fn((deg) => (deg * Math.PI) / 180),
+      degToRad: vi.fn(deg => (deg * Math.PI) / 180),
     };
 
     cameraManager = new CameraManager(mockCamera, mockRenderer);
@@ -106,12 +107,6 @@ describe("CameraManager", () => {
     it("should update camera projection matrix", () => {
       cameraManager.onWindowResize();
       expect(mockCamera.updateProjectionMatrix).toHaveBeenCalled();
-    });
-
-    it("should log camera update", () => {
-      const consoleSpy = vi.spyOn(console, "log");
-      cameraManager.onWindowResize();
-      expect(consoleSpy).toHaveBeenCalledWith("📷 Camera updated for window resize");
     });
   });
 

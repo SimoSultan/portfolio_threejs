@@ -1,8 +1,4 @@
-import {
-  ChatContext,
-  ContextStorage,
-  StoredMessage,
-} from "../chatbot/context";
+import { ChatContext, ContextStorage, StoredMessage } from "../chatbot/context";
 import { DatabaseManager } from "./database";
 
 /**
@@ -39,7 +35,6 @@ export class StorageManager {
     // If no context exists, create initial context
     if (!existing) {
       existing = this.createInitialContext();
-      console.log("💾 Creating initial context for first message");
     }
 
     existing.messages.push(message);
@@ -282,10 +277,6 @@ export class StorageManager {
         totalTokens,
         lastUpdated: new Date(),
       });
-
-      console.log(
-        `🗑️ Cleaned up ${removedMessages} messages, removed ${removedTokens} tokens`
-      );
     }
 
     return { removedMessages, removedTokens };
@@ -355,10 +346,6 @@ export class StorageManager {
       totalTokens,
       lastUpdated: new Date(),
     });
-
-    console.log(
-      `📥 Imported ${messages.length} messages with ${totalTokens} tokens`
-    );
   }
 
   /**

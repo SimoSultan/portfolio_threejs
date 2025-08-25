@@ -28,26 +28,14 @@ export class Chatbot {
   async initialize(): Promise<void> {
     // Handle local fallback model
     if (this.modelConfig.modelId === "local") {
-      console.log(
-        "🏠 Using local fallback model - no external loading required"
-      );
       return;
     }
 
     // Check if Ollama is available
     try {
-      console.log(
-        `🚀 Checking Ollama availability for: ${this.modelConfig.name}`
-      );
-      console.log(`🔧 Model ID: ${this.modelConfig.modelId}`);
-
       // Test Ollama connection
       const ollamaUrl = getOllamaUrl();
       const environment = getOllamaEnvironment();
-
-      console.log(
-        `🌐 Using Ollama server: ${ollamaUrl} (${environment} environment)`
-      );
 
       const response = await fetch(`${ollamaUrl}/api/tags`, {
         method: "GET",
@@ -56,7 +44,6 @@ export class Chatbot {
 
       if (response.ok) {
         this.isOllamaAvailable = true;
-        console.log("✅ Ollama is running and accessible");
 
         // Check if the model is available
         const models = await response.json();
@@ -65,18 +52,14 @@ export class Chatbot {
         );
 
         if (modelExists) {
-          console.log(`✅ Model ${this.modelConfig.modelId} is available`);
         } else {
-          console.log(
-            `❌ Model ${this.modelConfig.modelId} not found. Please download it manually with: ollama pull ${this.modelConfig.modelId}`
-          );
         }
       } else {
         throw new Error(`Ollama responded with status: ${response.status}`);
       }
     } catch (error) {
       console.error("❌ Ollama not available:", error);
-      console.log("🔄 Falling back to local responses");
+
       this.isOllamaAvailable = false;
     }
   }
@@ -126,10 +109,6 @@ export class Chatbot {
 
   private async generateOllamaResponse(userMessage: string): Promise<string> {
     try {
-      console.log(
-        `🤖 Generating response with Ollama model: ${this.modelConfig.modelId}`
-      );
-
       // Get current context and format it for the prompt
       const context = this.contextManager.formatContextForPrompt();
 

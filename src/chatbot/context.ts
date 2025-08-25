@@ -54,7 +54,6 @@ export class ContextManager {
       const stored = await this.storage.loadContext();
       if (stored) {
         this.context = stored.context;
-        console.log("📍 Context loaded from storage:", this.context);
       } else {
         // Initialize with default context
         await this.createDefaultContext();
@@ -67,9 +66,7 @@ export class ContextManager {
             this.getCurrentLocation();
           }
         })
-        .catch(() => {
-          console.log("📍 Using default location");
-        });
+        .catch(() => {});
     } catch (error) {
       console.error("❌ Error initializing context:", error);
       await this.createDefaultContext();
@@ -95,8 +92,6 @@ export class ContextManager {
       timezone: timezone,
       location: "Brisbane, Australia", // Default location
     };
-
-    console.log("📍 Context initialized with default:", this.context);
 
     // Save to storage
     await this.saveContext();
@@ -155,16 +150,10 @@ export class ContextManager {
       summary = this.createMessageSummary(content);
       finalContent = summary;
       isSummarized = true;
-      console.log(
-        `📝 Message summarized from ${content.length} to ${summary.length} characters`
-      );
     } else if (tokenCount > this.MAX_MESSAGE_TOKENS) {
       // Fallback to truncation if summarization isn't needed but message is too long
       const maxChars = this.MAX_MESSAGE_TOKENS * 4;
       finalContent = content.substring(0, maxChars) + "... [truncated]";
-      console.warn(
-        `⚠️ Message truncated from ${tokenCount} to ${this.MAX_MESSAGE_TOKENS} tokens`
-      );
     }
 
     const message: StoredMessage = {
@@ -195,9 +184,6 @@ export class ContextManager {
 
       // Check if adding this message would exceed our limit
       if (totalTokens + messageTokens + this.RESERVE_TOKENS > this.MAX_TOKENS) {
-        console.log(
-          `⚠️ Stopping at message ${i}: would exceed ${this.MAX_TOKENS} tokens`
-        );
         break;
       }
 
@@ -205,9 +191,6 @@ export class ContextManager {
       totalTokens += messageTokens;
     }
 
-    console.log(
-      `📊 Conversation: ${conversationMessages.length} messages, ${totalTokens} tokens`
-    );
     return conversationMessages;
   }
 
@@ -229,7 +212,6 @@ export class ContextManager {
     // If message was summarized, return the summary (original content is not stored to save space)
     // In a real implementation, you might want to store the original content separately
     if (message.isSummarized) {
-      console.log("📝 Message was summarized, returning summary content");
       return message.content; // This is the summary
     }
 
@@ -297,14 +279,10 @@ export class ContextManager {
   ): void {
     if (threshold !== undefined) {
       this.MESSAGE_SUMMARY_THRESHOLD = threshold;
-      console.log(
-        `📝 Updated summarization threshold to ${threshold} characters`
-      );
     }
 
     if (maxLength !== undefined) {
       this.SUMMARY_MAX_LENGTH = maxLength;
-      console.log(`📝 Updated summary max length to ${maxLength} characters`);
     }
   }
 
@@ -392,38 +370,26 @@ export class ContextManager {
 
   // Test method to demonstrate summarization functionality
   public async testSummarization(): Promise<void> {
-    console.log("🧪 Testing message summarization system...");
-
     // Create a test long message
     const longMessage =
       "This is a very long message that exceeds the summarization threshold. ".repeat(
         100
       );
-    console.log(`📝 Test message length: ${longMessage.length} characters`);
 
     // Test if it should be summarized
     const shouldSummarize = this.shouldSummarizeMessage(longMessage);
-    console.log(`📝 Should summarize: ${shouldSummarize}`);
 
     if (shouldSummarize) {
       const summary = this.createMessageSummary(longMessage);
-      console.log(`📝 Summary created: ${summary.length} characters`);
-      console.log(`📝 Summary preview: ${summary.substring(0, 100)}...`);
 
       // Test token savings
       const originalTokens = this.estimateTokenCount(longMessage);
       const summaryTokens = this.estimateTokenCount(summary);
       const tokensSaved = originalTokens - summaryTokens;
-      console.log(
-        `📝 Tokens saved: ${tokensSaved} (${originalTokens} → ${summaryTokens})`
-      );
     }
 
     // Show current settings
     const settings = this.getSummarizationSettings();
-    console.log(
-      `📝 Current settings: threshold=${settings.threshold}, maxLength=${settings.maxLength}`
-    );
   }
 
   // Clear old messages to free up space
@@ -444,7 +410,6 @@ export class ContextManager {
       const removed = messages.shift();
       if (removed) {
         totalTokens -= removed.tokenCount;
-        console.log(`🗑️ Removed old message: ${removed.tokenCount} tokens`);
       }
     }
 
@@ -459,9 +424,6 @@ export class ContextManager {
         0
       );
       totalTokens -= removedTokens;
-      console.log(
-        `🗑️ Removed ${removed.length} old messages: ${removedTokens} tokens`
-      );
     }
 
     // Update storage
@@ -512,10 +474,6 @@ export class ContextManager {
 
         savedTokens += tokensSaved;
         summarized++;
-
-        console.log(
-          `📝 Summarized existing message: saved ${tokensSaved} tokens`
-        );
       }
     }
 
@@ -532,10 +490,6 @@ export class ContextManager {
         totalTokens: newTotalTokens,
         lastUpdated: new Date(),
       });
-
-      console.log(
-        `📝 Summarized ${summarized} messages, saved ${savedTokens} tokens total`
-      );
     }
 
     return { summarized, savedTokens };
@@ -609,22 +563,16 @@ Please consider this context when responding to the user's message.`;
 
         if (permission.state === "granted") {
           this.locationPermissionGranted = true;
-          console.log("📍 Location permission already granted");
         } else if (permission.state === "prompt") {
-          console.log("📍 Requesting location permission...");
           // Request permission by trying to get position
           const position = await this.getCurrentPosition();
           if (position) {
             this.locationPermissionGranted = true;
-            console.log("📍 Location permission granted");
           }
         } else {
-          console.log("📍 Location permission denied");
         }
       }
-    } catch (error) {
-      console.log("📍 Location permission check failed:", error);
-    }
+    } catch (error) {}
   }
 
   private getCurrentPosition(): Promise<GeolocationPosition | null> {
@@ -651,8 +599,6 @@ Please consider this context when responding to the user's message.`;
           locationName || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
         this.context.lastLocationUpdate = new Date();
 
-        console.log("📍 Location updated:", this.context.location);
-
         // Save updated context
         await this.saveContext();
 
@@ -663,7 +609,6 @@ Please consider this context when responding to the user's message.`;
       }
     } catch (error) {
       console.error("❌ Error getting location:", error);
-      console.log("📍 Using default location");
     }
   }
 
@@ -706,8 +651,6 @@ Please consider this context when responding to the user's message.`;
   // Refresh location (can be called from UI)
   public async refreshLocation(): Promise<void> {
     try {
-      console.log("📍 Refreshing location...");
-
       // First, try to re-request permission if not already granted
       if (!this.locationPermissionGranted) {
         await this.requestLocationPermission();
@@ -718,9 +661,7 @@ Please consider this context when responding to the user's message.`;
         await this.getCurrentLocation();
       } else {
         // If permission is still denied, try to prompt user anyway
-        console.log(
-          "📍 Permission not granted, attempting to request location..."
-        );
+
         const position = await this.getCurrentPosition();
         if (position && this.context) {
           const { latitude, longitude } = position.coords;
@@ -732,11 +673,6 @@ Please consider this context when responding to the user's message.`;
           this.context.lastLocationUpdate = new Date();
           this.locationPermissionGranted = true;
 
-          console.log(
-            "📍 Location updated via direct request:",
-            this.context.location
-          );
-
           // Save updated context
           await this.saveContext();
 
@@ -745,7 +681,6 @@ Please consider this context when responding to the user's message.`;
             this.onContextUpdateCallback();
           }
         } else {
-          console.log("📍 Location request failed, keeping default");
         }
       }
     } catch (error) {
@@ -838,9 +773,7 @@ Please consider this context when responding to the user's message.`;
     try {
       const success = await this.storage.testStorage();
       if (success) {
-        console.log("✅ Database connection test passed");
       } else {
-        console.warn("⚠️ Database connection test failed");
       }
     } catch (error) {
       console.error("❌ Database connection test failed:", error);

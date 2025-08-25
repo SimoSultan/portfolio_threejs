@@ -107,12 +107,7 @@ describe("StorageManager", () => {
     it("should create initial context when none exists", async () => {
       mockDbManager.loadContext.mockResolvedValue(null);
 
-      const consoleSpy = vi.spyOn(console, "log");
       await storageManager.addMessage(mockMessage);
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "💾 Creating initial context for first message"
-      );
       expect(mockDbManager.saveContext).toHaveBeenCalledWith({
         messages: [mockMessage],
         totalTokens: 5,

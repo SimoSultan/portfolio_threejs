@@ -74,7 +74,6 @@ export class CameraManager {
     this.controls.update();
 
     // Log camera update for debugging
-    console.log("📷 Camera updated for window resize");
   }
 
   getControls(): OrbitControls {

@@ -182,16 +182,6 @@ describe("CircleGeometry", () => {
       expect(THREE.Color).toHaveBeenCalledWith(0x4a90e2); // Medium blue
       expect(THREE.Color).toHaveBeenCalledWith(0x1e3a8a); // Deep blue
     });
-
-    it("should log tube count", () => {
-      const consoleSpy = vi.spyOn(console, "log");
-
-      CircleGeometry.buildCircle();
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Created 91 tubes to form a circle"
-      );
-    });
   });
 
   describe("constants", () => {
