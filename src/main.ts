@@ -104,9 +104,9 @@ class PortfolioScene {
     // Get the actual canvas element dimensions
     const canvasRect = canvas.getBoundingClientRect();
 
-    // Use the actual canvas dimensions, not the CSS dimensions
-    const width = canvas.clientWidth || canvasRect.width;
-    const height = canvas.clientHeight || canvasRect.height;
+    // Use the viewport size so we truly fill the screen regardless of layout changes
+    const width = window.innerWidth || canvasRect.width;
+    const height = window.innerHeight || canvasRect.height;
 
     // Ensure minimum dimensions
     const minWidth = 100;
