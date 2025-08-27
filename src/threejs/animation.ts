@@ -136,6 +136,15 @@ export class AnimationManager {
         settleFactor = 1 - easeOut; // decreases to 0 near the end
       }
 
+      // In the initial phase, gently ramp up displacement from 0 to full
+      const rampEnd = 0.15; // ramp up during first 15%
+      let rampFactor = 1; // 0 = no displacement; 1 = full displacement
+      if (!continuous && progress < rampEnd) {
+        const t = progress / rampEnd;
+        const easeIn = t * t; // simple ease-in
+        rampFactor = easeIn;
+      }
+
       tubes.forEach((tube, index) => {
         // Create a continuous wave that moves around the circle
         // The wave affects exactly 5 tubes at a time as it travels
@@ -163,8 +172,10 @@ export class AnimationManager {
           const waveIntensity = 0.08 * waveShape;
 
           // Ensure radius only increases (never decreases)
-          // During settle, smoothly reduce outward displacement
-          const radiusMultiplier = 1 + Math.max(0, waveIntensity) * settleFactor;
+          // During start/end, smoothly adjust outward displacement
+          const effectiveFactor = rampFactor * settleFactor;
+          const radiusMultiplier =
+            1 + Math.max(0, waveIntensity) * effectiveFactor;
 
           // Move tube outward from center based on wave
           const direction = originalPositions[index].clone().normalize();
