@@ -4,6 +4,7 @@ import { ChatUI } from "./chatbot";
 import { AnimationManager } from "./threejs/animation";
 import { CameraManager } from "./threejs/camera";
 import { COLORS } from "./threejs/constants";
+import { BackgroundManager } from "./threejs/background";
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
 import { calculateBoundingSphere } from "./threejs/utils";
@@ -15,6 +16,7 @@ class PortfolioScene {
   private tubesGroup!: THREE.Group;
   private cameraManager!: CameraManager;
   private animationManager!: AnimationManager;
+  private backgroundManager!: BackgroundManager;
   private animationId!: number;
   private chatUI!: ChatUI;
   private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -67,6 +69,10 @@ class PortfolioScene {
 
     // Initialize animation manager
     this.animationManager = new AnimationManager(this.scene);
+
+    // Initialize background effects (transparent canvas overlays page gradient)
+    this.backgroundManager = new BackgroundManager(this.scene);
+    this.backgroundManager.setMode("wave");
 
     // Build circle geometry
     this.buildCircle();
@@ -180,6 +186,11 @@ class PortfolioScene {
 
     // Update camera controls
     this.cameraManager.update();
+
+    // Update background effects
+    if (this.backgroundManager) {
+      this.backgroundManager.update();
+    }
 
     // Render scene
     this.renderer.render(this.scene, this.camera);
@@ -363,6 +374,10 @@ class PortfolioScene {
     // Dispose of animation manager
     if (this.animationManager) {
       this.animationManager.dispose();
+    }
+
+    if (this.backgroundManager) {
+      this.backgroundManager.dispose();
     }
 
     // Dispose of chatbot
