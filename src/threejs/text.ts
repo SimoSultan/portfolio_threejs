@@ -82,8 +82,8 @@ export async function createTitleText(
     depthTest: false,
   });
   const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
-  outlineMesh.scale.multiplyScalar(1.015);
-  outlineMesh.position.z = -0.01; // sit just behind
+  outlineMesh.scale.multiplyScalar(1.05);
+  outlineMesh.position.z = -0.03; // sit further behind to form a halo
   outlineMesh.renderOrder = 998;
 
   const group = new THREE.Group();

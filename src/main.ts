@@ -200,7 +200,7 @@ class PortfolioScene {
         bevelSize: 0.008,
         bevelSegments: 2,
       });
-      title.position.set(0, 0.25, 0.04); // Slightly further in front of circle for clarity
+      title.position.set(0, 0.25, 0.06); // Further forward to clear all geometry
       this.titleMesh = title;
       this.scene.add(title);
     } catch (err) {
