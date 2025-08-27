@@ -92,10 +92,10 @@ export class BackgroundManager {
       const positions = this.particleGeometry.attributes.position.array as Float32Array;
       const velocities = this.particleVelocities;
 
-      // Bounds for wrapping
-      const rangeX = 6;
-      const rangeY = 3.5;
-      const rangeZ = 8; // deeper field – original implementation
+      // Bounds for wrapping (expanded horizontally, shallow depth, close to camera)
+      const rangeX = 10; // fill full width
+      const rangeY = 6;  // fill full height
+      const rangeZ = 3;  // shallow field so particles stay near camera
 
       for (let i = 0; i < positions.length; i += 3) {
         positions[i] += velocities[i] * dt;
@@ -216,15 +216,15 @@ export class BackgroundManager {
   private createParticles(): void {
     if (!this.root) return;
 
-    const count = 2000; // original density
+    const count = 4000; // denser field to cover full screen up-close
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const velocities = new Float32Array(count * 3);
 
     // Bounds for initialization
-    const rangeX = 6;
-    const rangeY = 3.5;
-    const rangeZ = 8;
+    const rangeX = 10;
+    const rangeY = 6;
+    const rangeZ = 3;
 
     let p = 0;
     let c = 0;
@@ -245,7 +245,7 @@ export class BackgroundManager {
 
       // Small drift velocities
       // Small drift velocities with forward bias
-      const speed = 0.2 + Math.random() * 0.3;
+      const speed = 0.25 + Math.random() * 0.35;
       const dir = new THREE.Vector3(
         (Math.random() - 0.5) * 0.4,
         (Math.random() - 0.5) * 0.2,
@@ -265,7 +265,7 @@ export class BackgroundManager {
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     const mat = new THREE.PointsMaterial({
-      size: 0.02,
+      size: 0.022,
       vertexColors: true,
       transparent: true,
       opacity: 0.6,
@@ -274,7 +274,7 @@ export class BackgroundManager {
     });
 
     const points = new THREE.Points(geo, mat);
-    points.position.set(0, 0, -6.5); // original further field
+    points.position.set(0, 0, -1.2); // bring the particle field near the camera
 
     this.root.add(points);
     this.particlePoints = points;
