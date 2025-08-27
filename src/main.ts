@@ -4,7 +4,7 @@ import { ChatUI } from "./chatbot";
 import { AnimationManager } from "./threejs/animation";
 import { BackgroundManager } from "./threejs/background";
 import { CameraManager } from "./threejs/camera";
-import { COLORS } from "./threejs/constants";
+// import { COLORS } from "./threejs/constants"; // not used
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
 import { calculateBoundingSphere } from "./threejs/utils";
@@ -170,7 +170,7 @@ class PortfolioScene {
     this.scene.add(this.tubesGroup);
 
     // Calculate bounding sphere for camera fitting - only for the tubes, not the floor
-    const bounds = calculateBoundingSphere([this.tubesGroup]);
+    // const bounds = calculateBoundingSphere([this.tubesGroup]); // not used anymore
 
     // Adjust bounds to focus only on the circle area, not the floor
     const adjustedBounds = {
@@ -261,7 +261,7 @@ class PortfolioScene {
         this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerMexicanWaveAnimation(
           this.tubesGroup,
-          2000,
+          1500,
           false
         ); // Single cycle for manual trigger
         break;

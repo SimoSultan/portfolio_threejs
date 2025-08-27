@@ -111,7 +111,9 @@ export class ChatUI {
     this.tokenUsageIndicator.id = "token-usage";
     this.tokenUsageIndicator.className = "text-sm sm:text-base text-gray-400";
 
-    // Context display removed (button no longer shown)
+    // Context display (created and hidden by default)
+    this.createContextDisplay();
+    this.contextDisplay.style.display = "none";
 
     // Create new chat button
     const newChatButton = document.createElement("div");

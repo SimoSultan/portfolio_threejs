@@ -1,4 +1,4 @@
-import { getOllamaEnvironment, getOllamaUrl } from "./config";
+import { getOllamaUrl } from "./config";
 import { type ChatContext, ContextManager } from "./context";
 import { SimonContextRetriever } from "./simon-context";
 
@@ -38,7 +38,6 @@ export class Chatbot {
     try {
       // Test Ollama connection
       const ollamaUrl = getOllamaUrl();
-      const environment = getOllamaEnvironment();
 
       const response = await fetch(`${ollamaUrl}/api/tags`, {
         method: "GET",
@@ -172,9 +171,24 @@ export class Chatbot {
       ) {
         return (
           "This assistant is focused on Simon Curran’s professional portfolio. " +
-          "I can answer questions about Simon’s skills, experience and projects described here. " +
-          "Your question appears to be outside this context, so I can’t provide an answer. " +
-          "Please rephrase to something relevant to Simon’s work."
+          "I can help with questions about Simon’s skills, experience and projects featured here. " +
+          "That topic is outside the scope of this portfolio, so I don’t have an answer. " +
+          "Try asking about Simon’s work, projects, skills or roles."
+        );
+      }
+      // Heuristic: some models may paraphrase the instruction instead of returning the token
+      const lc = cleaned.toLowerCase();
+      if (
+        lc.includes("simon context") ||
+        lc.includes("scope of the simon context") ||
+        lc.includes("outside the context") ||
+        lc.startsWith("i don't know")
+      ) {
+        return (
+          "This assistant focuses on context about Simon. " +
+          "I can help with questions about Simon’s skills, experience and projects featured here. " +
+          "That topic is outside the scope of this portfolio, so I don’t have an answer. " +
+          "Try asking about Simon’s work, projects, skills or roles."
         );
       }
       return cleaned || "Sorry, I couldn't generate a response.";
