@@ -162,6 +162,8 @@ class PortfolioScene {
 
   private buildCircle(): void {
     this.tubesGroup = CircleGeometry.buildCircle();
+    // Apply visual scale to reduce circle by ~10% without changing geometry constants
+    this.tubesGroup.scale.setScalar(0.9);
     // Move the circle slightly upward so the perceived page center sits
     // between the top of the screen and top of the chat input
     this.tubesGroup.position.set(0, 0.25, 0);
@@ -172,8 +174,8 @@ class PortfolioScene {
 
     // Adjust bounds to focus only on the circle area, not the floor
     const adjustedBounds = {
-      center: new THREE.Vector3(0, 0.25, 0), // Slightly above canvas center
-      radius: 1.05,
+      center: new THREE.Vector3(0, 0.25, 0),
+      radius: 0.95, // camera fit radius adjusted for scaled circle
     };
 
     this.cameraManager.setObjectBounds(
