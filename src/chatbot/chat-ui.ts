@@ -52,7 +52,7 @@ export class ChatUI {
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex flex-col justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-white/5 backdrop-blur-md rounded-t-2xl shadow-lg w-full border-t border-white/10 h-[15vh] min-h-[100px]";
+      "flex flex-col justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-white/5 backdrop-blur-md rounded-t-2xl shadow-lg w-full border-t border-white/10 h-[15vh] min-h-[100px] mx-6";
 
     // Model selector - compact transparent design
     this.modelSelector = document.createElement("div");
