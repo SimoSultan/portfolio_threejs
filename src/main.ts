@@ -164,7 +164,7 @@ class PortfolioScene {
     this.tubesGroup = CircleGeometry.buildCircle();
     // Move the circle slightly upward so the perceived page center sits
     // between the top of the screen and top of the chat input
-    this.tubesGroup.position.set(0, 0.35, 0);
+    this.tubesGroup.position.set(0, 0.25, 0);
     this.scene.add(this.tubesGroup);
 
     // Calculate bounding sphere for camera fitting - only for the tubes, not the floor
@@ -172,8 +172,8 @@ class PortfolioScene {
 
     // Adjust bounds to focus only on the circle area, not the floor
     const adjustedBounds = {
-      center: new THREE.Vector3(0, 0.35, 0), // Focus slightly above center
-      radius: 1.05, // tighten radius due to smaller circle
+      center: new THREE.Vector3(0, 0.25, 0), // Slightly above canvas center
+      radius: 1.05,
     };
 
     this.cameraManager.setObjectBounds(
