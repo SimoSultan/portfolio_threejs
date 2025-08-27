@@ -23,10 +23,18 @@ export class SimonContextRetriever {
     if (this.doc.skills?.length) {
       lines.push(`Skills: ${this.doc.skills.join(", ")}`);
     }
+    if ((this.doc as any).workPreferences?.length) {
+      lines.push("Work Preferences:");
+      (this.doc as any).workPreferences.forEach((p: string) =>
+        lines.push(`- ${p}`)
+      );
+    }
     if (this.doc.experience?.length) {
       lines.push("Experience:");
       this.doc.experience.forEach(exp => {
-        lines.push(`- ${exp.title} @ ${exp.company} (${exp.start} – ${exp.end})`);
+        lines.push(
+          `- ${exp.title} @ ${exp.company} (${exp.start} – ${exp.end})`
+        );
         exp.highlights.forEach(h => lines.push(`  • ${h}`));
       });
     }
@@ -38,8 +46,16 @@ export class SimonContextRetriever {
         if (p.outcomes?.length) p.outcomes.forEach(o => lines.push(`  • ${o}`));
       });
     }
+    if ((this.doc as any).personal) {
+      const personal = (this.doc as any).personal as {
+        about?: string;
+        interests?: string[];
+      };
+      lines.push("Personal:");
+      if (personal.about) lines.push(`- ${personal.about}`);
+      if (personal.interests?.length)
+        lines.push(`  Interests: ${personal.interests.join(", ")}`);
+    }
     return lines.join("\n");
   }
 }
-
-

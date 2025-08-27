@@ -22,6 +22,11 @@ export type SimonContextDoc = {
   experience: SimonExperience[];
   projects: SimonProject[];
   links?: { label: string; url: string }[];
+  workPreferences?: string[]; // bullets describing how Simon likes to work
+  personal?: {
+    about?: string; // short paragraph
+    interests?: string[]; // bullets
+  };
 };
 
 // Seed content: replace with your real professional details
@@ -78,6 +83,20 @@ export const SIMON_CONTEXT: SimonContextDoc = {
     { label: "GitHub", url: "https://github.com/your‑github" },
     { label: "LinkedIn", url: "https://www.linkedin.com/in/your‑linkedin" },
   ],
+  workPreferences: [
+    "Product‑focused engineering with rapid iteration and measurable outcomes",
+    "TypeScript across the stack; strongly typed APIs and components",
+    "Small, collaborative teams; async communication with crisp docs",
+    "CI with fast feedback; tests that protect shipping velocity",
+  ],
+  personal: {
+    about:
+      "Outside of work, Simon enjoys building creative visuals, spending time with family in Brisbane, and exploring the outdoors.",
+    interests: [
+      "Generative graphics",
+      "Cycling",
+      "Coffee",
+      "Learning new frameworks",
+    ],
+  },
 };
-
-
