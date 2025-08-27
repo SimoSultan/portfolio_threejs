@@ -111,8 +111,7 @@ export class ChatUI {
     this.tokenUsageIndicator.id = "token-usage";
     this.tokenUsageIndicator.className = "text-sm sm:text-base text-gray-400";
 
-    // Context display
-    this.createContextDisplay();
+    // Context display removed (button no longer shown)
 
     // Create new chat button
     const newChatButton = document.createElement("div");
@@ -151,9 +150,8 @@ export class ChatUI {
     leftSection.className =
       "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400 cursor-default select-none";
 
-    // Add left side elements
+    // Add left side elements (context button removed)
     leftSection.appendChild(this.modelSelector);
-    leftSection.appendChild(this.contextDisplay);
     leftSection.appendChild(newChatButton);
     leftSection.appendChild(infoButton);
 
@@ -220,7 +218,7 @@ export class ChatUI {
       </svg>
     `;
     this.sendButton.className =
-      "p-2 text-gray-200 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 backdrop-blur-md";
+      "p-2 text-gray-200 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 backdrop-blur-md cursor-pointer";
     this.sendButton.addEventListener("click", () => {
       this.sendMessage();
     });
@@ -510,8 +508,9 @@ export class ChatUI {
       }
 
       const body =
-        "This portfolio includes a curated context about Simon Curran’s professional experience, skills, and projects. " +
-        "The chatbot answers strictly from that context so you can quickly understand Simon’s work. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
+        "This portfolio includes a curated view of Simon Curran’s professional experience, skills, and projects. " +
+        "The chatbot answers strictly from this portfolio so you can quickly understand Simon’s work. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
+        "Location context: Brisbane, Australia.\n\n" +
         "Try asking: \n- What technologies does Simon use?\n- Tell me about Simon’s recent projects.\n- What kind of roles has Simon worked in?";
 
       this.createInfoModal("About this site", body, "Got it", () => {
@@ -566,7 +565,7 @@ export class ChatUI {
     const confirmButton = document.createElement("button");
     confirmButton.textContent = confirmText;
     confirmButton.className =
-      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg";
+      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg cursor-pointer";
     confirmButton.addEventListener("click", () => {
       onConfirm();
       modal.remove();
@@ -1045,7 +1044,7 @@ export class ChatUI {
     const confirmButton = document.createElement("button");
     confirmButton.textContent = confirmText;
     confirmButton.className =
-      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg";
+      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg cursor-pointer";
 
     // Event listeners
     cancelButton.addEventListener("click", () => modal.remove());
