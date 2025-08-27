@@ -22,7 +22,10 @@ export class AnimationManager {
    * always return to a consistent radius even if interrupted.
    */
   private getOrComputeBasePositions(tubesGroup: THREE.Group): THREE.Vector3[] {
-    if (this.basePositions && this.basePositions.length === tubesGroup.children.length) {
+    if (
+      this.basePositions &&
+      this.basePositions.length === tubesGroup.children.length
+    ) {
       return this.basePositions;
     }
     const tubes = tubesGroup.children as THREE.Mesh[];

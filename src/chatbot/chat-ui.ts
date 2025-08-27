@@ -179,7 +179,8 @@ export class ChatUI {
     this.input = document.createElement("input");
     this.input.id = "chat-input";
     this.input.type = "text";
-    this.input.placeholder = "Ask me something about Simon’s work or projects.";
+    this.input.placeholder =
+      "Ask me something about Simon’s work or projects...";
     this.input.className =
       "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-400 text-white";
     this.input.addEventListener("keypress", e => {
@@ -503,7 +504,7 @@ export class ChatUI {
       if (typeof window !== "undefined" && localStorage.getItem(ackKey)) {
         // Show hint in the input placeholder instead of sending a first assistant message
         this.input.placeholder =
-          "Ask me something about Simon’s work or projects.";
+          "Ask me something about Simon’s work or projects...";
         return;
       }
 
@@ -519,7 +520,7 @@ export class ChatUI {
         } catch {}
         // After acknowledging, show the hint in the input placeholder
         this.input.placeholder =
-          "Ask me something about Simon’s work or projects.";
+          "Ask me something about Simon’s work or projects...";
       });
     } catch {
       // no-op
