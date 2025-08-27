@@ -191,7 +191,7 @@ export class ChatUI {
     this.debugButton = document.createElement("button");
     this.debugButton.innerHTML = "🐛";
     this.debugButton.className =
-      "px-3 py-2 text-sm bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition-colors border border-white/10 backdrop-blur-md";
+      "px-3 py-2 text-sm bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition-colors border border-white/10 backdrop-blur-md cursor-pointer";
     this.debugButton.title = "Debug Animations";
     this.debugButton.addEventListener("click", () => {
       this.toggleDebugDropdown();
@@ -809,7 +809,7 @@ export class ChatUI {
       option.className =
         "px-3 py-2 text-xs md:text-sm text-gray-300 hover:bg-gray-700/50 cursor-pointer transition-colors first:rounded-t-lg last:rounded-b-lg";
       const isSelected = id === this.currentModelId;
-      option.textContent = `${metadata.name} (${metadata.size})${isSelected ? "  ✓" : ""}`;
+      option.textContent = `${metadata.name} (${metadata.size})${isSelected ? " ✓" : ""}`;
       option.dataset.modelId = id;
 
       option.addEventListener("click", () => {
@@ -881,7 +881,9 @@ export class ChatUI {
 
   private updateModelDropdownTicks(): void {
     if (!this.modelDropdown) return;
-    const children = Array.from(this.modelDropdown.children) as HTMLDivElement[];
+    const children = Array.from(
+      this.modelDropdown.children
+    ) as HTMLDivElement[];
     children.forEach(child => {
       const id = child.dataset.modelId as string | undefined;
       if (!id) return;
@@ -1007,6 +1009,8 @@ export class ChatUI {
     this.input.disabled = false;
     this.sendButton.disabled = false;
     this.input.focus();
+    // Celebrate new chat with a backflip animation
+    this.triggerAnimation("backflip");
   }
 
   private createConfirmationModal(
