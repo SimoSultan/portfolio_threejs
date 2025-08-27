@@ -191,19 +191,16 @@ class PortfolioScene {
   private async buildTitle(): Promise<void> {
     try {
       const title = await createTitleText("Simon Curran", {
-        size: 0.6,
-        height: 0.08,
+        size: 0.2,
+        height: 0.01,
         color: "#ffffff",
         emissive: "#0b1220",
-        bevelEnabled: true,
-        bevelThickness: 0.012,
-        bevelSize: 0.008,
-        bevelSegments: 2,
+        bevelEnabled: false,
       });
-      // Place exactly at the circle's axis origin and shrink to ~1% scale
+      // Place at the circle center without additional scaling
       title.position.set(0, 0.25, 0.02);
       title.rotation.set(0, 0, 0);
-      title.scale.setScalar(0.01);
+      title.scale.setScalar(1);
       this.titleMesh = title;
       this.scene.add(title);
     } catch (err) {

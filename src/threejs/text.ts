@@ -19,14 +19,14 @@ export type TitleTextOptions = {
 };
 
 const DEFAULTS: Required<TitleTextOptions> = {
-  size: 0.35,
-  height: 0.05,
+  size: 0.2,
+  height: 0.01,
   color: "#e5e7eb", // tailwind gray-200
   emissive: "#111827", // tailwind gray-900
-  bevelEnabled: true,
-  bevelThickness: 0.01,
-  bevelSize: 0.006,
-  bevelSegments: 2,
+  bevelEnabled: false,
+  bevelThickness: 0.005,
+  bevelSize: 0.003,
+  bevelSegments: 1,
 };
 
 /**
@@ -56,13 +56,6 @@ export async function createTitleText(
   // Center the geometry so it rotates around its own center
   geometry.computeBoundingBox();
   geometry.center();
-  // Normalize geometry to unit width so external scale controls final size
-  const box = geometry.boundingBox!;
-  const width = box.max.x - box.min.x;
-  if (width > 0) {
-    const normalize = 1 / width; // unit width
-    geometry.scale(normalize, normalize, 1);
-  }
 
   // Use unlit material for maximum legibility and render above tubes
   const frontMaterial = new THREE.MeshBasicMaterial({
@@ -70,6 +63,7 @@ export async function createTitleText(
     transparent: true,
     opacity: 1.0,
     depthTest: false,
+    side: THREE.DoubleSide,
   });
 
   const frontMesh = new THREE.Mesh(geometry, frontMaterial);
@@ -79,19 +73,7 @@ export async function createTitleText(
 
   // Create a subtle outline by cloning geometry slightly scaled and darker color behind
   const outlineGeometry = geometry.clone();
-  const outlineMaterial = new THREE.MeshBasicMaterial({
-    color: new THREE.Color("#0a0f1a"),
-    transparent: true,
-    opacity: 0.95,
-    depthTest: false,
-  });
-  const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
-  outlineMesh.scale.multiplyScalar(1.05);
-  outlineMesh.position.z = -0.03; // sit further behind to form a halo
-  outlineMesh.renderOrder = 998;
-
   const group = new THREE.Group();
-  group.add(outlineMesh);
   group.add(frontMesh);
   return group;
 }
