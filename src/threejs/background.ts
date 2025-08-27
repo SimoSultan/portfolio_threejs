@@ -216,7 +216,7 @@ export class BackgroundManager {
   private createParticles(): void {
     if (!this.root) return;
 
-    const count = 4000; // denser field to cover full screen up-close
+    const count = 2000; // reduced density by ~50% for clarity
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const velocities = new Float32Array(count * 3);
