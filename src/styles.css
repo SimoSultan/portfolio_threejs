@@ -9,20 +9,18 @@ body {
     "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(
-    135deg,
-    #000000 0%,
-    #0a0a0a 25%,
-    #0f0f23 50%,
-    #1a1a2e 75%
-  );
+  /* Subtle deep-space gradient background */
+  background: radial-gradient(circle at 20% 20%, #1a1a2e 0%, transparent 40%),
+    radial-gradient(circle at 80% 30%, #0f3460 0%, transparent 45%),
+    linear-gradient(135deg, #0a0a0a 0%, #0f0f23 50%, #1a1a2e 100%);
   background-attachment: fixed;
   min-height: 100vh;
 }
 
 #threejs-canvas {
   display: block;
-  background: #000000;
+  /* Transparent so CSS gradient shows through */
+  background: transparent;
 }
 
 /* Smooth animations */

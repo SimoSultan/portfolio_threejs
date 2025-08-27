@@ -28,7 +28,7 @@ class PortfolioScene {
   private init(): void {
     // Scene setup
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(COLORS.BACKGROUND);
+    // Leave scene background transparent so CSS gradient can show through
 
     // Camera setup - aspect ratio will be set properly after renderer initialization
     this.camera = new THREE.PerspectiveCamera(
@@ -44,7 +44,7 @@ class PortfolioScene {
     this.renderer = new THREE.WebGLRenderer({
       canvas: document.getElementById("threejs-canvas") as HTMLCanvasElement,
       antialias: true,
-      alpha: false,
+      alpha: true,
       powerPreference: "high-performance",
       preserveDrawingBuffer: false,
       stencil: false,
