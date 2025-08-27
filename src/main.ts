@@ -2,9 +2,9 @@ import * as THREE from "three";
 
 import { ChatUI } from "./chatbot";
 import { AnimationManager } from "./threejs/animation";
+import { BackgroundManager } from "./threejs/background";
 import { CameraManager } from "./threejs/camera";
 import { COLORS } from "./threejs/constants";
-import { BackgroundManager } from "./threejs/background";
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
 import { calculateBoundingSphere } from "./threejs/utils";
@@ -162,8 +162,9 @@ class PortfolioScene {
 
   private buildCircle(): void {
     this.tubesGroup = CircleGeometry.buildCircle();
-    // Center the circle at the origin
-    this.tubesGroup.position.set(0, 0, 0);
+    // Move the circle slightly upward so the perceived page center sits
+    // between the top of the screen and top of the chat input
+    this.tubesGroup.position.set(0, 0.35, 0);
     this.scene.add(this.tubesGroup);
 
     // Calculate bounding sphere for camera fitting - only for the tubes, not the floor
@@ -171,8 +172,8 @@ class PortfolioScene {
 
     // Adjust bounds to focus only on the circle area, not the floor
     const adjustedBounds = {
-      center: new THREE.Vector3(0, 0, 0), // Keep camera focused on circle center
-      radius: 1.15, // Increased by 15% to move camera slightly further away
+      center: new THREE.Vector3(0, 0.35, 0), // Focus slightly above center
+      radius: 1.05, // tighten radius due to smaller circle
     };
 
     this.cameraManager.setObjectBounds(
