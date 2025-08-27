@@ -92,11 +92,11 @@ export class BackgroundManager {
       const positions = this.particleGeometry.attributes.position.array as Float32Array;
       const velocities = this.particleVelocities;
 
-      // Bounds for lifecycle (expanded horizontally, shallow depth, close to camera)
+      // Bounds for wrapping (expanded horizontally, shallow depth, close to camera)
       const rangeX = 10; // fill full width
       const rangeY = 6;  // fill full height
       const rangeZ = 3;  // shallow field so particles stay near camera
-      const spawnRadius = 0.12; // spawn near screen center
+      const centerRadius = 0.15; // small central zone to avoid crossing
 
       for (let i = 0; i < positions.length; i += 3) {
         // Integrate
@@ -104,37 +104,30 @@ export class BackgroundManager {
         positions[i + 1] += velocities[i + 1] * dt;
         positions[i + 2] += velocities[i + 2] * dt;
 
-        // Keep XY velocity pointing away from center (never cross center)
-        const dirLen = Math.hypot(positions[i], positions[i + 1]);
-        const vxy = Math.hypot(velocities[i], velocities[i + 1]) || 0.001;
-        if (dirLen > 1e-4) {
-          const dx = positions[i] / dirLen;
-          const dy = positions[i + 1] / dirLen;
-          velocities[i] = dx * vxy;
-          velocities[i + 1] = dy * vxy;
+        // Prevent crossing center: if inside small central zone and heading inward, nudge velocity outward
+        if (Math.abs(positions[i]) < centerRadius && Math.abs(positions[i + 1]) < centerRadius) {
+          const vx = velocities[i];
+          const vy = velocities[i + 1];
+          const px = positions[i];
+          const py = positions[i + 1];
+          const inward = px * vx + py * vy < 0; // velocity has inward component
+          if (inward) {
+            const len = Math.hypot(px, py) || 1;
+            const dirx = px / len;
+            const diry = py / len;
+            const speedXY = Math.hypot(vx, vy) || 0.3;
+            velocities[i] = dirx * speedXY;
+            velocities[i + 1] = diry * speedXY;
+          }
         }
 
-        // Despawn if outside bounds and respawn near center with outward velocity
-        if (
-          Math.abs(positions[i]) > rangeX ||
-          Math.abs(positions[i + 1]) > rangeY ||
-          positions[i + 2] > 0 ||
-          positions[i + 2] < -rangeZ
-        ) {
-          const angle = Math.random() * Math.PI * 2;
-          const radius = Math.random() * spawnRadius;
-          const dx = Math.cos(angle);
-          const dy = Math.sin(angle);
-
-          positions[i] = dx * radius;
-          positions[i + 1] = dy * radius;
-          positions[i + 2] = -Math.random() * rangeZ; // slightly behind camera
-
-          const speedXY = 0.25 + Math.random() * 0.35;
-          velocities[i] = dx * speedXY;
-          velocities[i + 1] = dy * speedXY;
-          velocities[i + 2] = 0.2 + Math.random() * 0.4; // forward drift
-        }
+        // Wrap around bounds to keep a continuous field
+        if (positions[i] > rangeX) positions[i] = -rangeX;
+        if (positions[i] < -rangeX) positions[i] = rangeX;
+        if (positions[i + 1] > rangeY) positions[i + 1] = -rangeY;
+        if (positions[i + 1] < -rangeY) positions[i + 1] = rangeY;
+        if (positions[i + 2] > 0) positions[i + 2] = -rangeZ; // move forward towards camera, wrap back
+        if (positions[i + 2] < -rangeZ) positions[i + 2] = 0;
       }
 
       this.particleGeometry.attributes.position.needsUpdate = true;
