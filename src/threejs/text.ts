@@ -16,6 +16,7 @@ export type TitleTextOptions = {
   bevelThickness?: number;
   bevelSize?: number;
   bevelSegments?: number;
+  targetWidth?: number; // desired world-space width of the full text
 };
 
 const DEFAULTS: Required<TitleTextOptions> = {
@@ -56,6 +57,14 @@ export async function createTitleText(
   // Center the geometry so it rotates around its own center
   geometry.computeBoundingBox();
   geometry.center();
+
+  // Enforce a specific world-space width to avoid extreme length
+  geometry.computeBoundingBox();
+  const box = geometry.boundingBox!;
+  const currentWidth = Math.max(1e-6, box.max.x - box.min.x);
+  const desiredWidth = options.targetWidth ?? 0.6; // default width ~60cm in our world units
+  const scale = desiredWidth / currentWidth;
+  geometry.scale(scale, scale, 1);
 
   // Use unlit material for maximum legibility and render above tubes
   const frontMaterial = new THREE.MeshBasicMaterial({

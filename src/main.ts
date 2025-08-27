@@ -196,6 +196,7 @@ class PortfolioScene {
         color: "#ffffff",
         emissive: "#0b1220",
         bevelEnabled: false,
+        targetWidth: 0.6, // clamp world width
       });
       // Place at the circle center without additional scaling
       title.position.set(0, 0.25, 0.02);
