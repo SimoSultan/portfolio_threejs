@@ -96,7 +96,7 @@ export class BackgroundManager {
       // Bounds for wrapping
       const rangeX = 6;
       const rangeY = 3.5;
-      const rangeZ = 8;
+      const rangeZ = 3.5; // tighter depth so stars sit closer to the camera
 
       for (let i = 0; i < positions.length; i += 3) {
         positions[i] += velocities[i] * dt;
@@ -225,7 +225,7 @@ export class BackgroundManager {
     // Bounds for initialization
     const rangeX = 6;
     const rangeY = 3.5;
-    const rangeZ = 8;
+    const rangeZ = 3.5; // shallower field for a closer feel
 
     let p = 0;
     let c = 0;
@@ -265,7 +265,7 @@ export class BackgroundManager {
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     const mat = new THREE.PointsMaterial({
-      size: 0.02,
+      size: 0.03,
       vertexColors: true,
       transparent: true,
       opacity: 0.6,
@@ -274,7 +274,7 @@ export class BackgroundManager {
     });
 
     const points = new THREE.Points(geo, mat);
-    points.position.set(0, 0, -6.5);
+    points.position.set(0, 0, -3.2); // bring the field closer to the viewer
 
     this.root.add(points);
     this.particlePoints = points;
