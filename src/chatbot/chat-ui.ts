@@ -130,6 +130,20 @@ export class ChatUI {
       this.showNewChatConfirmation();
     });
 
+    // Create info button to show first-time use popup on demand
+    const infoButton = document.createElement("div");
+    infoButton.className =
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors min-w-0 w-auto overflow-visible";
+    infoButton.id = "info-button";
+
+    const infoSummary = document.createElement("div");
+    infoSummary.className = "flex items-center gap-2 truncate text-sm sm:text-base";
+    infoSummary.innerHTML = `<span>ℹ️ Info</span>`;
+    infoButton.appendChild(infoSummary);
+    infoButton.addEventListener("click", () => {
+      this.showAboutModal();
+    });
+
     // Create left section container
     const leftSection = document.createElement("div");
     leftSection.className =
@@ -139,6 +153,7 @@ export class ChatUI {
     leftSection.appendChild(this.modelSelector);
     leftSection.appendChild(this.contextDisplay);
     leftSection.appendChild(newChatButton);
+    leftSection.appendChild(infoButton);
 
     // Create right section container
     const rightSection = document.createElement("div");
@@ -561,6 +576,14 @@ export class ChatUI {
     modalContent.appendChild(buttonContainer);
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
+  }
+
+  private showAboutModal(): void {
+    const body =
+      "This portfolio includes a curated context about Simon Curran’s professional experience, skills, and projects. " +
+      "The chatbot answers strictly from that context so you can quickly understand Simon’s work. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
+      "Try asking: \n- What technologies does Simon use?\n- Tell me about Simon’s recent projects.\n- What kind of roles has Simon worked in?";
+    this.createInfoModal("About this site", body, "Got it", () => {});
   }
 
   private triggerAnimation(animationType: string): void {
