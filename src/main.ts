@@ -191,16 +191,17 @@ class PortfolioScene {
   private async buildTitle(): Promise<void> {
     try {
       const title = await createTitleText("Simon Curran", {
-        size: 0.38,
-        height: 0.06,
-        color: "#e5e7eb",
+        size: 0.6,
+        height: 0.08,
+        color: "#ffffff",
         emissive: "#0b1220",
         bevelEnabled: true,
         bevelThickness: 0.012,
         bevelSize: 0.008,
         bevelSegments: 2,
       });
-      title.position.set(0, 0.25, 0.06); // Further forward to clear all geometry
+      // Center of canvas (x=0,y≈0 for our layout), push well in front
+      title.position.set(0, 0, 0.2);
       this.titleMesh = title;
       this.scene.add(title);
     } catch (err) {

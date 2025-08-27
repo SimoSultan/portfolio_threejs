@@ -1,6 +1,11 @@
 import * as THREE from "three";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
-import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { Font } from "three/examples/jsm/loaders/FontLoader.js";
+// Import the font JSON locally to avoid network/CORS issues
+// Vite supports JSON imports and tsconfig has resolveJsonModule enabled
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - no type defs for this JSON
+import helvetiker from "three/examples/fonts/helvetiker_regular.typeface.json";
 
 export type TitleTextOptions = {
   size?: number; // font size
@@ -34,16 +39,8 @@ export async function createTitleText(
 ): Promise<THREE.Group> {
   const opts = { ...DEFAULTS, ...options };
 
-  const loader = new FontLoader();
-  // Load a standard font from the Three.js CDN (keeps repo light). Consider bundling locally later.
-  const font = await new Promise<THREE.Font>((resolve, reject) => {
-    loader.load(
-      "https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_regular.typeface.json",
-      f => resolve(f),
-      undefined,
-      err => reject(err)
-    );
-  });
+  // Construct font from local JSON
+  const font = new Font(helvetiker as any);
 
   const geometry = new TextGeometry(text, {
     font,
