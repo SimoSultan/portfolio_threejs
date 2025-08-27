@@ -87,7 +87,7 @@ export class AnimationManager {
    */
   public triggerMexicanWaveAnimation(
     tubesGroup: THREE.Group,
-    duration: number = 2000,
+    duration: number = 1000,
     continuous: boolean = false
   ): void {
     if (this.isAnimating) {

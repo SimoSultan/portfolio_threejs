@@ -26,6 +26,11 @@ export type SimonContextDoc = {
   personal?: {
     about?: string; // short paragraph
     interests?: string[]; // bullets
+    contact?: {
+      email?: string;
+      linkedin?: string;
+      github?: string;
+    };
   };
 };
 
@@ -80,8 +85,14 @@ export const SIMON_CONTEXT: SimonContextDoc = {
     },
   ],
   links: [
-    { label: "GitHub", url: "https://github.com/your‑github" },
-    { label: "LinkedIn", url: "https://www.linkedin.com/in/your‑linkedin" },
+    {
+      label: "GitHub",
+      url: "https://github.com/SimoSultan",
+    },
+    {
+      label: "LinkedIn",
+      url: "https://www.linkedin.com/in/simon-curran-brisbane",
+    },
   ],
   workPreferences: [
     "Product‑focused engineering with rapid iteration and measurable outcomes",
@@ -96,7 +107,15 @@ export const SIMON_CONTEXT: SimonContextDoc = {
       "Generative graphics",
       "Cycling",
       "Coffee",
+      "Music",
+      "Swimming",
+      "Movies and TV shows",
       "Learning new frameworks",
     ],
+    contact: {
+      email: "simon.curran.89@gmail.com",
+      linkedin: "https://www.linkedin.com/in/simon-curran-brisbane",
+      github: "https://github.com/SimoSultan",
+    },
   },
 };
