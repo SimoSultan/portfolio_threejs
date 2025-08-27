@@ -89,51 +89,26 @@ export class BackgroundManager {
       this.particleVelocities
     ) {
       const dt = Math.min(this.clock.getDelta(), 0.033); // clamp delta
-      const positions = this.particleGeometry.attributes.position
-        .array as Float32Array;
+      const positions = this.particleGeometry.attributes.position.array as Float32Array;
       const velocities = this.particleVelocities;
 
-      // Elliptical bounds for despawn/respawn
-      const boundX = 6;
-      const boundY = 3.5;
-      const boundZ = 1.2;
-      const maxRadiusSq = 1.0; // (x/bx)^2 + (y/by)^2 + (z/bz)^2 > 1 -> respawn
-
-      const spawnRadius = 0.08; // spawn near center so they emanate outward
+      // Bounds for wrapping
+      const rangeX = 6;
+      const rangeY = 3.5;
+      const rangeZ = 8; // deeper field – original implementation
 
       for (let i = 0; i < positions.length; i += 3) {
-        // Integrate motion
         positions[i] += velocities[i] * dt;
         positions[i + 1] += velocities[i + 1] * dt;
         positions[i + 2] += velocities[i + 2] * dt;
 
-        // Check if particle left the bounds (ellipse)
-        const nx = positions[i] / boundX;
-        const ny = positions[i + 1] / boundY;
-        const nz = positions[i + 2] / boundZ;
-        const r2 = nx * nx + ny * ny + nz * nz;
-
-        if (r2 > maxRadiusSq) {
-          // Respawn near the center with outward velocity from center
-          // Random direction in 3D, lightly biased to the screen plane
-          const theta = Math.random() * Math.PI * 2;
-          const phi = (Math.random() * Math.PI) / 8 + Math.PI / 2 - Math.PI / 16; // small tilt off plane
-          const dir = new THREE.Vector3(
-            Math.cos(theta) * Math.sin(phi),
-            Math.sin(theta) * Math.sin(phi),
-            Math.cos(phi) * 0.25 // small depth component
-          ).normalize();
-
-          const radius = Math.random() * spawnRadius;
-          positions[i] = dir.x * radius;
-          positions[i + 1] = dir.y * radius;
-          positions[i + 2] = dir.z * radius * 0.5; // keep depth tighter
-
-          const speed = 0.45 + Math.random() * 0.55;
-          velocities[i] = dir.x * speed;
-          velocities[i + 1] = dir.y * speed;
-          velocities[i + 2] = dir.z * speed;
-        }
+        // Wrap around bounds to keep a continuous field
+        if (positions[i] > rangeX) positions[i] = -rangeX;
+        if (positions[i] < -rangeX) positions[i] = rangeX;
+        if (positions[i + 1] > rangeY) positions[i + 1] = -rangeY;
+        if (positions[i + 1] < -rangeY) positions[i + 1] = rangeY;
+        if (positions[i + 2] > 0) positions[i + 2] = -rangeZ; // move forward towards camera, wrap back
+        if (positions[i + 2] < -rangeZ) positions[i + 2] = 0;
       }
 
       this.particleGeometry.attributes.position.needsUpdate = true;
@@ -241,23 +216,22 @@ export class BackgroundManager {
   private createParticles(): void {
     if (!this.root) return;
 
-    const count = 3000; // denser field for immersion
+    const count = 2000; // original density
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const velocities = new Float32Array(count * 3);
 
     // Bounds for initialization
-    const rangeX = 0.08; // initial spawn radius very close to center (elliptical)
-    const rangeY = 0.08;
-    const rangeZ = 0.04;
+    const rangeX = 6;
+    const rangeY = 3.5;
+    const rangeZ = 8;
 
     let p = 0;
     let c = 0;
     for (let i = 0; i < count; i++) {
-      // Spawn near the center
       const x = (Math.random() * 2 - 1) * rangeX;
       const y = (Math.random() * 2 - 1) * rangeY;
-      const z = (Math.random() * 2 - 1) * rangeZ;
+      const z = -Math.random() * rangeZ; // bias back
 
       positions[p++] = x;
       positions[p++] = y;
@@ -270,14 +244,15 @@ export class BackgroundManager {
       colors[c++] = 1.0 * tint; // B
 
       // Small drift velocities
-      // Outward radial velocity from center, never crossing the center
-      const dir = new THREE.Vector3(x, y, z * 0.25);
-      if (dir.lengthSq() < 1e-4) {
-        dir.set(Math.random() - 0.5, Math.random() - 0.5, 0).normalize();
-      }
-      dir.normalize();
-      const speed = 0.45 + Math.random() * 0.55;
-      dir.multiplyScalar(speed);
+      // Small drift velocities with forward bias
+      const speed = 0.2 + Math.random() * 0.3;
+      const dir = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.4,
+        (Math.random() - 0.5) * 0.2,
+        0.2 + Math.random() * 0.4
+      )
+        .normalize()
+        .multiplyScalar(speed);
 
       const vi = (i * 3) as number;
       velocities[vi] = dir.x;
@@ -290,7 +265,7 @@ export class BackgroundManager {
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     const mat = new THREE.PointsMaterial({
-      size: 0.025,
+      size: 0.02,
       vertexColors: true,
       transparent: true,
       opacity: 0.6,
@@ -299,7 +274,7 @@ export class BackgroundManager {
     });
 
     const points = new THREE.Points(geo, mat);
-    points.position.set(0, 0, -1.2); // place the field right around the camera frustum
+    points.position.set(0, 0, -6.5); // original further field
 
     this.root.add(points);
     this.particlePoints = points;
