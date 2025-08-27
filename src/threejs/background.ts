@@ -49,9 +49,15 @@ export class BackgroundManager {
   }
 
   public update(): void {
-    if (this.mode === "wave" && this.wavePoints && this.waveGeometry && this.waveBasePositions) {
+    if (
+      this.mode === "wave" &&
+      this.wavePoints &&
+      this.waveGeometry &&
+      this.waveBasePositions
+    ) {
       const t = this.clock.getElapsedTime();
-      const positions = this.waveGeometry.attributes.position.array as Float32Array;
+      const positions = this.waveGeometry.attributes.position
+        .array as Float32Array;
 
       // Parameters for the wave motion
       const amp = 0.15; // amplitude
@@ -89,13 +95,14 @@ export class BackgroundManager {
       this.particleVelocities
     ) {
       const dt = Math.min(this.clock.getDelta(), 0.033); // clamp delta
-      const positions = this.particleGeometry.attributes.position.array as Float32Array;
+      const positions = this.particleGeometry.attributes.position
+        .array as Float32Array;
       const velocities = this.particleVelocities;
 
       // Bounds for wrapping (expanded horizontally, shallow depth, close to camera)
       const rangeX = 10; // fill full width
-      const rangeY = 6;  // fill full height
-      const rangeZ = 3;  // shallow field so particles stay near camera
+      const rangeY = 6; // fill full height
+      const rangeZ = 3; // shallow field so particles stay near camera
       const centerRadius = 0.15; // small central zone to avoid crossing
 
       for (let i = 0; i < positions.length; i += 3) {
@@ -105,7 +112,10 @@ export class BackgroundManager {
         positions[i + 2] += velocities[i + 2] * dt;
 
         // Prevent crossing center: if inside small central zone and heading inward, nudge velocity outward
-        if (Math.abs(positions[i]) < centerRadius && Math.abs(positions[i + 1]) < centerRadius) {
+        if (
+          Math.abs(positions[i]) < centerRadius &&
+          Math.abs(positions[i + 1]) < centerRadius
+        ) {
           const vx = velocities[i];
           const vy = velocities[i + 1];
           const px = positions[i];
@@ -149,7 +159,10 @@ export class BackgroundManager {
         if ((obj as THREE.Mesh).geometry) {
           (obj as THREE.Mesh).geometry.dispose();
         }
-        const mat = (obj as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+        const mat = (obj as THREE.Mesh).material as
+          | THREE.Material
+          | THREE.Material[]
+          | undefined;
         if (Array.isArray(mat)) {
           mat.forEach(m => m.dispose());
         } else if (mat) {
@@ -301,5 +314,3 @@ export class BackgroundManager {
     this.particleVelocities = velocities;
   }
 }
-
-

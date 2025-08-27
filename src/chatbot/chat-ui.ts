@@ -53,13 +53,13 @@ export class ChatUI {
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex flex-col justify-between items-center p-3 md:p-4 bg-white/0 backdrop-blur-md rounded-t-2xl shadow-lg w-full border-t border-white/10 h-[15vh] min-h-[100px]";
+      "flex flex-col justify-between items-center p-3 md:p-4 sm:gap-4 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-6 sm:mb-4";
 
     // Model selector - compact transparent design
     this.modelSelector = document.createElement("div");
     this.modelSelector.id = "model-selector";
     this.modelSelector.className =
-      "flex items-center gap-2 cursor-pointer hover:text-gray-800 transition-colors w-[fit-content]";
+      "flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors w-[fit-content]";
 
     // Create the model icon
     const modelIcon = document.createElement("span");
@@ -116,7 +116,7 @@ export class ChatUI {
     // Create new chat button
     const newChatButton = document.createElement("div");
     newChatButton.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-800 transition-colors min-w-0 w-auto overflow-visible";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors min-w-0 w-auto overflow-visible";
     newChatButton.id = "new-chat-button";
 
     const newChatSummary = document.createElement("div");
@@ -133,7 +133,7 @@ export class ChatUI {
     // Create left section container
     const leftSection = document.createElement("div");
     leftSection.className =
-      "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400";
+      "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400 cursor-default select-none";
 
     // Add left side elements
     leftSection.appendChild(this.modelSelector);
@@ -143,7 +143,7 @@ export class ChatUI {
     // Create right section container
     const rightSection = document.createElement("div");
     rightSection.className =
-      "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400";
+      "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400 cursor-default select-none";
 
     // Add right side elements
     rightSection.appendChild(this.statusIndicator);
@@ -507,7 +507,7 @@ export class ChatUI {
   private createContextDisplay(): void {
     this.contextDisplay = document.createElement("div");
     this.contextDisplay.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-800 transition-colors min-w-0 w-auto overflow-visible";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors min-w-0 w-auto overflow-visible";
     this.contextDisplay.id = "context-display";
 
     // Create context summary (inline display)
