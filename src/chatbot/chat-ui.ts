@@ -33,7 +33,7 @@ export class ChatUI {
     this.initializeChatbot();
     // Initialize token usage display and load existing messages
     this.updateTokenUsageDisplay();
-    this.loadExistingMessages();
+    this.loadExistingMessages().then(() => this.showWelcomeIfFirstVisit());
   }
 
   private createUI(): void {
@@ -475,6 +475,26 @@ export class ChatUI {
       await this.updateTokenUsageDisplay();
     } catch (error) {
       console.error("Failed to load existing messages:", error);
+    }
+  }
+
+  private async showWelcomeIfFirstVisit(): Promise<void> {
+    try {
+      const existing = await this.chatbot.getMessages();
+      if (existing.length > 0) return;
+
+      const welcome =
+        "Welcome! This portfolio includes a context about Simon Curran’s professional experience, skills, and projects. " +
+        "The chatbot is designed to answer questions strictly based on that context so you can quickly learn what Simon does and how he works. " +
+        "If you ask about topics outside this scope, you’ll get a generic message that an answer can’t be provided as it lies outside the portfolio context. \n\n" +
+        "You can ask things like: \n" +
+        "- What technologies does Simon use?\n" +
+        "- Tell me about Simon’s recent projects.\n" +
+        "- What kind of roles has Simon worked in?";
+
+      this.addMessageToUI({ role: "assistant", content: welcome, timestamp: new Date() });
+    } catch {
+      // no-op
     }
   }
 

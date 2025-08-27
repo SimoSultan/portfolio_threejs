@@ -133,7 +133,9 @@ export class Chatbot {
         )
         .join("\n\n");
 
-      const systemInstruction = this.simonRetriever.getSystemInstruction();
+      const systemInstruction =
+        this.simonRetriever.getSystemInstruction() +
+        "\nIMPORTANT: If the answer cannot be derived strictly from the Simon Context, respond with the single token: OUT_OF_CONTEXT";
       const simonDomain = this.simonRetriever.buildContextText();
 
       const contextualizedPrompt = `${systemInstruction}\n\nSimon Context:\n${simonDomain}\n\nCurrent App Context:\n${context}\n\nConversation History:\n${conversationHistory}\n\nUser Message: ${userMessage}`;
@@ -161,7 +163,17 @@ export class Chatbot {
       }
 
       const data = await response.json();
-      return data.response || "Sorry, I couldn't generate a response.";
+      const raw = (data.response as string) || "";
+      const cleaned = raw.trim();
+      if (cleaned === "OUT_OF_CONTEXT" || cleaned.startsWith("OUT_OF_CONTEXT")) {
+        return (
+          "This assistant is focused on Simon Curran’s professional portfolio. " +
+          "I can answer questions about Simon’s skills, experience and projects described here. " +
+          "Your question appears to be outside this context, so I can’t provide an answer. " +
+          "Please rephrase to something relevant to Simon’s work."
+        );
+      }
+      return cleaned || "Sorry, I couldn't generate a response.";
     } catch (error) {
       console.error("❌ Ollama API error:", error);
       if (error instanceof Error) {
