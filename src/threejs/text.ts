@@ -56,6 +56,13 @@ export async function createTitleText(
   // Center the geometry so it rotates around its own center
   geometry.computeBoundingBox();
   geometry.center();
+  // Normalize geometry to unit width so external scale controls final size
+  const box = geometry.boundingBox!;
+  const width = box.max.x - box.min.x;
+  if (width > 0) {
+    const normalize = 1 / width; // unit width
+    geometry.scale(normalize, normalize, 1);
+  }
 
   // Use unlit material for maximum legibility and render above tubes
   const frontMaterial = new THREE.MeshBasicMaterial({

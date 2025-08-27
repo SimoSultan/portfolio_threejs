@@ -200,11 +200,10 @@ class PortfolioScene {
         bevelSize: 0.008,
         bevelSegments: 2,
       });
-      // Center and push further forward for clarity; slight tilt for depth
-      title.position.set(0, 0.15, 0.6);
-      title.rotation.x = -0.15; // tilt back toward camera
-      title.rotation.y = 0.0;
-      title.scale.setScalar(1.1);
+      // Place exactly at the circle's axis origin and shrink to ~1% scale
+      title.position.set(0, 0.25, 0.02);
+      title.rotation.set(0, 0, 0);
+      title.scale.setScalar(0.01);
       this.titleMesh = title;
       this.scene.add(title);
     } catch (err) {
