@@ -2,6 +2,18 @@
 @plugin "@tailwindcss/typography";
 
 /* Custom styles */
+@property --c1 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #1a1a2e;
+}
+
+@property --c2 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0f3460;
+}
+
 body {
   margin: 0;
   font-family:
@@ -10,9 +22,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Subtle deep-space gradient background */
+  /* Base colors driven by animating custom properties for a slight hue shift */
+  --c1: #1a1a2e; /* dark indigo */
+  --c2: #0f3460; /* deep blue */
   background:
-    radial-gradient(circle at 20% 20%, #1a1a2e 0%, transparent 40%),
-    radial-gradient(circle at 80% 30%, #0f3460 0%, transparent 45%),
+    radial-gradient(circle at 20% 20%, var(--c1) 0%, transparent 40%),
+    radial-gradient(circle at 80% 30%, var(--c2) 0%, transparent 45%),
     linear-gradient(135deg, #0a0a0a 0%, #0f0f23 50%, #1a1a2e 100%);
   /* Animate radials very slightly and the linear gradient more for a noticeable but slow effect */
   background-size:
@@ -40,18 +55,27 @@ body {
       0% 0%,
       100% 0%,
       0% 50%;
+    /* start colors */
+    --c1: #1a1a2e;
+    --c2: #0f3460;
   }
   50% {
     background-position:
       8% 6%,
       92% 4%,
       100% 55%;
+    /* slight hue shift toward a different blue */
+    --c1: #1b2246; /* subtly brighter indigo */
+    --c2: #12406f; /* slightly more cyan-leaning blue */
   }
   100% {
     background-position:
       0% 0%,
       100% 0%,
       0% 50%;
+    /* return to start colors */
+    --c1: #1a1a2e;
+    --c2: #0f3460;
   }
 }
 
