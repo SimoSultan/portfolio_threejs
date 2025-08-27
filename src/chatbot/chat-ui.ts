@@ -838,6 +838,11 @@ export class ChatUI {
     if (forceClose) {
       this.modelDropdown.style.display = "none";
       this.isModelDropdownOpen = false;
+      // Rotate arrow back up when force-closing
+      const arrow = document.getElementById("model-arrow");
+      if (arrow) {
+        arrow.style.transform = "rotate(0deg)";
+      }
       return;
     }
 
