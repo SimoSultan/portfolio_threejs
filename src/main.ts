@@ -273,6 +273,28 @@ class PortfolioScene {
     window.addEventListener("testAnimation", () => {
       this.triggerAnimation("spin");
     });
+
+    // Toggle camera controls (enable/disable orbit and reset position)
+    let cameraControlsEnabled = false;
+    const initialCameraPosition = this.camera.position.clone();
+    const initialTarget = new THREE.Vector3(0, 0, 0);
+    window.addEventListener("toggleCameraControls", () => {
+      cameraControlsEnabled = !cameraControlsEnabled;
+      const controls = this.cameraManager.getControls();
+      if (cameraControlsEnabled) {
+        controls.enablePan = true;
+        controls.enableZoom = true;
+        controls.autoRotate = false;
+      } else {
+        // Reset camera back to initial framing
+        this.camera.position.copy(initialCameraPosition);
+        controls.target.copy(initialTarget);
+        controls.update();
+        controls.enablePan = false;
+        controls.enableZoom = true;
+        controls.autoRotate = false;
+      }
+    });
   }
 
   private triggerAnimation(animationType: string): void {

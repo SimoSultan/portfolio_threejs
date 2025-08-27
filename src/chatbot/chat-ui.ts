@@ -979,6 +979,19 @@ export class ChatUI {
       this.debugDropdown.appendChild(button);
     });
 
+    // Camera controls toggle
+    const camBtn = document.createElement("button");
+    camBtn.id = "debug-camera-toggle";
+    camBtn.innerHTML = `🎥 Toggle Camera Controls`;
+    camBtn.className =
+      "w-full px-3 py-2 text-sm text-white rounded-lg transition-colors bg-teal-600 hover:bg-teal-700 text-left";
+    camBtn.addEventListener("click", () => {
+      const evt = new CustomEvent("toggleCameraControls");
+      window.dispatchEvent(evt);
+      this.toggleDebugDropdown({ forceClose: true });
+    });
+    this.debugDropdown.appendChild(camBtn);
+
     // Remove margin from last button
     const lastButton = this.debugDropdown.lastElementChild as HTMLElement;
     if (lastButton) {
