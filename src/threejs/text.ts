@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
-import { Font } from "three/examples/jsm/loaders/FontLoader.js";
 // Import the font JSON locally to avoid network/CORS issues
 // Vite supports JSON imports and tsconfig has resolveJsonModule enabled
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - no type defs for this JSON
 import helvetiker from "three/examples/fonts/helvetiker_regular.typeface.json";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
+import { Font } from "three/examples/jsm/loaders/FontLoader.js";
 
 export type TitleTextOptions = {
   size?: number; // font size
@@ -61,7 +61,7 @@ export async function createTitleText(
   const frontMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(opts.color),
     transparent: true,
-    opacity: 0.98,
+    opacity: 1.0,
     depthTest: false,
   });
 
@@ -73,9 +73,9 @@ export async function createTitleText(
   // Create a subtle outline by cloning geometry slightly scaled and darker color behind
   const outlineGeometry = geometry.clone();
   const outlineMaterial = new THREE.MeshBasicMaterial({
-    color: new THREE.Color("#0b1220"),
+    color: new THREE.Color("#0a0f1a"),
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.95,
     depthTest: false,
   });
   const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);

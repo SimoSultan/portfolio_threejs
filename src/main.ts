@@ -200,8 +200,11 @@ class PortfolioScene {
         bevelSize: 0.008,
         bevelSegments: 2,
       });
-      // Center of canvas (x=0,y≈0 for our layout), push well in front
-      title.position.set(0, 0, 0.2);
+      // Center and push further forward for clarity; slight tilt for depth
+      title.position.set(0, 0.15, 0.6);
+      title.rotation.x = -0.15; // tilt back toward camera
+      title.rotation.y = 0.0;
+      title.scale.setScalar(1.1);
       this.titleMesh = title;
       this.scene.add(title);
     } catch (err) {
