@@ -177,7 +177,7 @@ export class ChatUI {
     this.input = document.createElement("input");
     this.input.id = "chat-input";
     this.input.type = "text";
-    this.input.placeholder = "Ask me anything...";
+    this.input.placeholder = "Ask me something...";
     this.input.className =
       "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-300 text-white";
     this.input.addEventListener("keypress", e => {
@@ -581,9 +581,16 @@ export class ChatUI {
 
   private showAboutModal(): void {
     const body =
-      "This portfolio includes a curated context about Simon Curran’s professional experience, skills, and projects. " +
-      "The chatbot answers strictly from that context so you can quickly understand Simon’s work. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
-      "Try asking: \n- What technologies does Simon use?\n- Tell me about Simon’s recent projects.\n- What kind of roles has Simon worked in?";
+      "This portfolio includes curated context about Simon Curran’s professional experience, skills, and projects. " +
+      "You can also ask about a few personal details, request contact info, and see links. " +
+      "The chatbot answers strictly from this context so you can quickly understand Simon’s work and background. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
+      "Try asking: \n" +
+      "- What technologies does Simon use?\n" +
+      "- Tell me about Simon’s recent projects.\n" +
+      "- What kind of roles has Simon worked in?\n" +
+      "- What are some of Simon’s interests?\n" +
+      "- How can I contact Simon?\n" +
+      "- Show me Simon’s GitHub and LinkedIn.";
     this.createInfoModal("About this site", body, "Got it", () => {});
   }
 
