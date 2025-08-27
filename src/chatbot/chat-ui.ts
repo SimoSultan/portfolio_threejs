@@ -52,7 +52,7 @@ export class ChatUI {
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex flex-col justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full border-t border-gray-600/30 h-[15vh] min-h-[100px]";
+      "flex flex-col justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-white/5 backdrop-blur-md rounded-t-2xl shadow-lg w-full border-t border-white/10 h-[15vh] min-h-[100px]";
 
     // Model selector - compact transparent design
     this.modelSelector = document.createElement("div");
@@ -163,7 +163,7 @@ export class ChatUI {
     this.input.type = "text";
     this.input.placeholder = "Ask me anything...";
     this.input.className =
-      "flex-1 px-4 py-3 border-0 rounded-full text-sm md:text-base focus:outline-none focus:ring-0 bg-gray-800 placeholder-gray-500 text-white";
+      "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/10 backdrop-blur-md border border-white/10 placeholder-gray-300 text-white";
     this.input.addEventListener("keypress", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -175,7 +175,7 @@ export class ChatUI {
     this.debugButton = document.createElement("button");
     this.debugButton.innerHTML = "🐛";
     this.debugButton.className =
-      "px-3 py-2 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors";
+      "px-3 py-2 text-sm bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition-colors border border-white/10 backdrop-blur-md";
     this.debugButton.title = "Debug Animations";
     this.debugButton.addEventListener("click", () => {
       this.toggleDebugDropdown();
@@ -202,7 +202,7 @@ export class ChatUI {
       </svg>
     `;
     this.sendButton.className =
-      "p-2 text-gray-400 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-gray-700 hover:bg-gray-600 rounded-full transition-colors";
+      "p-2 text-gray-200 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 backdrop-blur-md";
     this.sendButton.addEventListener("click", () => {
       this.sendMessage();
     });
