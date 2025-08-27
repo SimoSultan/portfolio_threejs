@@ -69,7 +69,7 @@ export class ChatUI {
     // Create the model display text
     const modelText = document.createElement("span");
     modelText.id = "model-text";
-    modelText.textContent = MODEL_METADATA[this.currentModelId].name;
+    modelText.textContent = "Select Model";
 
     // Create the up arrow
     const arrowIcon = document.createElement("span");
@@ -139,7 +139,7 @@ export class ChatUI {
     const infoSummary = document.createElement("div");
     infoSummary.className =
       "flex items-center gap-2 truncate text-sm sm:text-base";
-    infoSummary.innerHTML = `<span>ℹ️ Info</span><span class="text-xs text-gray-600">▲</span>`;
+    infoSummary.innerHTML = `<span>ℹ️ Context Info</span><span class="text-xs text-gray-600">▲</span>`;
     infoButton.appendChild(infoSummary);
     infoButton.addEventListener("click", () => {
       this.showAboutModal();
@@ -808,7 +808,8 @@ export class ChatUI {
       const option = document.createElement("div");
       option.className =
         "px-3 py-2 text-xs md:text-sm text-gray-300 hover:bg-gray-700/50 cursor-pointer transition-colors first:rounded-t-lg last:rounded-b-lg";
-      option.textContent = `${metadata.name} (${metadata.size})`;
+      const isSelected = id === this.currentModelId;
+      option.textContent = `${metadata.name} (${metadata.size})${isSelected ? "  ✓" : ""}`;
       option.dataset.modelId = id;
 
       option.addEventListener("click", () => {
@@ -836,6 +837,7 @@ export class ChatUI {
     if (forceOpen) {
       this.modelDropdown.style.display = "block";
       this.isModelDropdownOpen = true;
+      this.updateModelDropdownTicks();
       return;
     }
 
@@ -850,6 +852,7 @@ export class ChatUI {
     } else {
       this.modelDropdown.style.display = "block";
       this.isModelDropdownOpen = true;
+      this.updateModelDropdownTicks();
       // Rotate arrow down
       const arrow = document.getElementById("model-arrow");
       if (arrow) {
@@ -866,13 +869,26 @@ export class ChatUI {
     this.currentModelId = modelId;
     const modelText = document.getElementById("model-text");
     if (modelText) {
-      modelText.textContent = MODEL_METADATA[modelId].name;
+      modelText.textContent = "Select Model";
     }
 
     // Switch the model
     this.switchModel(modelId);
 
     this.toggleModelDropdown({ forceClose: true });
+    this.updateModelDropdownTicks();
+  }
+
+  private updateModelDropdownTicks(): void {
+    if (!this.modelDropdown) return;
+    const children = Array.from(this.modelDropdown.children) as HTMLDivElement[];
+    children.forEach(child => {
+      const id = child.dataset.modelId as string | undefined;
+      if (!id) return;
+      const meta = MODEL_METADATA[id];
+      const isSelected = id === this.currentModelId;
+      child.textContent = `${meta.name} (${meta.size})${isSelected ? "  ✓" : ""}`;
+    });
   }
 
   private createDebugDropdown(): void {
@@ -1039,7 +1055,7 @@ export class ChatUI {
     const cancelButton = document.createElement("button");
     cancelButton.textContent = cancelText;
     cancelButton.className =
-      "px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors border border-gray-600/30 rounded-lg hover:border-gray-500/50";
+      "px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors border border-gray-600/30 rounded-lg hover:border-gray-500/50 cursor-pointer";
 
     const confirmButton = document.createElement("button");
     confirmButton.textContent = confirmText;
