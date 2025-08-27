@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export type BackgroundMode = "none" | "wave";
+export type BackgroundMode = "none" | "wave" | "particles";
 
 /**
  * BackgroundManager renders subtle background effects that live behind
@@ -18,6 +18,11 @@ export class BackgroundManager {
   private waveBasePositions: Float32Array | null = null;
   private waveGeometry: THREE.BufferGeometry | null = null;
 
+  // Particles-specific data
+  private particlePoints: THREE.Points | null = null;
+  private particleGeometry: THREE.BufferGeometry | null = null;
+  private particleVelocities: Float32Array | null = null;
+
   constructor(scene: THREE.Scene) {
     this.scene = scene;
   }
@@ -33,6 +38,9 @@ export class BackgroundManager {
     switch (mode) {
       case "wave":
         this.createWave();
+        break;
+      case "particles":
+        this.createParticles();
         break;
       case "none":
       default:
@@ -73,6 +81,43 @@ export class BackgroundManager {
         this.root.rotation.z = Math.sin(t * 0.05) * 0.03;
       }
     }
+
+    if (
+      this.mode === "particles" &&
+      this.particlePoints &&
+      this.particleGeometry &&
+      this.particleVelocities
+    ) {
+      const dt = Math.min(this.clock.getDelta(), 0.033); // clamp delta
+      const positions = this.particleGeometry.attributes.position
+        .array as Float32Array;
+      const velocities = this.particleVelocities;
+
+      // Bounds for wrapping
+      const rangeX = 6;
+      const rangeY = 3.5;
+      const rangeZ = 8;
+
+      for (let i = 0; i < positions.length; i += 3) {
+        positions[i] += velocities[i] * dt;
+        positions[i + 1] += velocities[i + 1] * dt;
+        positions[i + 2] += velocities[i + 2] * dt;
+
+        // Wrap around bounds to keep a continuous field
+        if (positions[i] > rangeX) positions[i] = -rangeX;
+        if (positions[i] < -rangeX) positions[i] = rangeX;
+        if (positions[i + 1] > rangeY) positions[i + 1] = -rangeY;
+        if (positions[i + 1] < -rangeY) positions[i + 1] = rangeY;
+        if (positions[i + 2] > rangeZ) positions[i + 2] = -rangeZ;
+        if (positions[i + 2] < -rangeZ) positions[i + 2] = rangeZ;
+      }
+
+      this.particleGeometry.attributes.position.needsUpdate = true;
+      if (this.root) {
+        const t = this.clock.elapsedTime;
+        this.root.rotation.z = Math.sin(t * 0.03) * 0.02;
+      }
+    }
   }
 
   public dispose(): void {
@@ -103,6 +148,13 @@ export class BackgroundManager {
       this.waveGeometry.dispose();
       this.waveGeometry = null;
     }
+
+    if (this.particleGeometry) {
+      this.particleGeometry.dispose();
+      this.particleGeometry = null;
+    }
+    this.particlePoints = null;
+    this.particleVelocities = null;
   }
 
   private createWave(): void {
@@ -160,6 +212,74 @@ export class BackgroundManager {
 
     this.root.add(points);
     this.wavePoints = points;
+  }
+
+  private createParticles(): void {
+    if (!this.root) return;
+
+    const count = 2000;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const velocities = new Float32Array(count * 3);
+
+    // Bounds for initialization
+    const rangeX = 6;
+    const rangeY = 3.5;
+    const rangeZ = 8;
+
+    let p = 0;
+    let c = 0;
+    for (let i = 0; i < count; i++) {
+      const x = (Math.random() * 2 - 1) * rangeX;
+      const y = (Math.random() * 2 - 1) * rangeY;
+      const z = -Math.random() * rangeZ; // bias back
+
+      positions[p++] = x;
+      positions[p++] = y;
+      positions[p++] = z;
+
+      // Cool bluish-white palette
+      const tint = 0.7 + Math.random() * 0.3;
+      colors[c++] = 0.75 * tint; // R
+      colors[c++] = 0.85 * tint; // G
+      colors[c++] = 1.0 * tint; // B
+
+      // Small drift velocities
+      const speed = 0.2 + Math.random() * 0.3;
+      const dir = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.4,
+        (Math.random() - 0.5) * 0.2,
+        0.2 + Math.random() * 0.4
+      )
+        .normalize()
+        .multiplyScalar(speed);
+
+      const vi = (i * 3) as number;
+      velocities[vi] = dir.x;
+      velocities[vi + 1] = dir.y;
+      velocities[vi + 2] = dir.z;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    const mat = new THREE.PointsMaterial({
+      size: 0.02,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.6,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    const points = new THREE.Points(geo, mat);
+    points.position.set(0, 0, -6.5);
+
+    this.root.add(points);
+    this.particlePoints = points;
+    this.particleGeometry = geo;
+    this.particleVelocities = velocities;
   }
 }
 

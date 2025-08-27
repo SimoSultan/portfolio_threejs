@@ -72,7 +72,7 @@ class PortfolioScene {
 
     // Initialize background effects (transparent canvas overlays page gradient)
     this.backgroundManager = new BackgroundManager(this.scene);
-    this.backgroundManager.setMode("wave");
+    this.backgroundManager.setMode("particles");
 
     // Build circle geometry
     this.buildCircle();
