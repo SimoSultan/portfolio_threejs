@@ -284,11 +284,11 @@ class PortfolioScene {
         break;
       case "backflip":
         this.animationManager.setShouldResumeInfiniteAnimation(true);
-        this.animationManager.triggerFrontflipAnimation(this.tubesGroup);
+        this.animationManager.triggerBackflipAnimation(this.tubesGroup);
         break;
       case "frontflip":
         this.animationManager.setShouldResumeInfiniteAnimation(true);
-        this.animationManager.triggerBackflipAnimation(this.tubesGroup);
+        this.animationManager.triggerFrontflipAnimation(this.tubesGroup);
         break;
       case "multiSpin":
         this.animationManager.setShouldResumeInfiniteAnimation(true);

@@ -523,7 +523,7 @@ export class ChatUI {
           "Ask me something about Simon’s work or projects...";
       });
     } catch {
-      // no-op
+      // o-op
     }
   }
 
@@ -944,13 +944,13 @@ export class ChatUI {
       },
       {
         id: "backflip",
-        name: "Frontflip Animation",
+        name: "Backflip Animation",
         icon: "🤸",
         color: "bg-orange-500 hover:bg-orange-600",
       },
       {
         id: "frontflip",
-        name: "Backflip Animation",
+        name: "Frontflip Animation",
         icon: "🤸‍♂️",
         color: "bg-amber-500 hover:bg-amber-600",
       },
