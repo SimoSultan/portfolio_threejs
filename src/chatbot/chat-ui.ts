@@ -52,13 +52,18 @@ export class ChatUI {
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex flex-col lg:flex-row justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full md:w-auto border-t border-gray-600/30 h-[15vh] md:h-[10vh] min-h-[100px] sm:min-h-[15%]";
+      "flex flex-col justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-gray-800/20 backdrop-blur-sm rounded-t-2xl shadow-lg w-full border-t border-gray-600/30 h-[15vh] min-h-[100px]";
 
     // Model selector - compact transparent design
     this.modelSelector = document.createElement("div");
     this.modelSelector.id = "model-selector";
     this.modelSelector.className =
       "flex items-center gap-2 cursor-pointer hover:text-gray-800 transition-colors w-[fit-content]";
+
+    // Create the model icon
+    const modelIcon = document.createElement("span");
+    modelIcon.innerHTML = "🤖";
+    modelIcon.className = "text-sm sm:text-base";
 
     // Create the model display text
     const modelText = document.createElement("span");
@@ -71,6 +76,7 @@ export class ChatUI {
     arrowIcon.className = "transition-transform duration-200";
     arrowIcon.id = "model-arrow";
 
+    this.modelSelector.appendChild(modelIcon);
     this.modelSelector.appendChild(modelText);
     this.modelSelector.appendChild(arrowIcon);
 
@@ -94,29 +100,62 @@ export class ChatUI {
 
     // Status indicator
     this.statusIndicator = document.createElement("div");
-    this.statusIndicator.className = "flex items-center gap-2";
+    this.statusIndicator.className =
+      "flex items-center gap-2 text-sm sm:text-base text-gray-400";
     this.updateStatus("Initializing...");
 
     // Token usage indicator
     this.tokenUsageIndicator = document.createElement("div");
     this.tokenUsageIndicator.id = "token-usage";
-    this.tokenUsageIndicator.className = "text-xs text-gray-400";
+    this.tokenUsageIndicator.className = "text-sm sm:text-base text-gray-400";
 
     // Context display
     this.createContextDisplay();
 
+    // Create new chat button
+    const newChatButton = document.createElement("div");
+    newChatButton.className =
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-800 transition-colors min-w-0 w-auto overflow-visible";
+    newChatButton.id = "new-chat-button";
+
+    const newChatSummary = document.createElement("div");
+    newChatSummary.className =
+      "flex items-center gap-2 truncate text-sm sm:text-base";
+    newChatSummary.innerHTML = `<span>🆕 New Chat</span><span class="text-xs text-gray-600">▲</span>`;
+    newChatSummary.id = "new-chat-summary";
+
+    newChatButton.appendChild(newChatSummary);
+    newChatButton.addEventListener("click", () => {
+      this.showNewChatConfirmation();
+    });
+
+    // Create left section container
+    const leftSection = document.createElement("div");
+    leftSection.className =
+      "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400";
+
+    // Add left side elements
+    leftSection.appendChild(this.modelSelector);
+    leftSection.appendChild(this.contextDisplay);
+    leftSection.appendChild(newChatButton);
+
+    // Create right section container
+    const rightSection = document.createElement("div");
+    rightSection.className =
+      "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400";
+
+    // Add right side elements
+    rightSection.appendChild(this.statusIndicator);
+    rightSection.appendChild(this.tokenUsageIndicator);
+
     this.modelSelectorContainer = document.createElement("div");
     this.modelSelectorContainer.className =
-      "flex w-full lg:w-2/5 items-center justify-around gap-4 text-sm sm:text-lg overflow-visible text-gray-400";
+      "flex w-full items-center justify-between gap-4 overflow-visible";
     this.modelSelectorContainer.id = "model-selector-container";
 
-    // Model selector and status
-    this.modelSelectorContainer.appendChild(this.modelSelector);
-    this.modelSelectorContainer.appendChild(this.statusIndicator);
-    this.modelSelectorContainer.appendChild(this.tokenUsageIndicator);
-
-    // Context display gets the remaining space
-    this.modelSelectorContainer.appendChild(this.contextDisplay);
+    // Add left and right sections
+    this.modelSelectorContainer.appendChild(leftSection);
+    this.modelSelectorContainer.appendChild(rightSection);
 
     // Input field
     this.input = document.createElement("input");
@@ -824,5 +863,111 @@ export class ChatUI {
       this.debugDropdown.style.display = "block";
       this.isDebugDropdownOpen = true;
     }
+  }
+
+  private showNewChatConfirmation(): void {
+    this.createConfirmationModal(
+      "Start New Chat?",
+      "This will completely reset your current conversation. All previous messages will be cleared and cannot be recovered.",
+      "Start New Chat",
+      "Cancel",
+      () => this.startNewChat()
+    );
+  }
+
+  private startNewChat(): void {
+    this.clearChat();
+    this.updateStatus("New chat started");
+    this.input.disabled = false;
+    this.sendButton.disabled = false;
+    this.input.focus();
+  }
+
+  private createConfirmationModal(
+    title: string,
+    message: string,
+    confirmText: string,
+    cancelText: string,
+    onConfirm: () => void
+  ): void {
+    // Remove existing modal if present
+    const existingModal = document.getElementById("confirmation-modal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // Create modal container
+    const modal = document.createElement("div");
+    modal.id = "confirmation-modal";
+    modal.className =
+      "fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4";
+
+    // Create modal content
+    const modalContent = document.createElement("div");
+    modalContent.className =
+      "bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-600/30 max-w-md w-full p-6";
+
+    // Modal header
+    const header = document.createElement("div");
+    header.className = "flex items-center gap-3 mb-4";
+    header.innerHTML = `
+      <div class="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center">
+        <span class="text-red-400 text-lg">⚠️</span>
+      </div>
+      <h3 class="text-lg font-semibold text-white">${title}</h3>
+    `;
+
+    // Modal message
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "text-gray-300 mb-6 leading-relaxed";
+    messageDiv.textContent = message;
+
+    // Modal buttons
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = "flex gap-3 justify-end";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.textContent = cancelText;
+    cancelButton.className =
+      "px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors border border-gray-600/30 rounded-lg hover:border-gray-500/50";
+
+    const confirmButton = document.createElement("button");
+    confirmButton.textContent = confirmText;
+    confirmButton.className =
+      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg";
+
+    // Event listeners
+    cancelButton.addEventListener("click", () => modal.remove());
+    confirmButton.addEventListener("click", () => {
+      onConfirm();
+      modal.remove();
+    });
+
+    // Assemble modal
+    buttonContainer.appendChild(cancelButton);
+    buttonContainer.appendChild(confirmButton);
+    modalContent.appendChild(header);
+    modalContent.appendChild(messageDiv);
+    modalContent.appendChild(buttonContainer);
+    modal.appendChild(modalContent);
+
+    // Add to body
+    document.body.appendChild(modal);
+
+    // Close on backdrop click
+    modal.addEventListener("click", e => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+
+    // Close on Escape key
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        modal.remove();
+        document.removeEventListener("keydown", handleEscape);
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
   }
 }
