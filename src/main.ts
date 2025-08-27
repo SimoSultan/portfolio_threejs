@@ -6,8 +6,8 @@ import { BackgroundManager } from "./threejs/background";
 import { CameraManager } from "./threejs/camera";
 // import { COLORS } from "./threejs/constants"; // not used
 import { CircleGeometry } from "./threejs/geometry";
-import { createTitleText } from "./threejs/text";
 import { Lighting } from "./threejs/lighting";
+import { createTitleText } from "./threejs/text";
 
 // import { calculateBoundingSphere } from "./threejs/utils"; // not used
 
@@ -16,7 +16,7 @@ class PortfolioScene {
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private tubesGroup!: THREE.Group;
-  private titleMesh: THREE.Mesh | null = null;
+  private titleMesh: THREE.Group | null = null;
   private cameraManager!: CameraManager;
   private animationManager!: AnimationManager;
   private backgroundManager!: BackgroundManager;
@@ -200,7 +200,7 @@ class PortfolioScene {
         bevelSize: 0.008,
         bevelSegments: 2,
       });
-      title.position.set(0, 0.25, 0.02); // Slightly in front of circle
+      title.position.set(0, 0.25, 0.04); // Slightly further in front of circle for clarity
       this.titleMesh = title;
       this.scene.add(title);
     } catch (err) {

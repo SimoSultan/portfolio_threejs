@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 
 export type TitleTextOptions = {
   size?: number; // font size
@@ -31,7 +31,7 @@ const DEFAULTS: Required<TitleTextOptions> = {
 export async function createTitleText(
   text: string,
   options: TitleTextOptions = {}
-): Promise<THREE.Mesh> {
+): Promise<THREE.Group> {
   const opts = { ...DEFAULTS, ...options };
 
   const loader = new FontLoader();
@@ -60,18 +60,34 @@ export async function createTitleText(
   geometry.computeBoundingBox();
   geometry.center();
 
-  const material = new THREE.MeshStandardMaterial({
+  // Use unlit material for maximum legibility and render above tubes
+  const frontMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(opts.color),
-    emissive: new THREE.Color(opts.emissive),
-    metalness: 0.2,
-    roughness: 0.6,
+    transparent: true,
+    opacity: 0.98,
+    depthTest: false,
   });
 
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  mesh.renderOrder = 1; // ensure it renders above the background
-  return mesh;
+  const frontMesh = new THREE.Mesh(geometry, frontMaterial);
+  frontMesh.castShadow = false;
+  frontMesh.receiveShadow = false;
+  frontMesh.renderOrder = 999;
+
+  // Create a subtle outline by cloning geometry slightly scaled and darker color behind
+  const outlineGeometry = geometry.clone();
+  const outlineMaterial = new THREE.MeshBasicMaterial({
+    color: new THREE.Color("#0b1220"),
+    transparent: true,
+    opacity: 0.85,
+    depthTest: false,
+  });
+  const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
+  outlineMesh.scale.multiplyScalar(1.015);
+  outlineMesh.position.z = -0.01; // sit just behind
+  outlineMesh.renderOrder = 998;
+
+  const group = new THREE.Group();
+  group.add(outlineMesh);
+  group.add(frontMesh);
+  return group;
 }
-
-
