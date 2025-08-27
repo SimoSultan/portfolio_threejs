@@ -13,14 +13,30 @@ body {
   background: radial-gradient(circle at 20% 20%, #1a1a2e 0%, transparent 40%),
     radial-gradient(circle at 80% 30%, #0f3460 0%, transparent 45%),
     linear-gradient(135deg, #0a0a0a 0%, #0f0f23 50%, #1a1a2e 100%);
+  /* Animate only the last gradient layer for a very subtle drift */
+  background-size: auto auto, auto auto, 200% 200%;
+  background-position: 0 0, 0 0, 0% 50%;
   background-attachment: fixed;
   min-height: 100vh;
+  animation: gradient-drift 120s ease-in-out infinite alternate;
 }
 
 #threejs-canvas {
   display: block;
   /* Transparent so CSS gradient shows through */
   background: transparent;
+}
+
+@keyframes gradient-drift {
+  0% {
+    background-position: 0 0, 0 0, 0% 50%;
+  }
+  50% {
+    background-position: 0 0, 0 0, 100% 50%;
+  }
+  100% {
+    background-position: 0 0, 0 0, 0% 50%;
+  }
 }
 
 /* Smooth animations */
