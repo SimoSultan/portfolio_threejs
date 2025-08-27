@@ -327,12 +327,12 @@ export class AnimationManager {
           ? 2 * progress * progress
           : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-      // Backflip rotation (X-axis rotation) - exactly 2π for complete flip
-      tubesGroup.rotation.x = originalRotation.x + Math.PI * 2 * easedProgress;
+      // Backflip: use negative rotation direction for this project’s semantics
+      tubesGroup.rotation.x = originalRotation.x - Math.PI * 2 * easedProgress;
 
-      // Slight forward movement during flip for realistic effect - complete cycle returns to start
-      const forwardMovement = Math.sin(progress * Math.PI) * 0.3;
-      tubesGroup.position.z = originalPosition.z + forwardMovement;
+      // Slight backward movement during flip for symmetry
+      const backwardMovement = -Math.sin(progress * Math.PI) * 0.3;
+      tubesGroup.position.z = originalPosition.z + backwardMovement;
 
       if (progress < 1) {
         this.currentAnimationId = requestAnimationFrame(animate);
@@ -379,12 +379,12 @@ export class AnimationManager {
           ? 2 * progress * progress
           : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-      // Frontflip rotation (X-axis) - reverse direction (-2π)
-      tubesGroup.rotation.x = originalRotation.x - Math.PI * 2 * easedProgress;
+      // Frontflip: use positive rotation direction
+      tubesGroup.rotation.x = originalRotation.x + Math.PI * 2 * easedProgress;
 
-      // Slight backward movement during flip for symmetry
-      const backwardMovement = -Math.sin(progress * Math.PI) * 0.3;
-      tubesGroup.position.z = originalPosition.z + backwardMovement;
+      // Slight forward movement during flip
+      const forwardMovement = Math.sin(progress * Math.PI) * 0.3;
+      tubesGroup.position.z = originalPosition.z + forwardMovement;
 
       if (progress < 1) {
         this.currentAnimationId = requestAnimationFrame(animate);
