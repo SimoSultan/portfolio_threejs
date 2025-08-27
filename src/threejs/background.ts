@@ -96,7 +96,7 @@ export class BackgroundManager {
       // Bounds for wrapping
       const rangeX = 6;
       const rangeY = 3.5;
-      const rangeZ = 3.5; // tighter depth so stars sit closer to the camera
+      const rangeZ = 1.2; // very shallow depth so stars sit right around the camera path
 
       for (let i = 0; i < positions.length; i += 3) {
         positions[i] += velocities[i] * dt;
@@ -217,7 +217,7 @@ export class BackgroundManager {
   private createParticles(): void {
     if (!this.root) return;
 
-    const count = 2000;
+    const count = 3000; // denser field for immersion
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const velocities = new Float32Array(count * 3);
@@ -225,14 +225,14 @@ export class BackgroundManager {
     // Bounds for initialization
     const rangeX = 6;
     const rangeY = 3.5;
-    const rangeZ = 3.5; // shallower field for a closer feel
+    const rangeZ = 1.2; // very shallow field so we appear inside the starfield
 
     let p = 0;
     let c = 0;
     for (let i = 0; i < count; i++) {
       const x = (Math.random() * 2 - 1) * rangeX;
       const y = (Math.random() * 2 - 1) * rangeY;
-      const z = -Math.random() * rangeZ; // bias back
+      const z = -Math.random() * rangeZ; // start in [-rangeZ, 0], right near the camera
 
       positions[p++] = x;
       positions[p++] = y;
@@ -245,11 +245,11 @@ export class BackgroundManager {
       colors[c++] = 1.0 * tint; // B
 
       // Small drift velocities
-      const speed = 0.2 + Math.random() * 0.3;
+      const speed = 0.35 + Math.random() * 0.45; // faster forward drift
       const dir = new THREE.Vector3(
         (Math.random() - 0.5) * 0.4,
         (Math.random() - 0.5) * 0.2,
-        0.2 + Math.random() * 0.4
+        0.5 + Math.random() * 0.7 // stronger forward (towards camera) component
       )
         .normalize()
         .multiplyScalar(speed);
@@ -265,7 +265,7 @@ export class BackgroundManager {
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     const mat = new THREE.PointsMaterial({
-      size: 0.03,
+      size: 0.025,
       vertexColors: true,
       transparent: true,
       opacity: 0.6,
@@ -274,7 +274,7 @@ export class BackgroundManager {
     });
 
     const points = new THREE.Points(geo, mat);
-    points.position.set(0, 0, -3.2); // bring the field closer to the viewer
+    points.position.set(0, 0, -1.2); // place the field right around the camera frustum
 
     this.root.add(points);
     this.particlePoints = points;
