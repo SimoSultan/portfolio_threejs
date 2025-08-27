@@ -10,17 +10,55 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Subtle deep-space gradient background */
-  background: radial-gradient(circle at 20% 20%, #1a1a2e 0%, transparent 40%),
+  background:
+    radial-gradient(circle at 20% 20%, #1a1a2e 0%, transparent 40%),
     radial-gradient(circle at 80% 30%, #0f3460 0%, transparent 45%),
     linear-gradient(135deg, #0a0a0a 0%, #0f0f23 50%, #1a1a2e 100%);
+  /* Animate radials very slightly and the linear gradient more for a noticeable but slow effect */
+  background-size:
+    130% 130%,
+    130% 130%,
+    400% 400%;
+  background-position:
+    0% 0%,
+    100% 0%,
+    0% 50%;
   background-attachment: fixed;
   min-height: 100vh;
+  animation: gradient-drift 30s ease-in-out infinite alternate;
 }
 
 #threejs-canvas {
   display: block;
   /* Transparent so CSS gradient shows through */
   background: transparent;
+}
+
+@keyframes gradient-drift {
+  0% {
+    background-position:
+      0% 0%,
+      100% 0%,
+      0% 50%;
+  }
+  50% {
+    background-position:
+      8% 6%,
+      92% 4%,
+      100% 55%;
+  }
+  100% {
+    background-position:
+      0% 0%,
+      100% 0%,
+      0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none !important;
+  }
 }
 
 /* Smooth animations */

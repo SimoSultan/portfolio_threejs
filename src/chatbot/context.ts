@@ -25,6 +25,12 @@ export interface ContextStorage {
   lastUpdated: Date;
 }
 
+// Simon context retrieval interface
+export type SimonSnippet = {
+  heading: string;
+  content: string;
+};
+
 export class ContextManager {
   private context: ChatContext | null = null;
   private locationPermissionGranted: boolean = false;
@@ -386,10 +392,12 @@ export class ContextManager {
       const originalTokens = this.estimateTokenCount(longMessage);
       const summaryTokens = this.estimateTokenCount(summary);
       const tokensSaved = originalTokens - summaryTokens;
+      void tokensSaved;
     }
 
     // Show current settings
     const settings = this.getSummarizationSettings();
+    void settings;
   }
 
   // Clear old messages to free up space

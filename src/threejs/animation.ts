@@ -87,7 +87,7 @@ export class AnimationManager {
    */
   public triggerMexicanWaveAnimation(
     tubesGroup: THREE.Group,
-    duration: number = 2000,
+    duration: number = 1000,
     continuous: boolean = false
   ): void {
     if (this.isAnimating) {
@@ -301,6 +301,58 @@ export class AnimationManager {
         this.currentAnimationId = requestAnimationFrame(animate);
       } else {
         // Animation complete - ensure exact reset to original position and rotation
+        tubesGroup.rotation.copy(originalRotation);
+        tubesGroup.position.copy(originalPosition);
+        this.isAnimating = false;
+        this.currentAnimationId = undefined;
+        // Resume infinite animation if needed
+        this.resumeInfiniteAnimation(tubesGroup);
+      }
+    };
+
+    animate();
+  }
+
+  /**
+   * Trigger a frontflip animation - reverse of backflip
+   * @param tubesGroup - The group containing the circle tubes
+   * @param duration - Animation duration in milliseconds (default: 2500ms)
+   */
+  public triggerFrontflipAnimation(
+    tubesGroup: THREE.Group,
+    duration: number = 2500
+  ): void {
+    if (this.isAnimating) {
+      this.stopAnimation();
+    }
+
+    this.isAnimating = true;
+
+    const startTime = Date.now();
+    const originalRotation = tubesGroup.rotation.clone();
+    const originalPosition = tubesGroup.position.clone();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease-in-out function
+      const easedProgress =
+        progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+      // Frontflip rotation (X-axis) - reverse direction (-2π)
+      tubesGroup.rotation.x = originalRotation.x - Math.PI * 2 * easedProgress;
+
+      // Slight backward movement during flip for symmetry
+      const backwardMovement = -Math.sin(progress * Math.PI) * 0.3;
+      tubesGroup.position.z = originalPosition.z + backwardMovement;
+
+      if (progress < 1) {
+        this.currentAnimationId = requestAnimationFrame(animate);
+      } else {
+        // Reset to original transform
         tubesGroup.rotation.copy(originalRotation);
         tubesGroup.position.copy(originalPosition);
         this.isAnimating = false;

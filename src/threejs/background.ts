@@ -248,7 +248,7 @@ export class BackgroundManager {
   private createParticles(): void {
     if (!this.root) return;
 
-    const count = 2000; // reduced density by ~50% for clarity
+    const count = 1500; // further reduce density by ~25% for clarity and performance
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const velocities = new Float32Array(count * 3);

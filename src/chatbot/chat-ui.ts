@@ -33,7 +33,7 @@ export class ChatUI {
     this.initializeChatbot();
     // Initialize token usage display and load existing messages
     this.updateTokenUsageDisplay();
-    this.loadExistingMessages();
+    this.loadExistingMessages().then(() => this.showFirstVisitFlow());
   }
 
   private createUI(): void {
@@ -69,12 +69,13 @@ export class ChatUI {
     // Create the model display text
     const modelText = document.createElement("span");
     modelText.id = "model-text";
-    modelText.textContent = MODEL_METADATA[this.currentModelId].name;
+    modelText.textContent = "Select Model";
 
     // Create the up arrow
     const arrowIcon = document.createElement("span");
     arrowIcon.innerHTML = "▲";
-    arrowIcon.className = "transition-transform duration-200";
+    arrowIcon.className =
+      "transition-transform duration-200 text-xs text-gray-600";
     arrowIcon.id = "model-arrow";
 
     this.modelSelector.appendChild(modelIcon);
@@ -110,8 +111,9 @@ export class ChatUI {
     this.tokenUsageIndicator.id = "token-usage";
     this.tokenUsageIndicator.className = "text-sm sm:text-base text-gray-400";
 
-    // Context display
+    // Context display (created and hidden by default)
     this.createContextDisplay();
+    this.contextDisplay.style.display = "none";
 
     // Create new chat button
     const newChatButton = document.createElement("div");
@@ -130,15 +132,30 @@ export class ChatUI {
       this.showNewChatConfirmation();
     });
 
+    // Create info button to show first-time use popup on demand
+    const infoButton = document.createElement("div");
+    infoButton.className =
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors min-w-0 w-auto overflow-visible";
+    infoButton.id = "info-button";
+
+    const infoSummary = document.createElement("div");
+    infoSummary.className =
+      "flex items-center gap-2 truncate text-sm sm:text-base";
+    infoSummary.innerHTML = `<span>ℹ️ Context Info</span><span class="text-xs text-gray-600">▲</span>`;
+    infoButton.appendChild(infoSummary);
+    infoButton.addEventListener("click", () => {
+      this.showAboutModal();
+    });
+
     // Create left section container
     const leftSection = document.createElement("div");
     leftSection.className =
       "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400 cursor-default select-none";
 
-    // Add left side elements
+    // Add left side elements (context button removed)
     leftSection.appendChild(this.modelSelector);
-    leftSection.appendChild(this.contextDisplay);
     leftSection.appendChild(newChatButton);
+    leftSection.appendChild(infoButton);
 
     // Create right section container
     const rightSection = document.createElement("div");
@@ -162,7 +179,7 @@ export class ChatUI {
     this.input = document.createElement("input");
     this.input.id = "chat-input";
     this.input.type = "text";
-    this.input.placeholder = "Ask me anything...";
+    this.input.placeholder = "Ask me something...";
     this.input.className =
       "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-300 text-white";
     this.input.addEventListener("keypress", e => {
@@ -176,7 +193,7 @@ export class ChatUI {
     this.debugButton = document.createElement("button");
     this.debugButton.innerHTML = "🐛";
     this.debugButton.className =
-      "px-3 py-2 text-sm bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition-colors border border-white/10 backdrop-blur-md";
+      "px-3 py-2 text-sm bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition-colors border border-white/10 backdrop-blur-md cursor-pointer";
     this.debugButton.title = "Debug Animations";
     this.debugButton.addEventListener("click", () => {
       this.toggleDebugDropdown();
@@ -203,7 +220,7 @@ export class ChatUI {
       </svg>
     `;
     this.sendButton.className =
-      "p-2 text-gray-200 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 backdrop-blur-md";
+      "p-2 text-gray-200 hover:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 backdrop-blur-md cursor-pointer";
     this.sendButton.addEventListener("click", () => {
       this.sendMessage();
     });
@@ -478,6 +495,107 @@ export class ChatUI {
     }
   }
 
+  private async showFirstVisitFlow(): Promise<void> {
+    try {
+      const existing = await this.chatbot.getMessages();
+      if (existing.length > 0) return;
+      const ackKey = "simon.welcome.v1.ack";
+      if (typeof window !== "undefined" && localStorage.getItem(ackKey)) {
+        this.addMessageToUI({
+          role: "assistant",
+          content: "Ask me something about Simon’s work or projects.",
+          timestamp: new Date(),
+        });
+        return;
+      }
+
+      const body =
+        "This portfolio includes a curated view of Simon Curran’s professional experience, skills, and projects. " +
+        "The chatbot answers strictly from this portfolio so you can quickly understand Simon’s work. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
+        "Location context: Brisbane, Australia.\n\n" +
+        "Try asking: \n- What technologies does Simon use?\n- Tell me about Simon’s recent projects.\n- What kind of roles has Simon worked in?";
+
+      this.createInfoModal("About this site", body, "Got it", () => {
+        try {
+          localStorage.setItem(ackKey, "1");
+        } catch {}
+        this.addMessageToUI({
+          role: "assistant",
+          content: "Ask me something about Simon’s work or projects.",
+          timestamp: new Date(),
+        });
+      });
+    } catch {
+      // no-op
+    }
+  }
+
+  private createInfoModal(
+    title: string,
+    message: string,
+    confirmText: string,
+    onConfirm: () => void
+  ): void {
+    const existingModal = document.getElementById("confirmation-modal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "confirmation-modal";
+    modal.className =
+      "fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4";
+
+    const modalContent = document.createElement("div");
+    modalContent.className =
+      "bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-600/30 max-w-md w-full p-6";
+
+    const header = document.createElement("div");
+    header.className = "flex items-center gap-3 mb-4";
+    header.innerHTML = `
+      <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+        <span class="text-blue-300 text-lg">ℹ️</span>
+      </div>
+      <h3 class="text-lg font-semibold text-white">${title}</h3>
+    `;
+
+    const messageDiv = document.createElement("div");
+    messageDiv.className =
+      "text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap";
+    messageDiv.textContent = message;
+
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = "flex gap-3 justify-end";
+    const confirmButton = document.createElement("button");
+    confirmButton.textContent = confirmText;
+    confirmButton.className =
+      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg cursor-pointer";
+    confirmButton.addEventListener("click", () => {
+      onConfirm();
+      modal.remove();
+    });
+
+    buttonContainer.appendChild(confirmButton);
+    modalContent.appendChild(header);
+    modalContent.appendChild(messageDiv);
+    modalContent.appendChild(buttonContainer);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+  }
+
+  private showAboutModal(): void {
+    const body =
+      "This portfolio includes curated context about Simon Curran’s professional experience, skills, and projects. " +
+      "You can also ask about a few personal details, request contact info, and see links. " +
+      "The chatbot answers strictly from this context so you can quickly understand Simon’s work and background. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
+      "Try asking: \n" +
+      "- What technologies does Simon use?\n" +
+      "- Tell me about Simon’s recent projects.\n" +
+      "- What kind of roles has Simon worked in?\n" +
+      "- What are some of Simon’s interests?\n" +
+      "- How can I contact Simon?\n" +
+      "- Show me Simon’s GitHub and LinkedIn.";
+    this.createInfoModal("About this site", body, "Got it", () => {});
+  }
+
   private triggerAnimation(animationType: string): void {
     // Dispatch custom event for main.ts to listen to
     const animationEvent = new CustomEvent("triggerAnimation", {
@@ -699,10 +817,13 @@ export class ChatUI {
       const option = document.createElement("div");
       option.className =
         "px-3 py-2 text-xs md:text-sm text-gray-300 hover:bg-gray-700/50 cursor-pointer transition-colors first:rounded-t-lg last:rounded-b-lg";
-      option.textContent = `${metadata.name} (${metadata.size})`;
+      const isSelected = id === this.currentModelId;
+      option.textContent = `${metadata.name} (${metadata.size})${isSelected ? " ✓" : ""}`;
       option.dataset.modelId = id;
 
-      option.addEventListener("click", () => {
+      option.addEventListener("click", (e: MouseEvent) => {
+        // Prevent parent modelSelector click handler from toggling the dropdown again
+        e.stopPropagation();
         this.selectModel(id);
       });
 
@@ -721,12 +842,18 @@ export class ChatUI {
     if (forceClose) {
       this.modelDropdown.style.display = "none";
       this.isModelDropdownOpen = false;
+      // Rotate arrow back up when force-closing
+      const arrow = document.getElementById("model-arrow");
+      if (arrow) {
+        arrow.style.transform = "rotate(0deg)";
+      }
       return;
     }
 
     if (forceOpen) {
       this.modelDropdown.style.display = "block";
       this.isModelDropdownOpen = true;
+      this.updateModelDropdownTicks();
       return;
     }
 
@@ -741,6 +868,7 @@ export class ChatUI {
     } else {
       this.modelDropdown.style.display = "block";
       this.isModelDropdownOpen = true;
+      this.updateModelDropdownTicks();
       // Rotate arrow down
       const arrow = document.getElementById("model-arrow");
       if (arrow) {
@@ -757,13 +885,31 @@ export class ChatUI {
     this.currentModelId = modelId;
     const modelText = document.getElementById("model-text");
     if (modelText) {
-      modelText.textContent = MODEL_METADATA[modelId].name;
+      modelText.textContent = "Select Model";
     }
 
     // Switch the model
     this.switchModel(modelId);
 
+    // Trigger a wave animation to acknowledge model change
+    this.triggerAnimation("wave");
+
     this.toggleModelDropdown({ forceClose: true });
+    this.updateModelDropdownTicks();
+  }
+
+  private updateModelDropdownTicks(): void {
+    if (!this.modelDropdown) return;
+    const children = Array.from(
+      this.modelDropdown.children
+    ) as HTMLDivElement[];
+    children.forEach(child => {
+      const id = child.dataset.modelId as string | undefined;
+      if (!id) return;
+      const meta = MODEL_METADATA[id];
+      const isSelected = id === this.currentModelId;
+      child.textContent = `${meta.name} (${meta.size})${isSelected ? "  ✓" : ""}`;
+    });
   }
 
   private createDebugDropdown(): void {
@@ -801,9 +947,15 @@ export class ChatUI {
       },
       {
         id: "backflip",
-        name: "Backflip Animation",
+        name: "Frontflip Animation",
         icon: "🤸",
         color: "bg-orange-500 hover:bg-orange-600",
+      },
+      {
+        id: "frontflip",
+        name: "Backflip Animation",
+        icon: "🤸‍♂️",
+        color: "bg-amber-500 hover:bg-amber-600",
       },
       {
         id: "multiSpin",
@@ -882,6 +1034,8 @@ export class ChatUI {
     this.input.disabled = false;
     this.sendButton.disabled = false;
     this.input.focus();
+    // Celebrate new chat with a backflip animation
+    this.triggerAnimation("backflip");
   }
 
   private createConfirmationModal(
@@ -930,12 +1084,12 @@ export class ChatUI {
     const cancelButton = document.createElement("button");
     cancelButton.textContent = cancelText;
     cancelButton.className =
-      "px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors border border-gray-600/30 rounded-lg hover:border-gray-500/50";
+      "px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors border border-gray-600/30 rounded-lg hover:border-gray-500/50 cursor-pointer";
 
     const confirmButton = document.createElement("button");
     confirmButton.textContent = confirmText;
     confirmButton.className =
-      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg";
+      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg cursor-pointer";
 
     // Event listeners
     cancelButton.addEventListener("click", () => modal.remove());
