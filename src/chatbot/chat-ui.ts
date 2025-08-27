@@ -179,7 +179,7 @@ export class ChatUI {
     this.input = document.createElement("input");
     this.input.id = "chat-input";
     this.input.type = "text";
-    this.input.placeholder = "Ask me something...";
+    this.input.placeholder = "Ask me something about Simon’s work or projects.";
     this.input.className =
       "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-300 text-white";
     this.input.addEventListener("keypress", e => {
@@ -501,11 +501,8 @@ export class ChatUI {
       if (existing.length > 0) return;
       const ackKey = "simon.welcome.v1.ack";
       if (typeof window !== "undefined" && localStorage.getItem(ackKey)) {
-        this.addMessageToUI({
-          role: "assistant",
-          content: "Ask me something about Simon’s work or projects.",
-          timestamp: new Date(),
-        });
+        // Show hint in the input placeholder instead of sending a first assistant message
+        this.input.placeholder = "Ask me something about Simon’s work or projects.";
         return;
       }
 
@@ -519,11 +516,8 @@ export class ChatUI {
         try {
           localStorage.setItem(ackKey, "1");
         } catch {}
-        this.addMessageToUI({
-          role: "assistant",
-          content: "Ask me something about Simon’s work or projects.",
-          timestamp: new Date(),
-        });
+        // After acknowledging, show the hint in the input placeholder
+        this.input.placeholder = "Ask me something about Simon’s work or projects.";
       });
     } catch {
       // no-op
