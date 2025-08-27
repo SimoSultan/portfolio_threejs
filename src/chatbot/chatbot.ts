@@ -1,5 +1,6 @@
 import { getOllamaEnvironment, getOllamaUrl } from "./config";
 import { type ChatContext, ContextManager } from "./context";
+import { SimonContextRetriever } from "./simon-context";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -19,10 +20,12 @@ export class Chatbot {
   private isGenerating = false;
   private isOllamaAvailable: boolean = false;
   private contextManager: ContextManager;
+  private simonRetriever: SimonContextRetriever;
 
   constructor(modelConfig: ModelConfig, onContextUpdate?: () => void) {
     this.modelConfig = modelConfig;
     this.contextManager = new ContextManager(onContextUpdate);
+    this.simonRetriever = new SimonContextRetriever();
   }
 
   async initialize(): Promise<void> {
@@ -130,7 +133,10 @@ export class Chatbot {
         )
         .join("\n\n");
 
-      const contextualizedPrompt = `${context}\n\nConversation History:\n${conversationHistory}\n\nUser Message: ${userMessage}`;
+      const systemInstruction = this.simonRetriever.getSystemInstruction();
+      const simonDomain = this.simonRetriever.buildContextText();
+
+      const contextualizedPrompt = `${systemInstruction}\n\nSimon Context:\n${simonDomain}\n\nCurrent App Context:\n${context}\n\nConversation History:\n${conversationHistory}\n\nUser Message: ${userMessage}`;
 
       const ollamaUrl = getOllamaUrl();
       const response = await fetch(`${ollamaUrl}/api/generate`, {

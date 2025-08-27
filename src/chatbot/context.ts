@@ -25,6 +25,12 @@ export interface ContextStorage {
   lastUpdated: Date;
 }
 
+// Simon context retrieval interface
+export type SimonSnippet = {
+  heading: string;
+  content: string;
+};
+
 export class ContextManager {
   private context: ChatContext | null = null;
   private locationPermissionGranted: boolean = false;
