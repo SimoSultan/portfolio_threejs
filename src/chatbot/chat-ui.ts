@@ -74,7 +74,8 @@ export class ChatUI {
     // Create the up arrow
     const arrowIcon = document.createElement("span");
     arrowIcon.innerHTML = "▲";
-    arrowIcon.className = "transition-transform duration-200";
+    arrowIcon.className =
+      "transition-transform duration-200 text-xs text-gray-600";
     arrowIcon.id = "model-arrow";
 
     this.modelSelector.appendChild(modelIcon);
@@ -137,8 +138,9 @@ export class ChatUI {
     infoButton.id = "info-button";
 
     const infoSummary = document.createElement("div");
-    infoSummary.className = "flex items-center gap-2 truncate text-sm sm:text-base";
-    infoSummary.innerHTML = `<span>ℹ️ Info</span>`;
+    infoSummary.className =
+      "flex items-center gap-2 truncate text-sm sm:text-base";
+    infoSummary.innerHTML = `<span>ℹ️ Info</span><span class="text-xs text-gray-600">▲</span>`;
     infoButton.appendChild(infoSummary);
     infoButton.addEventListener("click", () => {
       this.showAboutModal();
