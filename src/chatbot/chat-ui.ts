@@ -40,19 +40,20 @@ export class ChatUI {
     // Main container - positioned absolutely over canvas, full height
     this.container = document.createElement("div");
     this.container.className =
-      "absolute left-0 right-0 bg-transparent z-10 flex flex-col h-screen";
+      "absolute inset-0 bg-transparent z-10 flex flex-col h-screen -full";
     this.container.style.top = "0";
+    this.container.id = "chat-ui-container";
 
     // Chat messages container - takes up 90% of screen height
     this.chatContainer = document.createElement("div");
     this.chatContainer.className =
-      "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 flex-1";
+      "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 flex-1 w-full";
     this.chatContainer.id = "chat-container";
 
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex flex-col justify-around items-center gap-2 md:gap-3 p-3 md:p-4 bg-white/5 backdrop-blur-md rounded-t-2xl shadow-lg w-full border-t border-white/10 h-[15vh] min-h-[100px] mx-6";
+      "flex flex-col justify-between items-center p-3 md:p-4 bg-white/0 backdrop-blur-md rounded-t-2xl shadow-lg w-full border-t border-white/10 h-[15vh] min-h-[100px]";
 
     // Model selector - compact transparent design
     this.modelSelector = document.createElement("div");
@@ -150,7 +151,7 @@ export class ChatUI {
 
     this.modelSelectorContainer = document.createElement("div");
     this.modelSelectorContainer.className =
-      "flex w-full items-center justify-between gap-4 overflow-visible";
+      "flex w-full flex-col-reverse sm:flex-row items-center justify-between gap-3 overflow-visible";
     this.modelSelectorContainer.id = "model-selector-container";
 
     // Add left and right sections
@@ -163,7 +164,7 @@ export class ChatUI {
     this.input.type = "text";
     this.input.placeholder = "Ask me anything...";
     this.input.className =
-      "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/10 backdrop-blur-md border border-white/10 placeholder-gray-300 text-white";
+      "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-300 text-white";
     this.input.addEventListener("keypress", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
