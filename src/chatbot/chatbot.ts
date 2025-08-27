@@ -111,26 +111,7 @@ export class Chatbot {
 
   private async generateOllamaResponse(userMessage: string): Promise<string> {
     try {
-      // Get current context and format it for the prompt
-      const context = this.contextManager.formatContextForPrompt();
-
-      // Get conversation messages for context
-      let conversationMessages: any[] = [];
-      try {
-        conversationMessages =
-          await this.contextManager.getConversationMessages();
-      } catch (contextError) {
-        console.error("Error getting conversation messages:", contextError);
-        conversationMessages = [];
-      }
-
-      // Build a conversation history string with timestamps for date context
-      const conversationHistory = conversationMessages
-        .map(
-          msg =>
-            `${msg.role === "user" ? "User" : "Assistant"} (${msg.timestamp.toLocaleString()}): ${msg.content}`
-        )
-        .join("\n\n");
+      // Conversation and general context omitted for latency; Simon Context below is authoritative
 
       const systemInstruction =
         this.simonRetriever.getSystemInstruction() +

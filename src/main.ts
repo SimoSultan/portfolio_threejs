@@ -7,7 +7,7 @@ import { CameraManager } from "./threejs/camera";
 // import { COLORS } from "./threejs/constants"; // not used
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
-import { calculateBoundingSphere } from "./threejs/utils";
+// import { calculateBoundingSphere } from "./threejs/utils"; // not used
 
 class PortfolioScene {
   private scene!: THREE.Scene;
