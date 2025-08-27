@@ -138,7 +138,8 @@ export class Chatbot {
         "\nIMPORTANT: If the answer cannot be derived strictly from the Simon Context, respond with the single token: OUT_OF_CONTEXT";
       const simonDomain = this.simonRetriever.buildContextText();
 
-      const contextualizedPrompt = `${systemInstruction}\n\nSimon Context:\n${simonDomain}\n\nCurrent App Context:\n${context}\n\nConversation History:\n${conversationHistory}\n\nUser Message: ${userMessage}`;
+      // Keep prompt compact to reduce latency while preserving constraints
+      const contextualizedPrompt = `${systemInstruction}\n\nSimon Context (concise):\n${simonDomain}\n\nUser Message: ${userMessage}`;
 
       const ollamaUrl = getOllamaUrl();
       const response = await fetch(`${ollamaUrl}/api/generate`, {
@@ -165,7 +166,10 @@ export class Chatbot {
       const data = await response.json();
       const raw = (data.response as string) || "";
       const cleaned = raw.trim();
-      if (cleaned === "OUT_OF_CONTEXT" || cleaned.startsWith("OUT_OF_CONTEXT")) {
+      if (
+        cleaned === "OUT_OF_CONTEXT" ||
+        cleaned.startsWith("OUT_OF_CONTEXT")
+      ) {
         return (
           "This assistant is focused on Simon Curran’s professional portfolio. " +
           "I can answer questions about Simon’s skills, experience and projects described here. " +

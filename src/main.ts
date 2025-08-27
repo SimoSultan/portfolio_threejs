@@ -162,8 +162,8 @@ class PortfolioScene {
 
   private buildCircle(): void {
     this.tubesGroup = CircleGeometry.buildCircle();
-    // Apply visual scale to reduce circle by ~10% without changing geometry constants
-    this.tubesGroup.scale.setScalar(0.9);
+    // Apply visual scale to reduce circle size (~10% previous, now ~7%)
+    this.tubesGroup.scale.setScalar(0.93);
     // Move the circle slightly upward so the perceived page center sits
     // between the top of the screen and top of the chat input
     this.tubesGroup.position.set(0, 0.25, 0);

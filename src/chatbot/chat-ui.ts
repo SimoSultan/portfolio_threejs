@@ -540,7 +540,8 @@ export class ChatUI {
     `;
 
     const messageDiv = document.createElement("div");
-    messageDiv.className = "text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap";
+    messageDiv.className =
+      "text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap";
     messageDiv.textContent = message;
 
     const buttonContainer = document.createElement("div");
@@ -548,7 +549,7 @@ export class ChatUI {
     const confirmButton = document.createElement("button");
     confirmButton.textContent = confirmText;
     confirmButton.className =
-      "px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg";
+      "px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg";
     confirmButton.addEventListener("click", () => {
       onConfirm();
       modal.remove();
