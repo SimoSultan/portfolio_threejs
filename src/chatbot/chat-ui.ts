@@ -882,6 +882,9 @@ export class ChatUI {
     // Switch the model
     this.switchModel(modelId);
 
+    // Trigger a wave animation to acknowledge model change
+    this.triggerAnimation("wave");
+
     this.toggleModelDropdown({ forceClose: true });
     this.updateModelDropdownTicks();
   }
@@ -938,6 +941,12 @@ export class ChatUI {
         name: "Backflip Animation",
         icon: "🤸",
         color: "bg-orange-500 hover:bg-orange-600",
+      },
+      {
+        id: "frontflip",
+        name: "Frontflip Animation",
+        icon: "🤸‍♂️",
+        color: "bg-amber-500 hover:bg-amber-600",
       },
       {
         id: "multiSpin",
