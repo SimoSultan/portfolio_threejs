@@ -5,6 +5,7 @@ export class AnimationManager {
   private currentAnimationId?: number;
   private originalPositions: THREE.Vector3[] | undefined;
   private originalScales: THREE.Vector3[] | undefined;
+  private basePositions: THREE.Vector3[] | undefined; // stable baseline circle positions
   private shouldResumeInfiniteAnimation: boolean = false; // Flag to resume infinite animation after others finish
   private infiniteAnimationSpeed: number = 1.0; // Speed multiplier for infinite animation
   private originalInfiniteAnimationSpeed: number = 1.0; // Store original speed
@@ -14,6 +15,19 @@ export class AnimationManager {
     // Scene parameter kept for future use (e.g., adding particles, effects)
     // Currently not used but will be useful for scene-wide animations
     // Prefixed with underscore to indicate intentional non-use
+  }
+
+  /**
+   * Compute and cache the baseline circle positions (one-time) so wave animations
+   * always return to a consistent radius even if interrupted.
+   */
+  private getOrComputeBasePositions(tubesGroup: THREE.Group): THREE.Vector3[] {
+    if (this.basePositions && this.basePositions.length === tubesGroup.children.length) {
+      return this.basePositions;
+    }
+    const tubes = tubesGroup.children as THREE.Mesh[];
+    this.basePositions = tubes.map(t => (t.position as THREE.Vector3).clone());
+    return this.basePositions;
   }
 
   /**
@@ -98,17 +112,16 @@ export class AnimationManager {
 
     const startTime = Date.now();
     const tubes = tubesGroup.children as THREE.Mesh[];
-    const originalPositions: THREE.Vector3[] = [];
+    const basePositions = this.getOrComputeBasePositions(tubesGroup);
     const originalScales: THREE.Vector3[] = [];
 
     // Store original positions and scales
     tubes.forEach(tube => {
-      originalPositions.push(tube.position.clone());
       originalScales.push(tube.scale.clone());
     });
 
     // Store original positions and scales in the instance for reset
-    this.originalPositions = originalPositions;
+    this.originalPositions = basePositions;
     this.originalScales = originalScales;
 
     const animate = () => {
@@ -178,14 +191,14 @@ export class AnimationManager {
             1 + Math.max(0, waveIntensity) * effectiveFactor;
 
           // Move tube outward from center based on wave
-          const direction = originalPositions[index].clone().normalize();
+          const direction = basePositions[index].clone().normalize();
           const newRadius =
-            originalPositions[index].distanceTo(new THREE.Vector3(0, 0, 0)) *
+            basePositions[index].distanceTo(new THREE.Vector3(0, 0, 0)) *
             radiusMultiplier;
           tube.position.copy(direction.multiplyScalar(newRadius));
         } else {
           // Keep tubes at original position when not affected by wave
-          tube.position.copy(originalPositions[index]);
+          tube.position.copy(basePositions[index]);
         }
 
         // Keep original scale - no individual tube scaling
@@ -201,7 +214,7 @@ export class AnimationManager {
       } else {
         // Animation complete - reset to original positions and scales
         tubes.forEach((tube, index) => {
-          tube.position.copy(originalPositions[index]);
+          tube.position.copy(basePositions[index]);
           tube.scale.copy(originalScales[index]);
         });
         this.isAnimating = false;
@@ -561,9 +574,7 @@ export class AnimationManager {
       // This ensures that speedUpInfiniteAnimation can work on subsequent calls
 
       // Reset all tubes to their original positions and scales
-      if (this.originalPositions && this.originalScales) {
-        // Tubes will be reset on next animation
-      }
+      // We rely on each animation's completion to restore positions smoothly
     }
   }
 
