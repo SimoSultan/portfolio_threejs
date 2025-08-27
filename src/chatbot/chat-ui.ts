@@ -819,7 +819,9 @@ export class ChatUI {
       option.textContent = `${metadata.name} (${metadata.size})${isSelected ? " ✓" : ""}`;
       option.dataset.modelId = id;
 
-      option.addEventListener("click", () => {
+      option.addEventListener("click", (e: MouseEvent) => {
+        // Prevent parent modelSelector click handler from toggling the dropdown again
+        e.stopPropagation();
         this.selectModel(id);
       });
 
@@ -943,13 +945,13 @@ export class ChatUI {
       },
       {
         id: "backflip",
-        name: "Backflip Animation",
+        name: "Frontflip Animation",
         icon: "🤸",
         color: "bg-orange-500 hover:bg-orange-600",
       },
       {
         id: "frontflip",
-        name: "Frontflip Animation",
+        name: "Backflip Animation",
         icon: "🤸‍♂️",
         color: "bg-amber-500 hover:bg-amber-600",
       },
