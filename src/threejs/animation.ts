@@ -127,6 +127,15 @@ export class AnimationManager {
         progress = Math.min(elapsed / duration, 1);
       }
 
+      // In the final phase of a single-cycle animation, gently settle tubes back to original radius
+      const settleStart = 0.85; // begin settle at 85%
+      let settleFactor = 1; // 1 = full wave displacement; 0 = fully settled
+      if (!continuous && progress > settleStart) {
+        const t = (progress - settleStart) / (1 - settleStart);
+        const easeOut = 1 - Math.pow(1 - t, 3);
+        settleFactor = 1 - easeOut; // decreases to 0 near the end
+      }
+
       tubes.forEach((tube, index) => {
         // Create a continuous wave that moves around the circle
         // The wave affects exactly 5 tubes at a time as it travels
@@ -154,7 +163,8 @@ export class AnimationManager {
           const waveIntensity = 0.08 * waveShape;
 
           // Ensure radius only increases (never decreases)
-          const radiusMultiplier = 1 + Math.max(0, waveIntensity);
+          // During settle, smoothly reduce outward displacement
+          const radiusMultiplier = 1 + Math.max(0, waveIntensity) * settleFactor;
 
           // Move tube outward from center based on wave
           const direction = originalPositions[index].clone().normalize();
