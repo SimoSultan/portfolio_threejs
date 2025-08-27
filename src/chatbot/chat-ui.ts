@@ -33,7 +33,7 @@ export class ChatUI {
     this.initializeChatbot();
     // Initialize token usage display and load existing messages
     this.updateTokenUsageDisplay();
-    this.loadExistingMessages().then(() => this.showWelcomeIfFirstVisit());
+    this.loadExistingMessages().then(() => this.showFirstVisitFlow());
   }
 
   private createUI(): void {
@@ -478,24 +478,88 @@ export class ChatUI {
     }
   }
 
-  private async showWelcomeIfFirstVisit(): Promise<void> {
+  private async showFirstVisitFlow(): Promise<void> {
     try {
       const existing = await this.chatbot.getMessages();
       if (existing.length > 0) return;
+      const ackKey = "simon.welcome.v1.ack";
+      if (typeof window !== "undefined" && localStorage.getItem(ackKey)) {
+        this.addMessageToUI({
+          role: "assistant",
+          content: "Ask me something about Simon’s work or projects.",
+          timestamp: new Date(),
+        });
+        return;
+      }
 
-      const welcome =
-        "Welcome! This portfolio includes a context about Simon Curran’s professional experience, skills, and projects. " +
-        "The chatbot is designed to answer questions strictly based on that context so you can quickly learn what Simon does and how he works. " +
-        "If you ask about topics outside this scope, you’ll get a generic message that an answer can’t be provided as it lies outside the portfolio context. \n\n" +
-        "You can ask things like: \n" +
-        "- What technologies does Simon use?\n" +
-        "- Tell me about Simon’s recent projects.\n" +
-        "- What kind of roles has Simon worked in?";
+      const body =
+        "This portfolio includes a curated context about Simon Curran’s professional experience, skills, and projects. " +
+        "The chatbot answers strictly from that context so you can quickly understand Simon’s work. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
+        "Try asking: \n- What technologies does Simon use?\n- Tell me about Simon’s recent projects.\n- What kind of roles has Simon worked in?";
 
-      this.addMessageToUI({ role: "assistant", content: welcome, timestamp: new Date() });
+      this.createInfoModal("About this site", body, "Got it", () => {
+        try {
+          localStorage.setItem(ackKey, "1");
+        } catch {}
+        this.addMessageToUI({
+          role: "assistant",
+          content: "Ask me something about Simon’s work or projects.",
+          timestamp: new Date(),
+        });
+      });
     } catch {
       // no-op
     }
+  }
+
+  private createInfoModal(
+    title: string,
+    message: string,
+    confirmText: string,
+    onConfirm: () => void
+  ): void {
+    const existingModal = document.getElementById("confirmation-modal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "confirmation-modal";
+    modal.className =
+      "fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4";
+
+    const modalContent = document.createElement("div");
+    modalContent.className =
+      "bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-600/30 max-w-md w-full p-6";
+
+    const header = document.createElement("div");
+    header.className = "flex items-center gap-3 mb-4";
+    header.innerHTML = `
+      <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+        <span class="text-blue-300 text-lg">ℹ️</span>
+      </div>
+      <h3 class="text-lg font-semibold text-white">${title}</h3>
+    `;
+
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap";
+    messageDiv.textContent = message;
+
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = "flex gap-3 justify-end";
+    const confirmButton = document.createElement("button");
+    confirmButton.textContent = confirmText;
+    confirmButton.className =
+      "px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg";
+    confirmButton.addEventListener("click", () => {
+      onConfirm();
+      modal.remove();
+    });
+
+    buttonContainer.appendChild(confirmButton);
+    modalContent.appendChild(header);
+    modalContent.appendChild(messageDiv);
+    modalContent.appendChild(buttonContainer);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
   }
 
   private triggerAnimation(animationType: string): void {
