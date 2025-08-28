@@ -190,13 +190,16 @@ class PortfolioScene {
 
   private async buildTitle(): Promise<void> {
     try {
+      // Match text width to circle diameter (2 * RADIUS * scale)
+      const circleRadius = 1.3 * 0.95; // geometry radius * tubesGroup scale
+      const targetWidth = circleRadius * 2;
       const title = await createTitleText("Simon Curran", {
         size: 0.2,
         height: 0.01,
         color: "#ffffff",
         emissive: "#0b1220",
         bevelEnabled: false,
-        targetWidth: 0.6, // clamp world width
+        targetWidth,
       });
       // Place at the circle center without additional scaling
       title.position.set(0, 0.25, 0.02);
