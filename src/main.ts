@@ -79,7 +79,7 @@ class PortfolioScene {
 
     // Build circle geometry and title text
     this.buildCircle();
-    this.attachTitle();
+    // this.attachTitle();
 
     // Camera positioning is now handled manually in updateRendererSize() for mobile responsiveness
 
@@ -137,9 +137,16 @@ class PortfolioScene {
       // Mobile breakpoint (sm:)
       this.camera.position.y = -1.5; // Move camera down significantly
       this.camera.position.z = 4; // Much closer than the calculated 80.6
+      // Slightly reduce circle size on mobile to avoid appearing too wide
+      if (this.tubesGroup) {
+        this.tubesGroup.scale.setScalar(0.9);
+      }
     } else {
       this.camera.position.y = 0; // Desktop: keep centered
       this.camera.position.z = 2.3; // Desktop: original Z position
+      if (this.tubesGroup) {
+        this.tubesGroup.scale.setScalar(0.95);
+      }
     }
 
     // Update camera projection matrix
