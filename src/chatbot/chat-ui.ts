@@ -476,6 +476,13 @@ export class ChatUI {
 
   private async updateTokenUsageDisplay(): Promise<void> {
     try {
+      // Only show token usage for local LLM
+      if (!this.useLocalLLM) {
+        this.tokenUsageIndicator.style.display = "none";
+        return;
+      }
+
+      this.tokenUsageIndicator.style.display = "block";
       const tokenUsage = await this.chatbot.getTokenUsage();
       const tokenIndicator = document.getElementById("token-usage");
 
@@ -1028,6 +1035,8 @@ export class ChatUI {
       this.updateStatus(
         this.useLocalLLM ? "Local model enabled" : "Server API enabled"
       );
+      // Update token usage display based on new mode
+      this.updateTokenUsageDisplay();
     });
     this.debugDropdown.appendChild(localBtn);
 
