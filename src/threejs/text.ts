@@ -58,14 +58,6 @@ export async function createTitleText(
   geometry.computeBoundingBox();
   geometry.center();
 
-  // Enforce a specific world-space width to avoid extreme length
-  geometry.computeBoundingBox();
-  const box = geometry.boundingBox!;
-  const currentWidth = Math.max(1e-6, box.max.x - box.min.x);
-  const desiredWidth = options.targetWidth ?? 0.6; // default width ~60cm in our world units
-  const scale = desiredWidth / currentWidth;
-  geometry.scale(scale, scale, 1);
-
   // Use unlit material for maximum legibility and render above tubes
   const frontMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(opts.color),
@@ -80,8 +72,17 @@ export async function createTitleText(
   frontMesh.receiveShadow = false;
   frontMesh.renderOrder = 999;
 
-  // Create a subtle outline by cloning geometry slightly scaled and darker color behind
-  const outlineGeometry = geometry.clone();
+  // Enforce a specific world-space width using Box3 so transforms are respected
+  if (typeof opts.targetWidth === "number") {
+    const box3 = new THREE.Box3().setFromObject(frontMesh);
+    const size = new THREE.Vector3();
+    box3.getSize(size);
+    const currentWidth = Math.max(1e-6, size.x);
+    const desiredWidth = Math.max(1e-6, opts.targetWidth);
+    const uniformScale = desiredWidth / currentWidth;
+    frontMesh.scale.set(uniformScale, uniformScale, 1);
+  }
+
   const group = new THREE.Group();
   group.add(frontMesh);
   return group;
