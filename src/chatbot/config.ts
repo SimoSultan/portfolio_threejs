@@ -12,7 +12,7 @@ const loadConfig = (): OllamaConfig => {
   const config: OllamaConfig = {
     environment: "local",
     localUrl: "http://localhost:11434",
-    remoteUrl: "http://localhost:8000", // fallback to local server
+    remoteUrl: "https://portfolio-server-neon-five.vercel.app", // fallback to local server
   };
 
   // Load from environment variables if available
@@ -36,6 +36,8 @@ const loadConfig = (): OllamaConfig => {
       config.apiKey = windowConfig.OLLAMA_API_KEY;
     }
   }
+
+  console.log("Ollama config:", config);
 
   return config;
 };

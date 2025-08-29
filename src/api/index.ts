@@ -24,7 +24,9 @@ export async function generate(
   prompt: string,
   options: GenerateOptions = {}
 ): Promise<string> {
-  const url = options.url ?? "http://localhost:8000/generate";
+  // const url = options.url ?? "http://localhost:8000/generate";
+  const url = options.url ?? "https://portfolio-server-neon-five.vercel.app";
+
   const timeoutMs = options.timeoutMs ?? 20000;
 
   const controller = new AbortController();
@@ -50,6 +52,7 @@ export async function generate(
         data?.content ??
         data?.message ??
         data?.data ??
+        data?.response ??
         JSON.stringify(data)
       );
     }

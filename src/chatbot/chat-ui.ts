@@ -332,7 +332,7 @@ export class ChatUI {
         }));
         console.log("Sending history to server:", history); // Debug log
         response = await generate(message, { history });
-        
+
         // Manually add the user message to storage for server API mode
         await this.chatbot.addUserMessage(message);
       }
