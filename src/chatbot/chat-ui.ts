@@ -343,6 +343,13 @@ export class ChatUI {
       await this.updateTokenUsageDisplay();
     } catch (error) {
       console.error("Chat error:", error);
+      
+      // Show error status message
+      const errorMessage = this.useLocalLLM 
+        ? "Local model error - check Ollama"
+        : "Server API error - check connection";
+      this.updateStatus(errorMessage);
+      
       this.addMessageToUI({
         role: "assistant",
         content: "Sorry, I encountered an error. Please try again.",
