@@ -325,7 +325,11 @@ export class ChatUI {
       if (this.useLocalLLM) {
         response = await this.chatbot.chat(message);
       } else {
-        response = await generate(message);
+        const history = (await this.chatbot.getMessages()).map(m => ({
+          role: m.role,
+          content: m.content,
+        }));
+        response = await generate(message, { history });
       }
 
       // Add assistant response to UI
