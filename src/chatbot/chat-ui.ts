@@ -1,5 +1,5 @@
 import { generate } from "../api";
-import { type ChatContext, type StoredMessage } from "./context";
+import { type StoredMessage } from "./context";
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -18,6 +18,20 @@ export class ChatUI {
 
   constructor() {
     this.createUI();
+  }
+
+  // Helper function to create a proper StoredMessage object
+  private createMessage(
+    role: "user" | "assistant",
+    content: string
+  ): StoredMessage {
+    return {
+      role,
+      content,
+      timestamp: new Date(),
+      tokenCount: Math.ceil(content.length / 4), // Simple token estimation
+      isSummarized: false,
+    };
   }
 
   private createUI(): void {
@@ -210,11 +224,7 @@ export class ChatUI {
     this.input.value = "";
 
     // Add user message to UI
-    this.addMessageToUI({
-      role: "user",
-      content: message,
-      timestamp: new Date(),
-    });
+    this.addMessageToUI(this.createMessage("user", message));
 
     // Disable input while generating
     this.input.disabled = true;
@@ -228,18 +238,15 @@ export class ChatUI {
       let response: string;
       response = await generate(message);
       // Add assistant response to UI
-      this.addMessageToUI({
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
-      });
+      this.addMessageToUI(this.createMessage("assistant", response));
     } catch (error) {
       console.error("Chat error:", error);
-      this.addMessageToUI({
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: new Date(),
-      });
+      this.addMessageToUI(
+        this.createMessage(
+          "assistant",
+          "Sorry, I encountered an error. Please try again."
+        )
+      );
     } finally {
       // Resume infinite animation at normal speed and restart it
       this.triggerAnimation("resumeInfiniteSpeed");
