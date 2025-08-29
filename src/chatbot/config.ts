@@ -12,7 +12,7 @@ const loadConfig = (): OllamaConfig => {
   const config: OllamaConfig = {
     environment: "local",
     localUrl: "http://localhost:11434",
-    remoteUrl: "http://localhost:11434", // fallback to local
+    remoteUrl: "http://localhost:8000", // fallback to local server
   };
 
   // Load from environment variables if available
@@ -20,8 +20,7 @@ const loadConfig = (): OllamaConfig => {
     config.environment =
       (process.env.OLLAMA_ENVIRONMENT as "local" | "remote") || "local";
     config.localUrl = process.env.OLLAMA_LOCAL_URL || "http://localhost:11434";
-    config.remoteUrl =
-      process.env.OLLAMA_REMOTE_URL || "http://localhost:11434";
+    config.remoteUrl = process.env.OLLAMA_REMOTE_URL || "http://localhost:8000";
     config.apiKey = process.env.OLLAMA_API_KEY;
   }
 

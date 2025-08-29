@@ -1,6 +1,5 @@
 import { getOllamaUrl } from "./config";
 import { type ChatContext, ContextManager } from "./context";
-import { SimonContextRetriever } from "./simon-context";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -20,12 +19,10 @@ export class Chatbot {
   private isGenerating = false;
   private isOllamaAvailable: boolean = false;
   private contextManager: ContextManager;
-  private simonRetriever: SimonContextRetriever;
 
   constructor(modelConfig: ModelConfig, onContextUpdate?: () => void) {
     this.modelConfig = modelConfig;
     this.contextManager = new ContextManager(onContextUpdate);
-    this.simonRetriever = new SimonContextRetriever();
   }
 
   async initialize(): Promise<void> {
@@ -111,15 +108,8 @@ export class Chatbot {
 
   private async generateOllamaResponse(userMessage: string): Promise<string> {
     try {
-      // Conversation and general context omitted for latency; Simon Context below is authoritative
-
-      const systemInstruction =
-        this.simonRetriever.getSystemInstruction() +
-        "\nIMPORTANT: If the answer cannot be derived strictly from the Simon Context, respond with the single token: OUT_OF_CONTEXT";
-      const simonDomain = this.simonRetriever.buildContextText();
-
-      // Keep prompt compact to reduce latency while preserving constraints
-      const contextualizedPrompt = `${systemInstruction}\n\nSimon Context (concise):\n${simonDomain}\n\nUser Message: ${userMessage}`;
+      // Keep prompt compact; the server now handles portfolio context when used
+      const contextualizedPrompt = userMessage;
 
       const ollamaUrl = getOllamaUrl();
       const response = await fetch(`${ollamaUrl}/api/generate`, {
@@ -146,32 +136,6 @@ export class Chatbot {
       const data = await response.json();
       const raw = (data.response as string) || "";
       const cleaned = raw.trim();
-      if (
-        cleaned === "OUT_OF_CONTEXT" ||
-        cleaned.startsWith("OUT_OF_CONTEXT")
-      ) {
-        return (
-          "This assistant is focused on Simon Curran’s professional portfolio. " +
-          "I can help with questions about Simon’s skills, experience and projects featured here. " +
-          "That topic is outside the scope of this portfolio, so I don’t have an answer. " +
-          "Try asking about Simon’s work, projects, skills or roles."
-        );
-      }
-      // Heuristic: some models may paraphrase the instruction instead of returning the token
-      const lc = cleaned.toLowerCase();
-      if (
-        lc.includes("simon context") ||
-        lc.includes("scope of the simon context") ||
-        lc.includes("outside the context") ||
-        lc.startsWith("i don't know")
-      ) {
-        return (
-          "This assistant focuses on context about Simon. " +
-          "I can help with questions about Simon’s skills, experience and projects featured here. " +
-          "That topic is outside the scope of this portfolio, so I don’t have an answer. " +
-          "Try asking about Simon’s work, projects, skills or roles."
-        );
-      }
       return cleaned || "Sorry, I couldn't generate a response.";
     } catch (error) {
       console.error("❌ Ollama API error:", error);

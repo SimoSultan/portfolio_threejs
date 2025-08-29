@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+import { generate } from "./api";
 import { ChatUI } from "./chatbot";
 import { AnimationManager } from "./threejs/animation";
 import { BackgroundManager } from "./threejs/background";

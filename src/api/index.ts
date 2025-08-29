@@ -44,6 +44,7 @@ export async function generate(
         data?.content ??
         data?.message ??
         data?.data ??
+        data?.response ??
         JSON.stringify(data)
       );
     }
@@ -53,5 +54,3 @@ export async function generate(
     clearTimeout(timer);
   }
 }
-
-
