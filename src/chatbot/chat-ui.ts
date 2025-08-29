@@ -378,7 +378,13 @@ export class ChatUI {
       bubble.textContent = message.content;
     }
 
+    // Add timestamp below the message
+    const timestamp = document.createElement("div");
+    timestamp.className = "text-xs text-gray-400 mt-1 opacity-70";
+    timestamp.textContent = this.formatDateString(message.timestamp.toISOString());
+    
     messageDiv.appendChild(bubble);
+    messageDiv.appendChild(timestamp);
     this.chatContainer.appendChild(messageDiv);
 
     // Scroll to bottom
