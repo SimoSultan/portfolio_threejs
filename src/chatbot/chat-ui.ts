@@ -1,7 +1,5 @@
 import { generate } from "../api";
-import { type ChatMessage, Chatbot } from "./chatbot";
-import { type ChatContext } from "./context";
-import { AVAILABLE_MODELS, DEFAULT_MODEL, MODEL_METADATA } from "./models";
+import { type ChatContext, type StoredMessage } from "./context";
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -11,47 +9,15 @@ export class ChatUI {
   private sendButton!: HTMLButtonElement;
   private debugButton!: HTMLButtonElement;
   private debugDropdown!: HTMLDivElement;
-  private modelSelector!: HTMLDivElement;
-  private modelSelectorContainer!: HTMLDivElement;
   private statusIndicator!: HTMLDivElement;
-  private tokenUsageIndicator!: HTMLDivElement;
   private contextDisplay!: HTMLDivElement;
-  private modelDropdown!: HTMLDivElement;
   private contextDropdown!: HTMLDivElement;
-  private isModelDropdownOpen: boolean = false;
   private isContextDropdownOpen: boolean = false;
   private isDebugDropdownOpen: boolean = false;
-  private chatbot: Chatbot;
-  private currentModelId: string;
-  private useLocalLLM: boolean = false;
+  private infoContainer!: HTMLDivElement;
 
   constructor() {
-    this.currentModelId = DEFAULT_MODEL;
-    this.chatbot = new Chatbot(
-      AVAILABLE_MODELS[this.currentModelId],
-      () => this.updateContextDisplay() // Callback to update UI when context changes
-    );
-    
-    // Check if we're in production
-    const isProduction = typeof __IS_PROD__ !== 'undefined' ? __IS_PROD__ : 
-                        window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
-    
-    // In production, always use server API
-    if (isProduction) {
-      this.useLocalLLM = false;
-    } else {
-      // Load preference for local LLM usage only in development
-      try {
-        const saved = localStorage.getItem("debug.useLocalLLM");
-        if (saved != null) this.useLocalLLM = saved === "1";
-      } catch {}
-    }
-
     this.createUI();
-    this.initializeChatbot();
-    // Initialize token usage display and load existing messages
-    this.updateTokenUsageDisplay();
-    this.loadExistingMessages().then(() => this.showFirstVisitFlow());
   }
 
   private createUI(): void {
@@ -73,12 +39,6 @@ export class ChatUI {
     this.inputContainer.className =
       "flex flex-col justify-between items-center p-3 md:p-4 sm:gap-4 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-6 sm:mb-4";
 
-    // Model selector - compact transparent design
-    this.modelSelector = document.createElement("div");
-    this.modelSelector.id = "model-selector";
-    this.modelSelector.className =
-      "flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors w-[fit-content]";
-
     // Create the model icon
     const modelIcon = document.createElement("span");
     modelIcon.innerHTML = "🤖";
@@ -96,23 +56,8 @@ export class ChatUI {
       "transition-transform duration-200 text-xs text-gray-600";
     arrowIcon.id = "model-arrow";
 
-    this.modelSelector.appendChild(modelIcon);
-    this.modelSelector.appendChild(modelText);
-    this.modelSelector.appendChild(arrowIcon);
-
-    // Create the dropdown options container
-    this.createModelDropdown();
-
-    // Add click event to toggle dropdown
-    this.modelSelector.addEventListener("click", e => {
-      e.stopPropagation();
-      this.toggleModelDropdown({ forceOpen: true });
-    });
-
     // Close dropdown when clicking outside
     this.chatContainer.addEventListener("click", () => {
-      this.toggleModelDropdown({ forceClose: true });
-
       this.toggleDebugDropdown({ forceClose: true });
 
       this.toggleContextDropdown({ forceClose: true });
@@ -123,11 +68,6 @@ export class ChatUI {
     this.statusIndicator.className =
       "flex items-center gap-2 text-sm sm:text-base text-gray-400";
     this.updateStatus("Initializing...");
-
-    // Token usage indicator
-    this.tokenUsageIndicator = document.createElement("div");
-    this.tokenUsageIndicator.id = "token-usage";
-    this.tokenUsageIndicator.className = "text-sm sm:text-base text-gray-400";
 
     // Context display (created and hidden by default)
     this.createContextDisplay();
@@ -171,7 +111,6 @@ export class ChatUI {
       "flex items-center gap-4 text-sm sm:text-base overflow-visible text-gray-400 cursor-default select-none";
 
     // Add left side elements (context button removed)
-    leftSection.appendChild(this.modelSelector);
     leftSection.appendChild(newChatButton);
     leftSection.appendChild(infoButton);
 
@@ -182,16 +121,16 @@ export class ChatUI {
 
     // Add right side elements
     rightSection.appendChild(this.statusIndicator);
-    rightSection.appendChild(this.tokenUsageIndicator);
 
-    this.modelSelectorContainer = document.createElement("div");
-    this.modelSelectorContainer.className =
+    this.infoContainer = document.createElement("div");
+    this.infoContainer.className =
       "flex w-full flex-col-reverse sm:flex-row items-center justify-between gap-3 overflow-visible";
-    this.modelSelectorContainer.id = "model-selector-container";
+    this.infoContainer.id = "info-container";
 
-    // Add left and right sections
-    this.modelSelectorContainer.appendChild(leftSection);
-    this.modelSelectorContainer.appendChild(rightSection);
+    this.infoContainer.appendChild(leftSection);
+    this.infoContainer.appendChild(rightSection);
+
+    this.inputContainer.appendChild(this.infoContainer);
 
     // Input field
     this.input = document.createElement("input");
@@ -252,7 +191,6 @@ export class ChatUI {
     inputRow.appendChild(this.debugButton);
 
     // Assemble UI
-    this.inputContainer.appendChild(this.modelSelectorContainer);
     this.inputContainer.appendChild(inputRow);
 
     this.container.appendChild(this.chatContainer);
@@ -261,54 +199,10 @@ export class ChatUI {
     // Don't auto-append to body - let main.ts handle positioning
   }
 
-  private async initializeChatbot(): Promise<void> {
-    try {
-      await this.chatbot.initialize();
-
-      this.updateStatus("Ready");
-      this.input.disabled = false;
-      this.sendButton.disabled = false;
-    } catch (error) {
-      console.error("❌ ChatUI: Failed to initialize chatbot:", error);
-      this.updateStatus("Failed to load model");
-      this.input.disabled = true;
-      this.sendButton.disabled = true;
-    }
-  }
-
-  private async switchModel(newModelId: string): Promise<void> {
-    if (newModelId === this.currentModelId) {
-      return;
-    }
-
-    this.currentModelId = newModelId;
-    this.chatbot = new Chatbot(
-      AVAILABLE_MODELS[newModelId],
-      () => this.updateContextDisplay() // Callback to update UI when context changes
-    );
-
-    this.updateStatus("Switching models...");
-    this.input.disabled = true;
-    this.sendButton.disabled = true;
-    this.clearChat();
-
-    try {
-      await this.chatbot.initialize();
-      this.updateStatus("Ready");
-      this.input.disabled = false;
-      this.sendButton.disabled = false;
-    } catch (error) {
-      console.error("Failed to switch model:", error);
-      this.updateStatus("Failed to load model");
-      this.input.disabled = true;
-      this.sendButton.disabled = true;
-    }
-  }
-
   private async sendMessage(): Promise<void> {
     const message = this.input.value.trim();
 
-    if (!message || !this.chatbot.isReady()) {
+    if (!message) {
       return;
     }
 
@@ -332,30 +226,13 @@ export class ChatUI {
 
     try {
       let response: string;
-      if (this.useLocalLLM) {
-        response = await this.chatbot.chat(message);
-      } else {
-        // Get history BEFORE adding the current message to context
-        const history = (await this.chatbot.getMessages()).map(m => ({
-          role: m.role,
-          content: m.content,
-        }));
-        console.log("Sending history to server:", history); // Debug log
-        response = await generate(message, { history });
-
-        // Manually add the user message to storage for server API mode
-        await this.chatbot.addUserMessage(message);
-      }
-
+      response = await generate(message);
       // Add assistant response to UI
       this.addMessageToUI({
         role: "assistant",
         content: response,
         timestamp: new Date(),
       });
-
-      // Update token usage display
-      await this.updateTokenUsageDisplay();
     } catch (error) {
       console.error("Chat error:", error);
       this.addMessageToUI({
@@ -375,7 +252,7 @@ export class ChatUI {
     }
   }
 
-  private addMessageToUI(message: ChatMessage): void {
+  private addMessageToUI(message: StoredMessage): void {
     const messageDiv = document.createElement("div");
     messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
@@ -461,8 +338,6 @@ export class ChatUI {
 
   private async clearChat(): Promise<void> {
     this.chatContainer.innerHTML = "";
-    await this.chatbot.clearHistory();
-    await this.updateTokenUsageDisplay();
   }
 
   private updateStatus(status: string): void {
@@ -486,83 +361,6 @@ export class ChatUI {
   public destroy(): void {
     if (this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
-    }
-  }
-
-  private async updateTokenUsageDisplay(): Promise<void> {
-    try {
-      // Only show token usage for local LLM
-      if (!this.useLocalLLM) {
-        this.tokenUsageIndicator.style.display = "none";
-        return;
-      }
-
-      this.tokenUsageIndicator.style.display = "block";
-      const tokenUsage = await this.chatbot.getTokenUsage();
-      const tokenIndicator = document.getElementById("token-usage");
-
-      if (tokenIndicator) {
-        const percentage = Math.round(tokenUsage.percentage);
-        const colorClass =
-          percentage > 80
-            ? "text-red-400"
-            : percentage > 60
-              ? "text-yellow-400"
-              : "text-green-400";
-
-        tokenIndicator.innerHTML = `
-          <span class="text-xs ${colorClass}">
-            ${tokenUsage.used.toLocaleString()}/${tokenUsage.available.toLocaleString()} tokens (${percentage}%)
-          </span>
-        `;
-      }
-    } catch (error) {
-      console.error("Failed to update token usage display:", error);
-    }
-  }
-
-  private async loadExistingMessages(): Promise<void> {
-    try {
-      const messages = await this.chatbot.getMessages();
-      messages.forEach(message => {
-        this.addMessageToUI(message);
-      });
-
-      // Update token usage after loading messages
-      await this.updateTokenUsageDisplay();
-    } catch (error) {
-      console.error("Failed to load existing messages:", error);
-    }
-  }
-
-  private async showFirstVisitFlow(): Promise<void> {
-    try {
-      const existing = await this.chatbot.getMessages();
-      if (existing.length > 0) return;
-      const ackKey = "simon.welcome.v1.ack";
-      if (typeof window !== "undefined" && localStorage.getItem(ackKey)) {
-        // Show hint in the input placeholder instead of sending a first assistant message
-        this.input.placeholder =
-          "Ask me something about Simon’s work or projects...";
-        return;
-      }
-
-      const body =
-        "This portfolio includes a curated view of Simon Curran’s professional experience, skills, and projects. " +
-        "The chatbot answers strictly from this portfolio so you can quickly understand Simon’s work. If a question is outside of scope, you’ll get a gentle note that an answer can’t be provided.\n\n" +
-        "Location context: Brisbane, Australia.\n\n" +
-        "Try asking: \n- What technologies does Simon use?\n- Tell me about Simon’s recent projects.\n- What kind of roles has Simon worked in?";
-
-      this.createInfoModal("About this site", body, "Got it", () => {
-        try {
-          localStorage.setItem(ackKey, "1");
-        } catch {}
-        // After acknowledging, show the hint in the input placeholder
-        this.input.placeholder =
-          "Ask me something about Simon’s work or projects...";
-      });
-    } catch {
-      // o-op
     }
   }
 
@@ -696,28 +494,12 @@ export class ChatUI {
       return;
     }
 
-    // Get current context
-    const context = this.chatbot.getCurrentContext();
-
-    if (context) {
-      // Update inline summary
-      contextSummary.innerHTML = `
-        <span>📍 Context</span>
-        <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? "▼" : "▲"}</span>
-      `;
-
-      // Update dropdown content if it exists and is open
-      if (this.isContextDropdownOpen) {
-        this.updateContextDropdownContent(context);
-      }
-    } else {
-      // Update inline summary with loading state
-      contextSummary.innerHTML = `
+    // Update inline summary with loading state
+    contextSummary.innerHTML = `
         <span>📍 Context</span>
         <span class="text-gray-500">Loading...</span>
         <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? "▼" : "▲"}</span>
       `;
-    }
   }
 
   private createContextDropdown(): void {
@@ -738,7 +520,6 @@ export class ChatUI {
       refreshButton.innerHTML = "⏳";
       refreshButton.disabled = true;
       try {
-        await this.chatbot.refreshLocation();
         this.updateContextDisplay();
       } catch (error) {
         console.error("Failed to refresh location:", error);
@@ -792,160 +573,6 @@ export class ChatUI {
         arrow.innerHTML = isOpen ? "▼" : "▲";
       }
     }
-  }
-
-  private updateContextDropdownContent(context: ChatContext): void {
-    if (!this.contextDropdown) {
-      return;
-    }
-
-    // Preserve the refresh location button
-    const refreshButton = this.contextDropdown.querySelector(
-      ".absolute.top-2.right-2.text-xs.text-gray-400.hover\\:text-gray-200.transition-colors"
-    );
-
-    this.contextDropdown.innerHTML = `
-      <div class="font-semibold text-gray-400 mb-2">📍 Context Details</div>
-      <div class="text-xs space-y-2 text-gray-300">
-        <div class="flex items-center gap-2">
-          <span>📅</span>
-          <span>${context.currentDate}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span>🕐</span>
-          <span>${context.currentTime}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span>🌍</span>
-          <span>${context.timezone}</span>
-        </div>
-                <div class="flex items-center gap-2">
-          <span>📍</span>
-          <span class="break-words">${context.location}</span>
-        </div>
-        ${
-          context.coordinates
-            ? `
-        <div class="flex items-center gap-2">
-          <span>🌐</span>
-          <span class="break-words text-blue-300">Coordinates: ${context.coordinates.lat.toFixed(4)}, ${context.coordinates.lng.toFixed(4)}</span>
-        </div>
-        `
-            : ""
-        }
-      </div>
-    `;
-
-    // Re-add the refresh location button
-    if (refreshButton) {
-      this.contextDropdown.appendChild(refreshButton);
-    }
-  }
-
-  private createModelDropdown(): void {
-    this.modelDropdown = document.createElement("div");
-    this.modelDropdown.className =
-      "absolute bottom-full left-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-48";
-    this.modelDropdown.style.display = "none";
-
-    // Populate dropdown with model options
-    Object.entries(MODEL_METADATA).forEach(([id, metadata]) => {
-      const option = document.createElement("div");
-      option.className =
-        "px-3 py-2 text-xs md:text-sm text-gray-300 hover:bg-gray-700/50 cursor-pointer transition-colors first:rounded-t-lg last:rounded-b-lg";
-      const isSelected = id === this.currentModelId;
-      option.textContent = `${metadata.name} (${metadata.size})${isSelected ? " ✓" : ""}`;
-      option.dataset.modelId = id;
-
-      option.addEventListener("click", (e: MouseEvent) => {
-        // Prevent parent modelSelector click handler from toggling the dropdown again
-        e.stopPropagation();
-        this.selectModel(id);
-      });
-
-      this.modelDropdown.appendChild(option);
-    });
-
-    // Position the dropdown relative to the model selector
-    this.modelSelector.style.position = "relative";
-    this.modelSelector.appendChild(this.modelDropdown);
-  }
-
-  private toggleModelDropdown({
-    forceClose,
-    forceOpen,
-  }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
-    if (forceClose) {
-      this.modelDropdown.style.display = "none";
-      this.isModelDropdownOpen = false;
-      // Rotate arrow back up when force-closing
-      const arrow = document.getElementById("model-arrow");
-      if (arrow) {
-        arrow.style.transform = "rotate(0deg)";
-      }
-      return;
-    }
-
-    if (forceOpen) {
-      this.modelDropdown.style.display = "block";
-      this.isModelDropdownOpen = true;
-      this.updateModelDropdownTicks();
-      return;
-    }
-
-    if (this.isModelDropdownOpen) {
-      this.modelDropdown.style.display = "none";
-      this.isModelDropdownOpen = false;
-      // Rotate arrow back up
-      const arrow = document.getElementById("model-arrow");
-      if (arrow) {
-        arrow.style.transform = "rotate(0deg)";
-      }
-    } else {
-      this.modelDropdown.style.display = "block";
-      this.isModelDropdownOpen = true;
-      this.updateModelDropdownTicks();
-      // Rotate arrow down
-      const arrow = document.getElementById("model-arrow");
-      if (arrow) {
-        arrow.style.transform = "rotate(180deg)";
-      }
-    }
-  }
-
-  private selectModel(modelId: string): void {
-    if (modelId === this.currentModelId) {
-      return;
-    }
-
-    this.currentModelId = modelId;
-    const modelText = document.getElementById("model-text");
-    if (modelText) {
-      modelText.textContent = "Select Model";
-    }
-
-    // Switch the model
-    this.switchModel(modelId);
-
-    // Trigger a wave animation to acknowledge model change
-    this.triggerAnimation("wave");
-
-    this.toggleModelDropdown({ forceClose: true });
-    this.updateModelDropdownTicks();
-  }
-
-  private updateModelDropdownTicks(): void {
-    if (!this.modelDropdown) return;
-    const children = Array.from(
-      this.modelDropdown.children
-    ) as HTMLDivElement[];
-    children.forEach(child => {
-      const id = child.dataset.modelId as string | undefined;
-      if (!id) return;
-      const meta = MODEL_METADATA[id];
-      const isSelected = id === this.currentModelId;
-      child.textContent = `${meta.name} (${meta.size})${isSelected ? "  ✓" : ""}`;
-    });
   }
 
   private createDebugDropdown(): void {
@@ -1033,25 +660,11 @@ export class ChatUI {
 
     // Toggle local LLM usage
     const localBtn = document.createElement("button");
-    const setLocalBtnLabel = () =>
-      (localBtn.innerHTML = `${this.useLocalLLM ? "🧠" : "🌐"} Use local LLM: ${
-        this.useLocalLLM ? "ON" : "OFF"
-      }`);
-    setLocalBtnLabel();
+
     localBtn.className =
       "mt-2 w-full px-3 py-2 text-sm text-white rounded-lg transition-colors bg-slate-600 hover:bg-slate-700 text-left";
     localBtn.addEventListener("click", () => {
-      this.useLocalLLM = !this.useLocalLLM;
-      try {
-        localStorage.setItem("debug.useLocalLLM", this.useLocalLLM ? "1" : "0");
-      } catch {}
-      setLocalBtnLabel();
       this.toggleDebugDropdown({ forceClose: true });
-      this.updateStatus(
-        this.useLocalLLM ? "Local model enabled" : "Server API enabled"
-      );
-      // Update token usage display based on new mode
-      this.updateTokenUsageDisplay();
     });
     this.debugDropdown.appendChild(localBtn);
 
@@ -1062,31 +675,37 @@ export class ChatUI {
     }
 
     // Position the dropdown relative to the debug button
-    this.debugButton.style.position = "relative";
-    this.debugButton.appendChild(this.debugDropdown);
+    const debugButton = document.getElementById("debug-button");
+    if (debugButton) {
+      debugButton.style.position = "relative";
+      debugButton.appendChild(this.debugDropdown);
+    }
   }
 
   private toggleDebugDropdown({
     forceClose,
     forceOpen,
   }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
+    const debugDropdown = document.getElementById("debug-dropdown");
+    if (!debugDropdown) return;
+
     if (forceClose) {
-      this.debugDropdown.style.display = "none";
+      debugDropdown.style.display = "none";
       this.isDebugDropdownOpen = false;
       return;
     }
 
     if (forceOpen) {
-      this.debugDropdown.style.display = "block";
+      debugDropdown.style.display = "block";
       this.isDebugDropdownOpen = true;
       return;
     }
 
     if (this.isDebugDropdownOpen) {
-      this.debugDropdown.style.display = "none";
+      debugDropdown.style.display = "none";
       this.isDebugDropdownOpen = false;
     } else {
-      this.debugDropdown.style.display = "block";
+      debugDropdown.style.display = "block";
       this.isDebugDropdownOpen = true;
     }
   }

@@ -4,19 +4,14 @@ import { ChatUI } from "./chatbot";
 import { AnimationManager } from "./threejs/animation";
 import { BackgroundManager } from "./threejs/background";
 import { CameraManager } from "./threejs/camera";
-// import { COLORS } from "./threejs/constants"; // not used
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
-// import { createTitleText } from "./threejs/text"; // not used
-
-// import { calculateBoundingSphere } from "./threejs/utils"; // not used
 
 class PortfolioScene {
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private tubesGroup!: THREE.Group;
-  // private titleMesh: THREE.Group | null = null; // not used
   private cameraManager!: CameraManager;
   private animationManager!: AnimationManager;
   private backgroundManager!: BackgroundManager;
