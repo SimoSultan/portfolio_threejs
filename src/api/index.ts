@@ -1,7 +1,7 @@
 /**
  * Simple API client for the local Python text generation server.
  * Endpoint: POST http://localhost:8000/generate
- * Body: { "prompt": string }
+ * Body: { "prompt": string, "history": ConversationMessage[] }
  */
 
 export type ConversationMessage = {
@@ -31,13 +31,10 @@ export async function generate(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    // Compose the prompt with conversation history if provided
-    const composedPrompt = composePrompt(options.history ?? [], prompt);
-
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: composedPrompt }),
+      body: JSON.stringify({ prompt, history: options.history ?? [] }),
       signal: options.signal ?? controller.signal,
     });
 
@@ -53,7 +50,6 @@ export async function generate(
         data?.content ??
         data?.message ??
         data?.data ??
-        data?.response ??
         JSON.stringify(data)
       );
     }
@@ -62,17 +58,4 @@ export async function generate(
   } finally {
     clearTimeout(timer);
   }
-}
-
-function composePrompt(history: ConversationMessage[], latest: string): string {
-  if (!history || history.length === 0) return latest;
-  const lines: string[] = [];
-  lines.push("Conversation so far (most recent last):");
-  history.forEach(m => {
-    const speaker = m.role === "user" ? "User" : "Assistant";
-    lines.push(`${speaker}: ${m.content}`);
-  });
-  lines.push(`User: ${latest}`);
-  lines.push("Assistant:");
-  return lines.join("\n");
 }
