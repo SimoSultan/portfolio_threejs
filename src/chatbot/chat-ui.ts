@@ -325,11 +325,16 @@ export class ChatUI {
       if (this.useLocalLLM) {
         response = await this.chatbot.chat(message);
       } else {
+        // Get history BEFORE adding the current message to context
         const history = (await this.chatbot.getMessages()).map(m => ({
           role: m.role,
           content: m.content,
         }));
+        console.log("Sending history to server:", history); // Debug log
         response = await generate(message, { history });
+        
+        // Manually add the user message to storage for server API mode
+        await this.chatbot.addUserMessage(message);
       }
 
       // Add assistant response to UI
@@ -343,13 +348,6 @@ export class ChatUI {
       await this.updateTokenUsageDisplay();
     } catch (error) {
       console.error("Chat error:", error);
-      
-      // Show error status message
-      const errorMessage = this.useLocalLLM 
-        ? "Local model error - check Ollama"
-        : "Server API error - check connection";
-      this.updateStatus(errorMessage);
-      
       this.addMessageToUI({
         role: "assistant",
         content: "Sorry, I encountered an error. Please try again.",

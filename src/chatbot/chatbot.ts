@@ -220,4 +220,14 @@ export class Chatbot {
   async cleanupOldMessages(): Promise<void> {
     await this.contextManager.cleanupOldMessages();
   }
+
+  // Method to manually add user message to storage (for server API mode)
+  async addUserMessage(message: string): Promise<void> {
+    await this.contextManager.addMessage("user", message);
+  }
+
+  // Method to manually add assistant message to storage (for server API mode)
+  async addAssistantMessage(message: string): Promise<void> {
+    await this.contextManager.addMessage("assistant", message);
+  }
 }
