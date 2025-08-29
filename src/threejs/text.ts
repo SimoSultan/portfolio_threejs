@@ -19,7 +19,7 @@ export type TitleTextOptions = {
   targetWidth?: number; // desired world-space width of the full text
 };
 
-const DEFAULTS: Required<TitleTextOptions> = {
+const DEFAULTS: Required<Omit<TitleTextOptions, 'targetWidth'>> = {
   size: 0.2,
   height: 0.01,
   color: "#e5e7eb", // tailwind gray-200
@@ -46,7 +46,7 @@ export async function createTitleText(
   const geometry = new TextGeometry(text, {
     font,
     size: opts.size,
-    depth: opts.depth, // Changed from height to depth
+    depth: opts.height, // Changed from height to depth
     curveSegments: 8,
     bevelEnabled: opts.bevelEnabled,
     bevelThickness: opts.bevelThickness,

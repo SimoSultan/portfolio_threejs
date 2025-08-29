@@ -79,7 +79,7 @@ class PortfolioScene {
 
     // Build circle geometry and title text
     this.buildCircle();
-    // this.attachTitle();
+    // this.attachTitle(); // Title creation disabled for now
 
     // Camera positioning is now handled manually in updateRendererSize() for mobile responsiveness
 
@@ -193,18 +193,6 @@ class PortfolioScene {
       adjustedBounds.center,
       adjustedBounds.radius
     );
-  }
-
-  private async attachTitle(): Promise<void> {
-    try {
-      // const title = await TitleManager.attach(this.scene, this.tubesGroup, {
-      //   text: "Simon Curran",
-      //   margin: 0.9,
-      // });
-      // this.titleMesh = title;
-    } catch (err) {
-      console.error("Failed to create 3D title:", err);
-    }
   }
 
   private animate(): void {
