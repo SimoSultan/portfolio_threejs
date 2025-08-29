@@ -46,7 +46,7 @@ export async function createTitleText(
   const geometry = new TextGeometry(text, {
     font,
     size: opts.size,
-    height: opts.height,
+    depth: opts.depth, // Changed from height to depth
     curveSegments: 8,
     bevelEnabled: opts.bevelEnabled,
     bevelThickness: opts.bevelThickness,

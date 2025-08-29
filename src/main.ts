@@ -1,6 +1,5 @@
 import * as THREE from "three";
 
-import { generate } from "./api";
 import { ChatUI } from "./chatbot";
 import { AnimationManager } from "./threejs/animation";
 import { BackgroundManager } from "./threejs/background";
@@ -8,7 +7,7 @@ import { CameraManager } from "./threejs/camera";
 // import { COLORS } from "./threejs/constants"; // not used
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
-import { TitleManager } from "./threejs/text";
+// import { createTitleText } from "./threejs/text"; // not used
 
 // import { calculateBoundingSphere } from "./threejs/utils"; // not used
 
@@ -17,7 +16,7 @@ class PortfolioScene {
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private tubesGroup!: THREE.Group;
-  private titleMesh: THREE.Group | null = null;
+  // private titleMesh: THREE.Group | null = null; // not used
   private cameraManager!: CameraManager;
   private animationManager!: AnimationManager;
   private backgroundManager!: BackgroundManager;
@@ -198,11 +197,11 @@ class PortfolioScene {
 
   private async attachTitle(): Promise<void> {
     try {
-      const title = await TitleManager.attach(this.scene, this.tubesGroup, {
-        text: "Simon Curran",
-        margin: 0.9,
-      });
-      this.titleMesh = title;
+      // const title = await TitleManager.attach(this.scene, this.tubesGroup, {
+      //   text: "Simon Curran",
+      //   margin: 0.9,
+      // });
+      // this.titleMesh = title;
     } catch (err) {
       console.error("Failed to create 3D title:", err);
     }
