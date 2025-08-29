@@ -7,7 +7,7 @@ import { CameraManager } from "./threejs/camera";
 // import { COLORS } from "./threejs/constants"; // not used
 import { CircleGeometry } from "./threejs/geometry";
 import { Lighting } from "./threejs/lighting";
-import { createTitleText } from "./threejs/text";
+import { TitleManager } from "./threejs/text";
 
 // import { calculateBoundingSphere } from "./threejs/utils"; // not used
 
@@ -79,7 +79,7 @@ class PortfolioScene {
 
     // Build circle geometry and title text
     this.buildCircle();
-    this.buildTitle();
+    this.attachTitle();
 
     // Camera positioning is now handled manually in updateRendererSize() for mobile responsiveness
 
@@ -188,27 +188,15 @@ class PortfolioScene {
     );
   }
 
-  private async buildTitle(): Promise<void> {
+  private async attachTitle(): Promise<void> {
     try {
-      // Match text width to circle diameter (2 * RADIUS * scale)
-      const circleRadius = 1.3 * 0.95; // geometry radius * tubesGroup scale
-      const targetWidth = circleRadius * 2 * 0.9; // slightly smaller than circle
-      const title = await createTitleText("Simon Curran", {
-        size: 0.2,
-        height: 0.01,
-        color: "#ffffff",
-        emissive: "#0b1220",
-        bevelEnabled: false,
-        targetWidth,
+      const title = await TitleManager.attach(this.scene, this.tubesGroup, {
+        text: "Simon Curran",
+        margin: 0.9,
       });
-      // Place at the circle center without additional scaling
-      title.position.set(0, 0.25, 0.02);
-      title.rotation.set(0, 0, 0);
-      title.scale.setScalar(1);
       this.titleMesh = title;
-      this.scene.add(title);
     } catch (err) {
-      console.error("Failed to load 3D title font:", err);
+      console.error("Failed to create 3D title:", err);
     }
   }
 

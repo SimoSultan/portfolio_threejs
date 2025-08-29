@@ -87,3 +87,47 @@ export async function createTitleText(
   group.add(frontMesh);
   return group;
 }
+
+export class TitleManager {
+  private static titleGroup: THREE.Group | null = null;
+
+  static async attach(
+    scene: THREE.Scene,
+    circleGroup: THREE.Group,
+    opts?: { text?: string; margin?: number }
+  ): Promise<THREE.Group> {
+    const text = opts?.text ?? "Simon Curran";
+    const margin = opts?.margin ?? 0.9; // fraction of circle width
+
+    // Compute the circle's world-space width using its bounding box
+    const circleBox = new THREE.Box3().setFromObject(circleGroup);
+    const circleSize = new THREE.Vector3();
+    const circleCenter = new THREE.Vector3();
+    circleBox.getSize(circleSize);
+    circleBox.getCenter(circleCenter);
+
+    const targetWidth = Math.max(1e-6, circleSize.x * margin);
+
+    const group = await createTitleText(text, {
+      targetWidth,
+      size: 0.2,
+      height: 0.01,
+      color: "#ffffff",
+      emissive: "#0b1220",
+      bevelEnabled: false,
+    });
+
+    // Place near the circle center and slightly forward on Z to avoid depth fighting
+    group.position.set(circleCenter.x, circleCenter.y, 0.02);
+    scene.add(group);
+    this.titleGroup = group;
+    return group;
+  }
+
+  static remove(scene: THREE.Scene): void {
+    if (this.titleGroup) {
+      scene.remove(this.titleGroup);
+      this.titleGroup = null;
+    }
+  }
+}
