@@ -192,7 +192,7 @@ class PortfolioScene {
     try {
       // Match text width to circle diameter (2 * RADIUS * scale)
       const circleRadius = 1.3 * 0.95; // geometry radius * tubesGroup scale
-      const targetWidth = circleRadius * 2;
+      const targetWidth = circleRadius * 2 * 0.9; // slightly smaller than circle
       const title = await createTitleText("Simon Curran", {
         size: 0.2,
         height: 0.01,
