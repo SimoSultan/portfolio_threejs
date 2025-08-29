@@ -1,4 +1,5 @@
 import { type ChatMessage, Chatbot } from "./chatbot";
+import { generate } from "../api";
 import { type ChatContext } from "./context";
 import { AVAILABLE_MODELS, DEFAULT_MODEL, MODEL_METADATA } from "./models";
 
@@ -22,6 +23,7 @@ export class ChatUI {
   private isDebugDropdownOpen: boolean = false;
   private chatbot: Chatbot;
   private currentModelId: string;
+  private useLocalLLM: boolean = false;
 
   constructor() {
     this.currentModelId = DEFAULT_MODEL;
@@ -29,6 +31,12 @@ export class ChatUI {
       AVAILABLE_MODELS[this.currentModelId],
       () => this.updateContextDisplay() // Callback to update UI when context changes
     );
+    // Load preference for local LLM usage
+    try {
+      const saved = localStorage.getItem("debug.useLocalLLM");
+      if (saved != null) this.useLocalLLM = saved === "1";
+    } catch {}
+
     this.createUI();
     this.initializeChatbot();
     // Initialize token usage display and load existing messages
@@ -313,7 +321,12 @@ export class ChatUI {
     this.triggerAnimation("speedUpInfinite");
 
     try {
-      const response = await this.chatbot.chat(message);
+      let response: string;
+      if (this.useLocalLLM) {
+        response = await this.chatbot.chat(message);
+      } else {
+        response = await generate(message);
+      }
 
       // Add assistant response to UI
       this.addMessageToUI({
@@ -991,6 +1004,28 @@ export class ChatUI {
       this.toggleDebugDropdown({ forceClose: true });
     });
     this.debugDropdown.appendChild(camBtn);
+
+    // Toggle local LLM usage
+    const localBtn = document.createElement("button");
+    const setLocalBtnLabel = () =>
+      (localBtn.innerHTML = `${this.useLocalLLM ? "🧠" : "🌐"} Use local LLM: ${
+        this.useLocalLLM ? "ON" : "OFF"
+      }`);
+    setLocalBtnLabel();
+    localBtn.className =
+      "mt-2 w-full px-3 py-2 text-sm text-white rounded-lg transition-colors bg-slate-600 hover:bg-slate-700 text-left";
+    localBtn.addEventListener("click", () => {
+      this.useLocalLLM = !this.useLocalLLM;
+      try {
+        localStorage.setItem("debug.useLocalLLM", this.useLocalLLM ? "1" : "0");
+      } catch {}
+      setLocalBtnLabel();
+      this.toggleDebugDropdown({ forceClose: true });
+      this.updateStatus(
+        this.useLocalLLM ? "Local model enabled" : "Server API enabled"
+      );
+    });
+    this.debugDropdown.appendChild(localBtn);
 
     // Remove margin from last button
     const lastButton = this.debugDropdown.lastElementChild as HTMLElement;
