@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "NODE_ENV=production tsc && vite build",
+    "build:dev": "NODE_ENV=development tsc && vite build",
     "preview": "vite preview",
     "commit": "cz",
     "test": "vitest",

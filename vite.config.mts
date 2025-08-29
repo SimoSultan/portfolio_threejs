@@ -16,9 +16,16 @@ export default defineConfig({
   build: {
     target: "esnext",
   },
-  test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: ["./src/test-setup.ts"],
+  define: {
+    // Make environment variables available to client code
+    __IS_DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
+    __IS_PROD__: JSON.stringify(process.env.NODE_ENV === 'production'),
   },
 });
+
+// Test configuration (separate from main config)
+export const testConfig = {
+  globals: true,
+  environment: "jsdom",
+  setupFiles: ["./src/test-setup.ts"],
+};

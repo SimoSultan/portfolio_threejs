@@ -31,11 +31,21 @@ export class ChatUI {
       AVAILABLE_MODELS[this.currentModelId],
       () => this.updateContextDisplay() // Callback to update UI when context changes
     );
-    // Load preference for local LLM usage
-    try {
-      const saved = localStorage.getItem("debug.useLocalLLM");
-      if (saved != null) this.useLocalLLM = saved === "1";
-    } catch {}
+    
+    // Check if we're in production
+    const isProduction = typeof __IS_PROD__ !== 'undefined' ? __IS_PROD__ : 
+                        window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+    
+    // In production, always use server API
+    if (isProduction) {
+      this.useLocalLLM = false;
+    } else {
+      // Load preference for local LLM usage only in development
+      try {
+        const saved = localStorage.getItem("debug.useLocalLLM");
+        if (saved != null) this.useLocalLLM = saved === "1";
+      } catch {}
+    }
 
     this.createUI();
     this.initializeChatbot();
