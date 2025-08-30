@@ -28,6 +28,13 @@ export class DatabaseManager {
    * Save context data to storage
    */
   async saveContext(data: ContextStorage): Promise<void> {
+    console.log("💾 Saving context to storage:", {
+      useIndexedDB: this.useIndexedDB,
+      messageCount: data.messages.length,
+      totalTokens: data.totalTokens,
+      lastUpdated: data.lastUpdated
+    });
+    
     if (this.useIndexedDB) {
       await this.saveToIndexedDB(data);
     } else {
@@ -39,11 +46,23 @@ export class DatabaseManager {
    * Load context data from storage
    */
   async loadContext(): Promise<ContextStorage | null> {
+    console.log("📂 Loading context from storage, useIndexedDB:", this.useIndexedDB);
+    
+    let result;
     if (this.useIndexedDB) {
-      return await this.loadFromIndexedDB();
+      result = await this.loadFromIndexedDB();
     } else {
-      return this.loadFromLocalStorage();
+      result = this.loadFromLocalStorage();
     }
+    
+    console.log("📂 Loaded context result:", {
+      hasData: !!result,
+      messageCount: result?.messages?.length || 0,
+      totalTokens: result?.totalTokens || 0,
+      lastUpdated: result?.lastUpdated || null
+    });
+    
+    return result;
   }
 
   /**
@@ -131,7 +150,12 @@ export class DatabaseManager {
 
       request.onupgradeneeded = (event: any) => {
         const db = event.target.result;
-        console.log("🔄 IndexedDB upgrade needed - version:", event.oldVersion, "->", event.newVersion);
+        console.log(
+          "🔄 IndexedDB upgrade needed - version:",
+          event.oldVersion,
+          "->",
+          event.newVersion
+        );
 
         // Create object stores if they don't exist
         if (!db.objectStoreNames.contains("context")) {
@@ -163,10 +187,18 @@ export class DatabaseManager {
 
         // Add an id field to the data for IndexedDB
         const dataWithId = { ...data, id: "context" };
+        console.log("💾 Saving to IndexedDB:", dataWithId);
+        
         const saveRequest = store.put(dataWithId);
 
-        saveRequest.onsuccess = () => resolve();
-        saveRequest.onerror = () => reject(saveRequest.error);
+        saveRequest.onsuccess = () => {
+          console.log("✅ Successfully saved to IndexedDB");
+          resolve();
+        };
+        saveRequest.onerror = () => {
+          console.error("❌ Failed to save to IndexedDB:", saveRequest.error);
+          reject(saveRequest.error);
+        };
       };
     });
   }
@@ -190,7 +222,12 @@ export class DatabaseManager {
 
       request.onupgradeneeded = (event: any) => {
         const db = event.target.result;
-        console.log("🔄 IndexedDB upgrade needed during load - version:", event.oldVersion, "->", event.newVersion);
+        console.log(
+          "🔄 IndexedDB upgrade needed during load - version:",
+          event.oldVersion,
+          "->",
+          event.newVersion
+        );
 
         // Create object stores if they don't exist (same schema as save)
         if (!db.objectStoreNames.contains("context")) {
@@ -221,8 +258,14 @@ export class DatabaseManager {
         const store = transaction.objectStore("context");
 
         const getRequest = store.get("context");
-        getRequest.onsuccess = () => resolve(getRequest.result || null);
-        getRequest.onerror = () => reject(getRequest.error);
+        getRequest.onsuccess = () => {
+          console.log("📂 Retrieved from IndexedDB:", getRequest.result);
+          resolve(getRequest.result || null);
+        };
+        getRequest.onerror = () => {
+          console.error("❌ Failed to retrieve from IndexedDB:", getRequest.error);
+          reject(getRequest.error);
+        };
       };
     });
   }

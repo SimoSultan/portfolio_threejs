@@ -56,11 +56,20 @@ export class ContextManager {
 
   private async initializeContext(): Promise<void> {
     try {
+      console.log("🔄 Initializing context...");
       // Try to load existing context from storage
       const stored = await this.storage.loadContext();
+      console.log("🔄 Loaded stored context:", {
+        hasContext: !!stored,
+        messageCount: stored?.messages?.length || 0,
+        context: stored?.context || null
+      });
+      
       if (stored) {
         this.context = stored.context;
+        console.log("✅ Using stored context");
       } else {
+        console.log("🆕 No stored context found, creating default");
         // Initialize with default context
         await this.createDefaultContext();
       }
@@ -171,7 +180,17 @@ export class ContextManager {
       isSummarized,
     };
 
+    console.log("💬 Adding message to context:", {
+      role,
+      contentLength: finalContent.length,
+      timestamp: message.timestamp,
+      tokenCount: message.tokenCount,
+      isSummarized
+    });
+
     await this.storage.addMessage(message);
+    
+    console.log("✅ Message added to storage successfully");
   }
 
   // Get messages for the current conversation, ensuring we stay within token limits
