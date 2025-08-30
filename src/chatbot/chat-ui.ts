@@ -255,9 +255,10 @@ export class ChatUI {
     this.sendButton.disabled = true;
     this.updateStatus("Generating...");
 
-    // Speed up infinite animation and start infinite bounce for loading
-    this.triggerAnimation("speedUpInfinite");
-    this.triggerAnimation("startInfiniteBounce");
+    // Start both infinite animations for loading
+    this.triggerAnimation("resumeInfinite"); // Ensure infinite animation is running
+    this.triggerAnimation("speedUpInfinite"); // Speed it up
+    this.triggerAnimation("startInfiniteBounce"); // Start the bounce animation
 
     // Save user message to storage (non-blocking)
     this.contextManager.addMessage("user", message).catch(error => {
