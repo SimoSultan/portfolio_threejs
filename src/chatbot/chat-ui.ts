@@ -84,6 +84,9 @@ export class ChatUI {
     this.statusIndicator.className =
       "flex items-center gap-2 text-sm sm:text-base text-gray-400";
     this.updateStatus("Initializing...");
+    
+    // Perform health check to server
+    this.performHealthCheck();
 
     // Context display (created and hidden by default)
     this.createContextDisplay();
@@ -349,11 +352,39 @@ export class ChatUI {
     this.chatContainer.innerHTML = "";
   }
 
+  private performHealthCheck(): void {
+    // Check if server is reachable by hitting the home route
+    fetch("/", {
+      method: "GET",
+      headers: {
+        "Accept": "text/plain",
+      },
+    })
+    .then(response => {
+      if (response.ok) {
+        return response.text();
+      }
+      throw new Error(`HTTP ${response.status}`);
+    })
+    .then(text => {
+      // Check if response contains "hello world"
+      if (text.toLowerCase().includes("hello world")) {
+        this.updateStatus("Ready");
+      } else {
+        this.updateStatus("Server responded but unexpected content");
+      }
+    })
+    .catch(error => {
+      console.error("Health check failed:", error);
+      this.updateStatus("Server connection failed");
+    });
+  }
+
   private updateStatus(status: string): void {
     let dotColor = "bg-yellow-500";
     if (status === "Ready") {
       dotColor = "bg-green-500";
-    } else if (status === "Failed to load model") {
+    } else if (status === "Failed to load model" || status === "Server connection failed" || status === "Server responded but unexpected content") {
       dotColor = "bg-red-500";
     }
 
