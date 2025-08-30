@@ -10,6 +10,7 @@ export class AnimationManager {
   private infiniteAnimationSpeed: number = 1.0; // Speed multiplier for infinite animation
   private originalInfiniteAnimationSpeed: number = 1.0; // Store original speed
   private isInfiniteAnimationRunning: boolean = false; // Track if infinite animation is running
+  private isInfiniteBounceActive: boolean = false; // Track if infinite bounce animation is running
 
   constructor(_scene: THREE.Scene) {
     // Scene parameter kept for future use (e.g., adding particles, effects)
@@ -296,6 +297,73 @@ export class AnimationManager {
     };
 
     animate();
+  }
+
+  /**
+   * Start infinite bounce animation - circle continuously bounces during loading
+   * @param tubesGroup - The group containing the circle tubes
+   */
+  public startInfiniteBounceAnimation(tubesGroup: THREE.Group): void {
+    if (this.isInfiniteBounceActive) {
+      return; // Already running
+    }
+
+    this.isInfiniteBounceActive = true;
+    this.stopAnimation(); // Stop any current animation
+
+    const tubes = tubesGroup.children as THREE.Mesh[];
+    const originalPositions: THREE.Vector3[] = [];
+    const centerPosition = new THREE.Vector3(0, 0, 0); // Circle center
+
+    // Store original positions
+    tubes.forEach(tube => {
+      originalPositions.push(tube.position.clone());
+    });
+
+    const animate = () => {
+      if (!this.isInfiniteBounceActive) {
+        // Reset to original positions when stopped
+        tubes.forEach((tube, index) => {
+          tube.position.copy(originalPositions[index]);
+        });
+        return;
+      }
+
+      const time = Date.now() * 0.002; // Slower, continuous animation
+      const radiusBounce = Math.sin(time) * 0.1; // Smaller, gentler bounce
+      const radiusMultiplier = 1 + radiusBounce;
+
+      tubes.forEach((tube, index) => {
+        // Calculate direction from center to original position
+        const direction = originalPositions[index]
+          .clone()
+          .sub(centerPosition)
+          .normalize();
+        const originalRadius =
+          originalPositions[index].distanceTo(centerPosition);
+
+        // Apply continuous radius bounce
+        const newRadius = originalRadius * radiusMultiplier;
+        tube.position
+          .copy(centerPosition)
+          .add(direction.multiplyScalar(newRadius));
+      });
+
+      this.currentAnimationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+  }
+
+  /**
+   * Stop infinite bounce animation
+   */
+  public stopInfiniteBounceAnimation(): void {
+    this.isInfiniteBounceActive = false;
+    if (this.currentAnimationId) {
+      cancelAnimationFrame(this.currentAnimationId);
+      this.currentAnimationId = undefined;
+    }
   }
 
   /**

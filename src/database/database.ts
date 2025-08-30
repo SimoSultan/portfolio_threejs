@@ -68,7 +68,7 @@ export class DatabaseManager {
     return result;
   }
 
-    /**
+  /**
    * Clear all stored data
    */
   async clearAll(): Promise<void> {
@@ -185,7 +185,7 @@ export class DatabaseManager {
         const dataWithId = {
           ...data,
           id: "context",
-          
+
           messages: data.messages.map(msg => ({
             ...msg,
             timestamp:
