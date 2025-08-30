@@ -30,7 +30,7 @@ export async function checkServerHealth(
   baseUrl?: string
 ): Promise<HealthCheckResult> {
   const url = baseUrl ?? window.location.origin;
-  
+
   try {
     const response = await fetch(`${url}/`, {
       method: "GET",
@@ -48,7 +48,7 @@ export async function checkServerHealth(
     }
 
     const text = await response.text();
-    
+
     // Check if response contains "hello world"
     if (text.toLowerCase().includes("hello world")) {
       return {

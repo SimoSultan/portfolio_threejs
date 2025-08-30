@@ -1,4 +1,4 @@
-import { generate, checkServerHealth } from "../api";
+import { checkServerHealth, generate } from "../api";
 import { type StoredMessage } from "./context";
 
 export class ChatUI {
@@ -85,8 +85,10 @@ export class ChatUI {
       "flex items-center gap-2 text-sm sm:text-base text-gray-400";
     this.updateStatus("Initializing...");
 
-    // Perform health check to server
-    this.performHealthCheck();
+    // Perform health check to server after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.performHealthCheck();
+    }, 100);
 
     // Context display (created and hidden by default)
     this.createContextDisplay();
@@ -353,12 +355,17 @@ export class ChatUI {
   }
 
   private async performHealthCheck(): Promise<void> {
+    console.log("Starting server health check...");
     try {
       const healthResult = await checkServerHealth();
-      this.updateStatus(healthResult.status);
+      console.log("Health check result:", healthResult);
       
+      this.updateStatus(healthResult.status);
+
       if (!healthResult.isHealthy) {
         console.error("Health check failed:", healthResult.message);
+      } else {
+        console.log("Server health check successful");
       }
     } catch (error) {
       console.error("Health check failed:", error);
