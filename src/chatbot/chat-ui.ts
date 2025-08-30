@@ -359,7 +359,7 @@ export class ChatUI {
     try {
       const healthResult = await checkServerHealth();
       console.log("Health check result:", healthResult);
-      
+
       this.updateStatus(healthResult.status);
 
       if (!healthResult.isHealthy) {
