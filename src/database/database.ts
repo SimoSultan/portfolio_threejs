@@ -201,19 +201,25 @@ export class DatabaseManager {
         const transaction = db.transaction(["context"], "readwrite");
         const store = transaction.objectStore("context");
 
-                // Add an id field to the data for IndexedDB
+        // Add an id field to the data for IndexedDB
         // Ensure proper serialization of Date objects and complex data
-        const dataWithId = { 
-          ...data, 
+        const dataWithId = {
+          ...data,
           id: "context",
           messages: data.messages.map(msg => ({
             ...msg,
-            timestamp: msg.timestamp instanceof Date ? msg.timestamp.toISOString() : msg.timestamp
+            timestamp:
+              msg.timestamp instanceof Date
+                ? msg.timestamp.toISOString()
+                : msg.timestamp,
           })),
-          lastUpdated: data.lastUpdated instanceof Date ? data.lastUpdated.toISOString() : data.lastUpdated
+          lastUpdated:
+            data.lastUpdated instanceof Date
+              ? data.lastUpdated.toISOString()
+              : data.lastUpdated,
         };
         console.log("💾 Saving to IndexedDB:", dataWithId);
-        
+
         const saveRequest = store.put(dataWithId);
 
         saveRequest.onsuccess = () => {
@@ -286,25 +292,27 @@ export class DatabaseManager {
         getRequest.onsuccess = () => {
           const result = getRequest.result;
           console.log("📂 Retrieved from IndexedDB:", result);
-          
+
           if (result) {
             // Properly deserialize Date objects and ensure messages array integrity
             const deserializedResult = {
               ...result,
-              messages: Array.isArray(result.messages) ? result.messages.map((msg: any) => ({
-                ...msg,
-                timestamp: new Date(msg.timestamp)
-              })) : [],
-              lastUpdated: new Date(result.lastUpdated)
+              messages: Array.isArray(result.messages)
+                ? result.messages.map((msg: any) => ({
+                    ...msg,
+                    timestamp: new Date(msg.timestamp),
+                  }))
+                : [],
+              lastUpdated: new Date(result.lastUpdated),
             };
-            
+
             console.log("📂 Deserialized result:", {
               messageCount: deserializedResult.messages.length,
               hasMessages: Array.isArray(deserializedResult.messages),
               firstMessage: deserializedResult.messages[0],
-              lastUpdated: deserializedResult.lastUpdated
+              lastUpdated: deserializedResult.lastUpdated,
             });
-            
+
             resolve(deserializedResult);
           } else {
             resolve(null);

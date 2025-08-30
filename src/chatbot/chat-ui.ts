@@ -264,8 +264,15 @@ export class ChatUI {
     });
 
     try {
+      // Get conversation history to send to the server
+      const conversationHistory = await this.contextManager.getConversationMessages();
+      console.log("📚 Sending conversation history:", {
+        messageCount: conversationHistory.length,
+        history: conversationHistory.map(msg => ({ role: msg.role, content: msg.content.substring(0, 50) + "..." }))
+      });
+
       let response: string;
-      response = await generate(message);
+      response = await generate(message, { history: conversationHistory });
 
       // Create and display assistant response
       const assistantMessage = this.createMessage("assistant", response);
