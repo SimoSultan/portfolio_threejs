@@ -141,7 +141,6 @@ class PortfolioScene {
   private handleMobileViewportChange(): void {
     // Handle mobile browser UI changes
     if ("visualViewport" in window && window.visualViewport) {
-      const viewport = window.visualViewport;
       const offset = this.getVisualViewportOffset();
 
       // Adjust camera position based on viewport offset
@@ -158,11 +157,7 @@ class PortfolioScene {
         this.chatUI.handleMobileViewportChange();
       }
 
-      console.log("Visual viewport changed:", {
-        width: viewport.width,
-        height: viewport.height,
-        offset: offset,
-      });
+      // Visual viewport changed - status updated
     }
   }
 
@@ -224,9 +219,8 @@ class PortfolioScene {
       this.updateRendererSize();
       this.cameraManager.onWindowResize();
 
-      // Log resize for debugging
-      const dimensions = this.getCanvasDimensions();
-      console.log("Canvas resized to:", dimensions);
+      // Get dimensions for resize handling
+      this.getCanvasDimensions();
 
       // Handle mobile-specific viewport changes
       this.handleMobileViewportChange();

@@ -355,17 +355,12 @@ export class ChatUI {
   }
 
   private async performHealthCheck(): Promise<void> {
-    console.log("Starting server health check...");
     try {
       const healthResult = await checkServerHealth();
-      console.log("Health check result:", healthResult);
-
       this.updateStatus(healthResult.status);
 
       if (!healthResult.isHealthy) {
         console.error("Health check failed:", healthResult.message);
-      } else {
-        console.log("Server health check successful");
       }
     } catch (error) {
       console.error("Health check failed:", error);
@@ -868,10 +863,7 @@ export class ChatUI {
         this.inputContainer.style.bottom = "0";
       }
 
-      console.log("Chat UI viewport updated:", {
-        width: viewport.width,
-        height: viewport.height,
-      });
+      // Chat UI viewport updated successfully
     }
   }
 }

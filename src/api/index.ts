@@ -30,13 +30,10 @@ export async function checkServerHealth(
   baseUrl?: string
 ): Promise<HealthCheckResult> {
   const url = baseUrl ?? "https://portfolio-server-neon-five.vercel.app";
-  console.log("Health check URL:", url);
   try {
     const response = await fetch(`${url}/`, {
       method: "GET",
-      // Remove Content-Type header for GET requests to avoid CORS issues
     });
-    console.log("Health check response:", response);
     if (!response.ok) {
       return {
         isHealthy: false,
@@ -46,8 +43,6 @@ export async function checkServerHealth(
     }
 
     const text = await response.text();
-    console.log("Health check response text:", text);
-    console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
     // Check if response contains "hello world"
     if (text.toLowerCase().includes("hello world")) {
