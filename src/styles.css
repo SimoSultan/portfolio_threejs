@@ -303,4 +303,20 @@ body {
       gap: 0.5rem !important;
     }
   }
+  
+  /* Chat UI button styling for mobile */
+  #new-chat-button,
+  #info-button {
+    /* Ensure buttons have consistent sizing on mobile */
+    min-height: 2.5rem;
+    /* Add subtle shadow for better button appearance */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Active/focus states for buttons */
+  #new-chat-button:active,
+  #info-button:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
 }

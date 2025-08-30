@@ -92,7 +92,7 @@ export class ChatUI {
     // Create new chat button
     const newChatButton = document.createElement("div");
     newChatButton.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors min-w-0 w-auto overflow-visible";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-2 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
     newChatButton.id = "new-chat-button";
 
     const newChatSummary = document.createElement("div");
@@ -109,7 +109,7 @@ export class ChatUI {
     // Create info button to show first-time use popup on demand
     const infoButton = document.createElement("div");
     infoButton.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors min-w-0 w-auto overflow-visible";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-2 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
     infoButton.id = "info-button";
 
     const infoSummary = document.createElement("div");
