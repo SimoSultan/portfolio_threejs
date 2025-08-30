@@ -11,6 +11,7 @@ export class DatabaseManager {
   private useIndexedDB: boolean = false;
 
   constructor() {
+    console.log("🏗️ DatabaseManager constructor called, DB_VERSION:", this.DB_VERSION);
     this.checkStorageSupport();
   }
 
@@ -20,7 +21,9 @@ export class DatabaseManager {
   private checkStorageSupport(): void {
     if (typeof window !== "undefined" && "indexedDB" in window) {
       this.useIndexedDB = true;
+      console.log("✅ IndexedDB is available and will be used");
     } else {
+      console.log("⚠️ IndexedDB not available, falling back to localStorage");
     }
   }
 
@@ -72,6 +75,9 @@ export class DatabaseManager {
    * Clear all stored data
    */
   async clearAll(): Promise<void> {
+    console.log("🗑️ clearAll() called - this should NOT happen automatically!");
+    console.log("🗑️ Stack trace:", new Error().stack);
+    
     if (this.useIndexedDB) {
       await this.clearIndexedDB();
     } else {
@@ -159,6 +165,7 @@ export class DatabaseManager {
           "->",
           event.newVersion
         );
+        console.log("🔄 Upgrade reason:", event.oldVersion === 0 ? "New database" : "Schema change");
 
         // Create object stores if they don't exist
         if (!db.objectStoreNames.contains("context")) {
