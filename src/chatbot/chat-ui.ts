@@ -270,7 +270,7 @@ export class ChatUI {
       // Create and display assistant response
       const assistantMessage = this.createMessage("assistant", response);
       this.addMessageToUI(assistantMessage);
-      
+
       // Save assistant response to storage (non-blocking)
       this.contextManager.addMessage("assistant", response).catch(error => {
         console.error("Failed to save assistant message:", error);

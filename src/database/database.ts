@@ -6,7 +6,7 @@ import { ContextStorage } from "../chatbot/context";
  */
 export class DatabaseManager {
   private readonly DB_NAME = "PortfolioChat";
-  private readonly DB_VERSION = 3; // Increment for schema changes
+  private readonly DB_VERSION = 4; // Increment for schema changes
   private readonly STORAGE_KEY = "portfolio_chat_context";
   private useIndexedDB: boolean = false;
 
@@ -131,18 +131,21 @@ export class DatabaseManager {
 
       request.onupgradeneeded = (event: any) => {
         const db = event.target.result;
+        console.log("🔄 IndexedDB upgrade needed - version:", event.oldVersion, "->", event.newVersion);
 
         // Create object stores if they don't exist
         if (!db.objectStoreNames.contains("context")) {
+          console.log("📁 Creating context object store");
           const contextStore = db.createObjectStore("context", {
             keyPath: "id",
           });
-          contextStore.createIndex("timestamp", "lastUpdated", {
+          contextStore.createIndex("lastUpdated", "lastUpdated", {
             unique: false,
           });
         }
 
         if (!db.objectStoreNames.contains("messages")) {
+          console.log("📁 Creating messages object store");
           const messageStore = db.createObjectStore("messages", {
             keyPath: "id",
             autoIncrement: true,
@@ -154,15 +157,6 @@ export class DatabaseManager {
 
       request.onsuccess = () => {
         const db = request.result;
-
-        if (!db.objectStoreNames.contains("context")) {
-          try {
-            db.createObjectStore("context", { keyPath: "id" });
-          } catch {
-            reject(new Error("Failed to create context object store"));
-            return;
-          }
-        }
 
         const transaction = db.transaction(["context"], "readwrite");
         const store = transaction.objectStore("context");
@@ -196,18 +190,32 @@ export class DatabaseManager {
 
       request.onupgradeneeded = (event: any) => {
         const db = event.target.result;
+        console.log("🔄 IndexedDB upgrade needed during load - version:", event.oldVersion, "->", event.newVersion);
+
+        // Create object stores if they don't exist (same schema as save)
         if (!db.objectStoreNames.contains("context")) {
-          db.createObjectStore("context", { keyPath: "id" });
+          console.log("📁 Creating context object store during load");
+          const contextStore = db.createObjectStore("context", {
+            keyPath: "id",
+          });
+          contextStore.createIndex("lastUpdated", "lastUpdated", {
+            unique: false,
+          });
+        }
+
+        if (!db.objectStoreNames.contains("messages")) {
+          console.log("📁 Creating messages object store during load");
+          const messageStore = db.createObjectStore("messages", {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+          messageStore.createIndex("timestamp", "timestamp", { unique: false });
+          messageStore.createIndex("role", "role", { unique: false });
         }
       };
 
       request.onsuccess = () => {
         const db = request.result;
-
-        if (!db.objectStoreNames.contains("context")) {
-          resolve(null);
-          return;
-        }
 
         const transaction = db.transaction(["context"], "readonly");
         const store = transaction.objectStore("context");
