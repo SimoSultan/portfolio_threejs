@@ -1,5 +1,5 @@
 import { checkServerHealth, generate } from "../api";
-import { type StoredMessage, ContextManager } from "./context";
+import { ContextManager, type StoredMessage } from "./context";
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -246,10 +246,9 @@ export class ChatUI {
 
     // Create user message
     const userMessage = this.createMessage("user", message);
-    
-    // Add user message to UI and save to storage
+
+    // Add user message to UI immediately
     this.addMessageToUI(userMessage);
-    await this.contextManager.addMessage("user", message);
 
     // Disable input while generating
     this.input.disabled = true;
@@ -259,14 +258,23 @@ export class ChatUI {
     // Speed up infinite animation for loading
     this.triggerAnimation("speedUpInfinite");
 
+    // Save user message to storage (non-blocking)
+    this.contextManager.addMessage("user", message).catch(error => {
+      console.error("Failed to save user message:", error);
+    });
+
     try {
       let response: string;
       response = await generate(message);
-      
-      // Create and save assistant response
+
+      // Create and display assistant response
       const assistantMessage = this.createMessage("assistant", response);
       this.addMessageToUI(assistantMessage);
-      await this.contextManager.addMessage("assistant", response);
+      
+      // Save assistant response to storage (non-blocking)
+      this.contextManager.addMessage("assistant", response).catch(error => {
+        console.error("Failed to save assistant message:", error);
+      });
     } catch (error) {
       console.error("Chat error:", error);
       this.addMessageToUI(
