@@ -103,9 +103,19 @@ class PortfolioScene {
     // Get the actual canvas element dimensions
     const canvasRect = canvas.getBoundingClientRect();
 
-    // Use the viewport size so we truly fill the screen regardless of layout changes
-    const width = window.innerWidth || canvasRect.width;
-    const height = window.innerHeight || canvasRect.height;
+    // For mobile devices, use visual viewport to account for browser UI
+    let width: number;
+    let height: number;
+
+    if ("visualViewport" in window && window.visualViewport) {
+      // Use visual viewport for mobile - this accounts for browser UI elements
+      width = window.visualViewport.width;
+      height = window.visualViewport.height;
+    } else {
+      // Fallback to inner dimensions
+      width = window.innerWidth || canvasRect.width;
+      height = window.innerHeight || canvasRect.height;
+    }
 
     // Ensure minimum dimensions
     const minWidth = 100;
@@ -115,6 +125,59 @@ class PortfolioScene {
       width: Math.max(width, minWidth),
       height: Math.max(height, minHeight),
     };
+  }
+
+  private getVisualViewportOffset(): { x: number; y: number } {
+    // Get visual viewport offset for mobile browser UI
+    if ("visualViewport" in window && window.visualViewport) {
+      return {
+        x: window.visualViewport.offsetLeft || 0,
+        y: window.visualViewport.offsetTop || 0,
+      };
+    }
+    return { x: 0, y: 0 };
+  }
+
+  private handleMobileViewportChange(): void {
+    // Handle mobile browser UI changes
+    if ("visualViewport" in window && window.visualViewport) {
+      const viewport = window.visualViewport;
+      const offset = this.getVisualViewportOffset();
+
+      // Adjust camera position based on viewport offset
+      if (offset.y > 0) {
+        // Browser UI is visible, adjust camera accordingly
+        this.camera.position.y = -1.5 + offset.y * 0.001;
+      }
+
+      // Adjust content positioning for mobile browser UI
+      this.adjustContentPositioning(offset);
+
+      // Update chat UI viewport
+      if (this.chatUI) {
+        this.chatUI.handleMobileViewportChange();
+      }
+
+      console.log("Visual viewport changed:", {
+        width: viewport.width,
+        height: viewport.height,
+        offset: offset,
+      });
+    }
+  }
+
+  private adjustContentPositioning(offset: { x: number; y: number }): void {
+    // Adjust chat UI positioning for mobile browser UI without moving the title
+    const chatUIContainer = document.getElementById("chat-ui-container");
+    if (chatUIContainer) {
+      // Only adjust the chat UI container, not the entire app
+      if (offset.y > 0) {
+        // Move chat UI up when browser UI appears at the bottom
+        chatUIContainer.style.transform = `translateY(-${offset.y}px)`;
+      } else {
+        chatUIContainer.style.transform = "translateY(0)";
+      }
+    }
   }
 
   private updateRendererSize(): void {
@@ -162,7 +225,11 @@ class PortfolioScene {
       this.cameraManager.onWindowResize();
 
       // Log resize for debugging
-      this.getCanvasDimensions();
+      const dimensions = this.getCanvasDimensions();
+      console.log("Canvas resized to:", dimensions);
+
+      // Handle mobile-specific viewport changes
+      this.handleMobileViewportChange();
     }, 100);
   };
 
@@ -206,16 +273,26 @@ class PortfolioScene {
   }
 
   private setupEventListeners(): void {
-    // Enhanced resize event listener with debouncing
+    // Handle window resize
     window.addEventListener("resize", this.handleResize);
 
-    // Also listen for orientation change on mobile devices
+    // Handle visual viewport changes (mobile browser UI)
+    if ("visualViewport" in window && window.visualViewport) {
+      window.visualViewport.addEventListener("resize", this.handleResize);
+      window.visualViewport.addEventListener("scroll", this.handleResize);
+    }
+
+    // Handle orientation change
     window.addEventListener("orientationchange", () => {
       // Wait for orientation change to complete
       setTimeout(() => {
         this.handleResize();
       }, 200);
     });
+
+    // Handle focus/blur for mobile browser state changes
+    window.addEventListener("focus", this.handleResize);
+    window.addEventListener("blur", this.handleResize);
 
     // Listen for custom canvas resize events
     window.addEventListener("canvasResize", () => {

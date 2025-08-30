@@ -2,22 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <title>Web Software Engineer Portfolio</title>
     <script type="module" src="src/main.ts"></script>
     <link href="src/styles.css" rel="stylesheet" />
   </head>
   <body class="relative min-h-screen w-full overflow-hidden text-white">
-    <div id="app" class="flex size-full w-full items-center justify-center">
+    <div
+      id="app"
+      class="flex size-full w-full items-start justify-center sm:items-center"
+    >
       <!-- Three.js Canvas -->
       <canvas
         id="threejs-canvas"
-        class="fixed inset-0 z-0 h-screen w-full"
+        class="fixed inset-0 z-0 h-dvh h-screen w-full"
       ></canvas>
 
       <!-- Content Overlay -->
       <div
-        class="relative z-10 px-4 py-8 sm:absolute sm:top-[40%] sm:translate-y-[-50%]"
+        class="relative top-0 z-10 px-4 py-8 sm:absolute sm:top-[40%] sm:translate-y-[-50%]"
       >
         <div class="flex flex-col items-center gap-3">
           <div class="space-y-2 text-center text-gray-400 italic">

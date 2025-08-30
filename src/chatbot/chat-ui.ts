@@ -38,20 +38,22 @@ export class ChatUI {
     // Main container - positioned absolutely over canvas, full height
     this.container = document.createElement("div");
     this.container.className =
-      "absolute inset-0 bg-transparent z-10 flex flex-col h-screen -full";
+      "absolute inset-0 bg-transparent z-10 flex flex-col h-screen h-dvh w-full";
     this.container.style.top = "0";
     this.container.id = "chat-ui-container";
 
-    // Chat messages container - takes up 90% of screen height
+    // Chat messages container - takes up remaining height above input
     this.chatContainer = document.createElement("div");
     this.chatContainer.className =
-      "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 flex-1 w-full";
+      "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 w-full";
+    this.chatContainer.style.height = "calc(100% - 15vh)";
+    this.chatContainer.style.minHeight = "calc(100% - 100px)";
     this.chatContainer.id = "chat-container";
 
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "flex flex-col justify-between items-center p-3 md:p-4 sm:gap-4 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-6 sm:mb-4";
+      "absolute bottom-0 left-0 right-0 flex flex-col justify-between items-center p-3 md:p-4 sm:gap-4 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-6 sm:mb-4";
 
     // Create the model icon
     const modelIcon = document.createElement("span");
@@ -153,7 +155,7 @@ export class ChatUI {
     this.input.placeholder =
       "Ask me something about Simon’s work or projects...";
     this.input.className =
-      "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-400 text-white";
+      "flex-1 px-4 py-3 rounded-full text-xs sm:text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-400 text-white";
     this.input.addEventListener("keypress", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -823,5 +825,25 @@ export class ChatUI {
       }
     };
     document.addEventListener("keydown", handleEscape);
+  }
+
+  // Method to handle mobile viewport changes
+  public handleMobileViewportChange(): void {
+    if ("visualViewport" in window && window.visualViewport) {
+      const viewport = window.visualViewport;
+
+      // Update container height to use visual viewport
+      this.container.style.height = `${viewport.height}px`;
+
+      // Ensure input container stays at the bottom of the viewport
+      if (this.inputContainer) {
+        this.inputContainer.style.bottom = "0";
+      }
+
+      console.log("Chat UI viewport updated:", {
+        width: viewport.width,
+        height: viewport.height,
+      });
+    }
   }
 }
