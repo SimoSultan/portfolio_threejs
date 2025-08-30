@@ -16,6 +16,62 @@ export type GenerateOptions = {
   history?: ConversationMessage[];
 };
 
+export type HealthCheckResult = {
+  isHealthy: boolean;
+  status: string;
+  message?: string;
+};
+
+/**
+ * Check if the server is healthy by hitting the home route.
+ * Returns health status and message.
+ */
+export async function checkServerHealth(
+  baseUrl?: string
+): Promise<HealthCheckResult> {
+  const url = baseUrl ?? window.location.origin;
+  
+  try {
+    const response = await fetch(`${url}/`, {
+      method: "GET",
+      headers: {
+        Accept: "text/plain",
+      },
+    });
+
+    if (!response.ok) {
+      return {
+        isHealthy: false,
+        status: "Error",
+        message: `HTTP ${response.status}`,
+      };
+    }
+
+    const text = await response.text();
+    
+    // Check if response contains "hello world"
+    if (text.toLowerCase().includes("hello world")) {
+      return {
+        isHealthy: true,
+        status: "Ready",
+        message: "Server is healthy",
+      };
+    } else {
+      return {
+        isHealthy: false,
+        status: "Server responded but unexpected content",
+        message: "Unexpected response content",
+      };
+    }
+  } catch (error) {
+    return {
+      isHealthy: false,
+      status: "Error",
+      message: error instanceof Error ? error.message : "Network error",
+    };
+  }
+}
+
 /**
  * Send a prompt to the local generator and return the response text.
  * Attempts to parse JSON and extract a reasonable text field; falls back to raw text.

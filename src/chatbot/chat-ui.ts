@@ -1,4 +1,4 @@
-import { generate } from "../api";
+import { generate, checkServerHealth } from "../api";
 import { type StoredMessage } from "./context";
 
 export class ChatUI {
@@ -352,43 +352,29 @@ export class ChatUI {
     this.chatContainer.innerHTML = "";
   }
 
-  private performHealthCheck(): void {
-    // Check if server is reachable by hitting the home route
-    fetch("/", {
-      method: "GET",
-      headers: {
-        Accept: "text/plain",
-      },
-    })
-      .then(response => {
-        if (response.ok) {
-          return response.text();
-        }
-        throw new Error(`HTTP ${response.status}`);
-      })
-      .then(text => {
-        // Check if response contains "hello world"
-        if (text.toLowerCase().includes("hello world")) {
-          this.updateStatus("Ready");
-        } else {
-          this.updateStatus("Server responded but unexpected content");
-        }
-      })
-             .catch(error => {
-         console.error("Health check failed:", error);
-         this.updateStatus("Error");
-       });
+  private async performHealthCheck(): Promise<void> {
+    try {
+      const healthResult = await checkServerHealth();
+      this.updateStatus(healthResult.status);
+      
+      if (!healthResult.isHealthy) {
+        console.error("Health check failed:", healthResult.message);
+      }
+    } catch (error) {
+      console.error("Health check failed:", error);
+      this.updateStatus("Error");
+    }
   }
 
   private updateStatus(status: string): void {
     let dotColor = "bg-yellow-500";
     if (status === "Ready") {
       dotColor = "bg-green-500";
-         } else if (
-       status === "Failed to load model" ||
-       status === "Error" ||
-       status === "Server responded but unexpected content"
-     ) {
+    } else if (
+      status === "Failed to load model" ||
+      status === "Error" ||
+      status === "Server responded but unexpected content"
+    ) {
       dotColor = "bg-red-500";
     }
 
