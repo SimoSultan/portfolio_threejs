@@ -47,13 +47,13 @@ export class ChatUI {
     this.chatContainer.className =
       "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 w-full";
     this.chatContainer.style.height = "calc(100% - 15vh)";
-    this.chatContainer.style.minHeight = "calc(100% - 100px)";
+    this.chatContainer.style.minHeight = "calc(100% - 140px)";
     this.chatContainer.id = "chat-container";
 
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "absolute bottom-0 left-0 right-0 flex flex-col justify-around items-center p-3 md:p-4 sm:gap-4 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-6 sm:mb-4";
+      "absolute bottom-0 left-0 right-0 flex flex-col justify-around items-center py-3 px-5 gap-2 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-auto md:max-w-[800px] sm:mb-6 h-[auto]";
 
     // Create the model icon
     const modelIcon = document.createElement("span");
@@ -92,7 +92,7 @@ export class ChatUI {
     // Create new chat button
     const newChatButton = document.createElement("div");
     newChatButton.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-2 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-1 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
     newChatButton.id = "new-chat-button";
 
     const newChatSummary = document.createElement("div");
@@ -109,7 +109,7 @@ export class ChatUI {
     // Create info button to show first-time use popup on demand
     const infoButton = document.createElement("div");
     infoButton.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-2 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-1 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
     infoButton.id = "info-button";
 
     const infoSummary = document.createElement("div");
