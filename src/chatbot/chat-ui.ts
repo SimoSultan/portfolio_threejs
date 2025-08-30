@@ -53,7 +53,7 @@ export class ChatUI {
     // Input container - takes up 10% of screen height at the bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "absolute bottom-0 left-0 right-0 flex flex-col justify-between items-center p-3 md:p-4 sm:gap-4 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-6 sm:mb-4";
+      "absolute bottom-0 left-0 right-0 flex flex-col justify-around items-center p-3 md:p-4 sm:gap-4 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-6 sm:mb-4";
 
     // Create the model icon
     const modelIcon = document.createElement("span");
@@ -98,7 +98,7 @@ export class ChatUI {
     const newChatSummary = document.createElement("div");
     newChatSummary.className =
       "flex items-center gap-2 truncate text-sm sm:text-base";
-    newChatSummary.innerHTML = `<span>🆕 New Chat</span><span class="text-xs text-gray-600">▲</span>`;
+    newChatSummary.innerHTML = `<span>New Chat</span><span class="text-xs text-gray-600">+</span>`;
     newChatSummary.id = "new-chat-summary";
 
     newChatButton.appendChild(newChatSummary);
@@ -115,7 +115,7 @@ export class ChatUI {
     const infoSummary = document.createElement("div");
     infoSummary.className =
       "flex items-center gap-2 truncate text-sm sm:text-base";
-    infoSummary.innerHTML = `<span>ℹ️ Context Info</span><span class="text-xs text-gray-600">▲</span>`;
+    infoSummary.innerHTML = `<span>Context Info</span><span class="text-xs text-gray-600">▲</span>`;
     infoButton.appendChild(infoSummary);
     infoButton.addEventListener("click", () => {
       this.showAboutModal();
@@ -140,7 +140,7 @@ export class ChatUI {
 
     this.infoContainer = document.createElement("div");
     this.infoContainer.className =
-      "flex w-full flex-col-reverse sm:flex-row items-center justify-between gap-3 overflow-visible";
+      "flex w-full flex-row items-center justify-between gap-3 overflow-visible";
     this.infoContainer.id = "info-container";
 
     this.infoContainer.appendChild(leftSection);
