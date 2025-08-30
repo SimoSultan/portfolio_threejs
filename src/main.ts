@@ -380,12 +380,6 @@ class PortfolioScene {
         this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerBounceAnimation(this.tubesGroup);
         break;
-      case "startInfiniteBounce":
-        this.animationManager.startInfiniteBounceAnimation(this.tubesGroup);
-        break;
-      case "stopInfiniteBounce":
-        this.animationManager.stopInfiniteBounceAnimation();
-        break;
       case "backflip":
         this.animationManager.setShouldResumeInfiniteAnimation(true);
         this.animationManager.triggerBackflipAnimation(this.tubesGroup);
