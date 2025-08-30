@@ -1,5 +1,5 @@
 import { checkServerHealth, generate } from "../api";
-import { type StoredMessage } from "./context";
+import { type StoredMessage, ContextManager } from "./context";
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -15,9 +15,12 @@ export class ChatUI {
   private isContextDropdownOpen: boolean = false;
   private isDebugDropdownOpen: boolean = false;
   private infoContainer!: HTMLDivElement;
+  private contextManager: ContextManager;
 
   constructor() {
+    this.contextManager = new ContextManager();
     this.createUI();
+    this.loadExistingConversation();
   }
 
   // Helper function to create a proper StoredMessage object
@@ -220,6 +223,17 @@ export class ChatUI {
     // Don't auto-append to body - let main.ts handle positioning
   }
 
+  private async loadExistingConversation(): Promise<void> {
+    try {
+      const messages = await this.contextManager.getConversationMessages();
+      messages.forEach((message: StoredMessage) => {
+        this.addMessageToUI(message);
+      });
+    } catch (error) {
+      console.error("Failed to load existing conversation:", error);
+    }
+  }
+
   private async sendMessage(): Promise<void> {
     const message = this.input.value.trim();
 
@@ -230,8 +244,12 @@ export class ChatUI {
     // Clear input
     this.input.value = "";
 
-    // Add user message to UI
-    this.addMessageToUI(this.createMessage("user", message));
+    // Create user message
+    const userMessage = this.createMessage("user", message);
+    
+    // Add user message to UI and save to storage
+    this.addMessageToUI(userMessage);
+    await this.contextManager.addMessage("user", message);
 
     // Disable input while generating
     this.input.disabled = true;
@@ -244,8 +262,11 @@ export class ChatUI {
     try {
       let response: string;
       response = await generate(message);
-      // Add assistant response to UI
-      this.addMessageToUI(this.createMessage("assistant", response));
+      
+      // Create and save assistant response
+      const assistantMessage = this.createMessage("assistant", response);
+      this.addMessageToUI(assistantMessage);
+      await this.contextManager.addMessage("assistant", response);
     } catch (error) {
       console.error("Chat error:", error);
       this.addMessageToUI(
