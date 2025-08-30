@@ -11,7 +11,10 @@ export class DatabaseManager {
   private useIndexedDB: boolean = false;
 
   constructor() {
-    console.log("🏗️ DatabaseManager constructor called, DB_VERSION:", this.DB_VERSION);
+    console.log(
+      "🏗️ DatabaseManager constructor called, DB_VERSION:",
+      this.DB_VERSION
+    );
     this.checkStorageSupport();
   }
 
@@ -77,7 +80,7 @@ export class DatabaseManager {
   async clearAll(): Promise<void> {
     console.log("🗑️ clearAll() called - this should NOT happen automatically!");
     console.log("🗑️ Stack trace:", new Error().stack);
-    
+
     if (this.useIndexedDB) {
       await this.clearIndexedDB();
     } else {
@@ -165,7 +168,10 @@ export class DatabaseManager {
           "->",
           event.newVersion
         );
-        console.log("🔄 Upgrade reason:", event.oldVersion === 0 ? "New database" : "Schema change");
+        console.log(
+          "🔄 Upgrade reason:",
+          event.oldVersion === 0 ? "New database" : "Schema change"
+        );
 
         // Create object stores if they don't exist
         if (!db.objectStoreNames.contains("context")) {
@@ -195,10 +201,19 @@ export class DatabaseManager {
         const transaction = db.transaction(["context"], "readwrite");
         const store = transaction.objectStore("context");
 
-        // Add an id field to the data for IndexedDB
-        const dataWithId = { ...data, id: "context" };
+                // Add an id field to the data for IndexedDB
+        // Ensure proper serialization of Date objects and complex data
+        const dataWithId = { 
+          ...data, 
+          id: "context",
+          messages: data.messages.map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp instanceof Date ? msg.timestamp.toISOString() : msg.timestamp
+          })),
+          lastUpdated: data.lastUpdated instanceof Date ? data.lastUpdated.toISOString() : data.lastUpdated
+        };
         console.log("💾 Saving to IndexedDB:", dataWithId);
-
+        
         const saveRequest = store.put(dataWithId);
 
         saveRequest.onsuccess = () => {
@@ -269,8 +284,31 @@ export class DatabaseManager {
 
         const getRequest = store.get("context");
         getRequest.onsuccess = () => {
-          console.log("📂 Retrieved from IndexedDB:", getRequest.result);
-          resolve(getRequest.result || null);
+          const result = getRequest.result;
+          console.log("📂 Retrieved from IndexedDB:", result);
+          
+          if (result) {
+            // Properly deserialize Date objects and ensure messages array integrity
+            const deserializedResult = {
+              ...result,
+              messages: Array.isArray(result.messages) ? result.messages.map((msg: any) => ({
+                ...msg,
+                timestamp: new Date(msg.timestamp)
+              })) : [],
+              lastUpdated: new Date(result.lastUpdated)
+            };
+            
+            console.log("📂 Deserialized result:", {
+              messageCount: deserializedResult.messages.length,
+              hasMessages: Array.isArray(deserializedResult.messages),
+              firstMessage: deserializedResult.messages[0],
+              lastUpdated: deserializedResult.lastUpdated
+            });
+            
+            resolve(deserializedResult);
+          } else {
+            resolve(null);
+          }
         };
         getRequest.onerror = () => {
           console.error(
