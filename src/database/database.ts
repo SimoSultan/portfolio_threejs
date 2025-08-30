@@ -32,9 +32,9 @@ export class DatabaseManager {
       useIndexedDB: this.useIndexedDB,
       messageCount: data.messages.length,
       totalTokens: data.totalTokens,
-      lastUpdated: data.lastUpdated
+      lastUpdated: data.lastUpdated,
     });
-    
+
     if (this.useIndexedDB) {
       await this.saveToIndexedDB(data);
     } else {
@@ -46,22 +46,25 @@ export class DatabaseManager {
    * Load context data from storage
    */
   async loadContext(): Promise<ContextStorage | null> {
-    console.log("📂 Loading context from storage, useIndexedDB:", this.useIndexedDB);
-    
+    console.log(
+      "📂 Loading context from storage, useIndexedDB:",
+      this.useIndexedDB
+    );
+
     let result;
     if (this.useIndexedDB) {
       result = await this.loadFromIndexedDB();
     } else {
       result = this.loadFromLocalStorage();
     }
-    
+
     console.log("📂 Loaded context result:", {
       hasData: !!result,
       messageCount: result?.messages?.length || 0,
       totalTokens: result?.totalTokens || 0,
-      lastUpdated: result?.lastUpdated || null
+      lastUpdated: result?.lastUpdated || null,
     });
-    
+
     return result;
   }
 
@@ -188,7 +191,7 @@ export class DatabaseManager {
         // Add an id field to the data for IndexedDB
         const dataWithId = { ...data, id: "context" };
         console.log("💾 Saving to IndexedDB:", dataWithId);
-        
+
         const saveRequest = store.put(dataWithId);
 
         saveRequest.onsuccess = () => {
@@ -263,7 +266,10 @@ export class DatabaseManager {
           resolve(getRequest.result || null);
         };
         getRequest.onerror = () => {
-          console.error("❌ Failed to retrieve from IndexedDB:", getRequest.error);
+          console.error(
+            "❌ Failed to retrieve from IndexedDB:",
+            getRequest.error
+          );
           reject(getRequest.error);
         };
       };

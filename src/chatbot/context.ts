@@ -191,6 +191,9 @@ export class ContextManager {
     await this.storage.addMessage(message);
     
     console.log("✅ Message added to storage successfully");
+    
+    // Note: We don't call saveContext() here because addMessage() already saves the context
+    // Calling saveContext() would overwrite the newly added message
   }
 
   // Get messages for the current conversation, ensuring we stay within token limits
