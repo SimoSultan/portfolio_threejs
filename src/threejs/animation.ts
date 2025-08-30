@@ -10,7 +10,7 @@ export class AnimationManager {
   private infiniteAnimationSpeed: number = 1.0; // Speed multiplier for infinite animation
   private originalInfiniteAnimationSpeed: number = 1.0; // Store original speed
   private isInfiniteAnimationRunning: boolean = false; // Track if infinite animation is running
-  private isLoadingBounceActive: boolean = false; // Track if loading bounce effect is active
+
 
   constructor(_scene: THREE.Scene) {
     // Scene parameter kept for future use (e.g., adding particles, effects)
@@ -42,7 +42,7 @@ export class AnimationManager {
     // Check if infinite animation is active (either running or should resume)
     if (this.isInfiniteAnimationActive()) {
       this.infiniteAnimationSpeed = speedMultiplier;
-      this.isLoadingBounceActive = true; // Enable loading bounce effect
+
     }
   }
 
@@ -51,7 +51,7 @@ export class AnimationManager {
    */
   public resumeInfiniteAnimationSpeed(): void {
     this.infiniteAnimationSpeed = this.originalInfiniteAnimationSpeed;
-    this.isLoadingBounceActive = false; // Disable loading bounce effect
+
   }
 
   /**
@@ -524,20 +524,7 @@ export class AnimationManager {
             Math.sin(adjustedElapsed * 0.004 * this.infiniteAnimationSpeed) *
               0.1;
 
-          // Add loading bounce effect when animation is sped up
-          if (this.isLoadingBounceActive) {
-            const bounceTime = adjustedElapsed * 0.003; // Loading bounce frequency
-            const radiusBounce = Math.sin(bounceTime) * 0.12; // Loading bounce intensity (12%)
-            const radiusMultiplier = 1 + radiusBounce;
 
-            // Apply radius bounce - expand/contract from center
-            const centerPosition = new THREE.Vector3(0, 0, 0);
-            const direction = originalPositions[index].clone().sub(centerPosition).normalize();
-            const originalRadius = originalPositions[index].distanceTo(centerPosition);
-            const newRadius = originalRadius * radiusMultiplier;
-            
-            tube.position.copy(centerPosition).add(direction.multiplyScalar(newRadius));
-          }
         } else {
           // For single cycle, use the original progress-based approach
           const progress = Math.min(elapsed / duration, 1);
