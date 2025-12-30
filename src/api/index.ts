@@ -23,13 +23,29 @@ export type HealthCheckResult = {
 };
 
 /**
+ * Custom error class for API errors with status code information
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public statusText?: string,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+
+/**
  * Check if the server is healthy by hitting the home route.
  * Returns health status and message.
  */
-export async function checkServerHealth(
-  baseUrl?: string
-): Promise<HealthCheckResult> {
-  const url = baseUrl ?? "https://portfolio-server-neon-five.vercel.app";
+export async function checkServerHealth(): Promise<HealthCheckResult> {
+  const url = VITE_API_URL ?? "https://portfolio-server-neon-five.vercel.app";
+
   try {
     const response = await fetch(`${url}/`, {
       method: "GET",
@@ -75,8 +91,7 @@ export async function generate(
   prompt: string,
   options: GenerateOptions = {}
 ): Promise<string> {
-  // const url = options.url ?? "http://localhost:8000/generate";
-  const url = options.url ?? "https://portfolio-server-neon-five.vercel.app";
+  const url = VITE_API_URL ?? "https://portfolio-server-neon-five.vercel.app";
 
   const timeoutMs = options.timeoutMs ?? 20000;
 
@@ -84,7 +99,7 @@ export async function generate(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch(`${url}/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, history: options.history ?? [] }),
@@ -112,4 +127,51 @@ export async function generate(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Get user-friendly error message based on status code
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    switch (error.statusCode) {
+      case 400:
+        return "Invalid request. Please check your input and try again.";
+      case 401:
+        return "Authentication failed. Please refresh the page and try again.";
+      case 403:
+        return "Access forbidden. You don't have permission to use this service.";
+      case 404:
+        return "Service not found. The server endpoint may be unavailable.";
+      case 429:
+        return "Too many requests. Please wait a moment and try again.";
+      case 500:
+        return "Server error. The service is experiencing issues. Please try again later.";
+      case 502:
+        return "Bad gateway. The server is temporarily unavailable. Please try again later.";
+      case 503:
+        return "Service unavailable. The server is temporarily down. Please try again later.";
+      default:
+        return (
+          error.message || "An unexpected error occurred. Please try again."
+        );
+    }
+  }
+
+  if (error instanceof Error) {
+    // Handle network errors
+    if (
+      error.message.includes("Failed to fetch") ||
+      error.message.includes("NetworkError")
+    ) {
+      return "Network error. Please check your connection and try again.";
+    }
+    // Handle timeout errors
+    if (error.name === "AbortError" || error.message.includes("timeout")) {
+      return "Request timed out. The server took too long to respond. Please try again.";
+    }
+    return error.message || "An unexpected error occurred. Please try again.";
+  }
+
+  return "An unexpected error occurred. Please try again.";
 }

@@ -96,7 +96,7 @@ const activeAnimationFrames = new Set<number>();
 global.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
   animationFrameId++;
   activeAnimationFrames.add(animationFrameId);
-  
+
   // Use setTimeout to simulate async behavior
   setTimeout(() => {
     if (activeAnimationFrames.has(animationFrameId)) {
@@ -104,7 +104,7 @@ global.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
       activeAnimationFrames.delete(animationFrameId);
     }
   }, 0);
-  
+
   return animationFrameId;
 });
 

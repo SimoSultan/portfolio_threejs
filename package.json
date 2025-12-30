@@ -4,7 +4,9 @@
   "description": "Welcome to my portfolio website repository! This project showcases my work, skills, and professional experience.",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "VITE_API_URL=http://localhost:8000 vite",
+    "dev:local": "VITE_API_URL=http://localhost:8000 vite",
+    "dev:remote": "VITE_API_URL=https://portfolio-server-neon-five.vercel.app/api vite",
     "build": "NODE_ENV=production tsc && vite build",
     "build:dev": "NODE_ENV=development tsc && vite build",
     "preview": "vite preview",

@@ -28,13 +28,6 @@ export class DatabaseManager {
    * Save context data to storage
    */
   async saveContext(data: ContextStorage): Promise<void> {
-    console.log("💾 Saving context to storage:", {
-      useIndexedDB: this.useIndexedDB,
-      messageCount: data.messages.length,
-      totalTokens: data.totalTokens,
-      lastUpdated: data.lastUpdated,
-    });
-
     if (this.useIndexedDB) {
       await this.saveToIndexedDB(data);
     } else {
@@ -46,24 +39,12 @@ export class DatabaseManager {
    * Load context data from storage
    */
   async loadContext(): Promise<ContextStorage | null> {
-    console.log(
-      "📂 Loading context from storage, useIndexedDB:",
-      this.useIndexedDB
-    );
-
     let result;
     if (this.useIndexedDB) {
       result = await this.loadFromIndexedDB();
     } else {
       result = this.loadFromLocalStorage();
     }
-
-    console.log("📂 Loaded context result:", {
-      hasData: !!result,
-      messageCount: result?.messages?.length || 0,
-      totalTokens: result?.totalTokens || 0,
-      lastUpdated: result?.lastUpdated || null,
-    });
 
     return result;
   }
@@ -225,16 +206,9 @@ export class DatabaseManager {
 
       request.onupgradeneeded = (event: any) => {
         const db = event.target.result;
-        console.log(
-          "🔄 IndexedDB upgrade needed during load - version:",
-          event.oldVersion,
-          "->",
-          event.newVersion
-        );
 
         // Create object stores if they don't exist (same schema as save)
         if (!db.objectStoreNames.contains("context")) {
-          console.log("📁 Creating context object store during load");
           const contextStore = db.createObjectStore("context", {
             keyPath: "id",
           });

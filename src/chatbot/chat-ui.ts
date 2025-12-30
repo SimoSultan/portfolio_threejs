@@ -1,4 +1,4 @@
-import { checkServerHealth, generate } from "../api";
+import { checkServerHealth, generate, getErrorMessage } from "../api";
 import { ContextManager, type StoredMessage } from "./context";
 
 export class ChatUI {
@@ -281,12 +281,14 @@ export class ChatUI {
       });
     } catch (error) {
       console.error("Chat error:", error);
-      this.addMessageToUI(
-        this.createMessage(
-          "assistant",
-          "Sorry, I encountered an error. Please try again."
-        )
-      );
+      const errorMessage = getErrorMessage(error);
+
+      // If we already started a message, append error there or just create new one?
+      // Simpler to just add a new error message if the previous one was empty,
+      // but if we were streaming partial content, maybe append error?
+      // Standard behavior: just show error message as a fresh bubble or update status.
+      // Let's add a distinct error message.
+      this.addMessageToUI(this.createMessage("assistant", errorMessage));
     } finally {
       // Resume infinite animation at normal speed and restart it
       this.triggerAnimation("resumeInfiniteSpeed");
@@ -304,10 +306,10 @@ export class ChatUI {
     messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
     const bubble = document.createElement("div");
-    bubble.className = `max-w-[80%] md:max-w-md px-4 py-2 rounded-2xl text-sm md:text-base ${
+    bubble.className = `max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base ${
       message.role === "user"
-        ? "bg-emerald-500/30 backdrop-blur-sm text-emerald-200 border border-emerald-400/30"
-        : "bg-purple-500/10 backdrop-blur-sm text-purple-300 border border-purple-400/20 chat-message"
+        ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/30"
+        : "bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message"
     }`;
 
     // For AI messages, render markdown; for user messages, use plain text
@@ -751,6 +753,7 @@ export class ChatUI {
     forceClose,
     forceOpen,
   }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
+    console.log("here");
     const debugDropdown = document.getElementById("debug-dropdown");
     if (!debugDropdown) return;
 
