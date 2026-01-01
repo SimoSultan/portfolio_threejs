@@ -5,9 +5,9 @@ import { ApiError } from "../../api";
 import { ChatUI } from "../chat-ui";
 import { ContextManager } from "../context";
 
-// Mock async generator helper
-async function* mockGenerator(response: string) {
-  yield response;
+// Mock string response helper
+function mockResponse(response: string) {
+  return Promise.resolve(response);
 }
 
 // Mock the API module
@@ -16,7 +16,11 @@ vi.mock("../../api", async () => {
   return {
     ...actual,
     generate: vi.fn(), // This will be overridden in beforeEach
-    checkServerHealth: vi.fn(),
+    checkServerHealth: vi.fn().mockResolvedValue({
+      status: "Ready",
+      isHealthy: true,
+      message: "Server is healthy",
+    }),
     getErrorMessage: vi.fn((error: unknown) => {
       if (error instanceof ApiError) {
         switch (error.statusCode) {
@@ -119,7 +123,7 @@ describe("ChatUI", () => {
     // Default successful mock for generate using async generator
     const { generate } = await import("../../api");
     vi.mocked(generate).mockImplementation(prompt =>
-      mockGenerator("AI response")
+      mockResponse("AI response")
     );
 
     // Create a mock container
@@ -161,17 +165,16 @@ describe("ChatUI", () => {
     chatUI = new ChatUI();
     // Inject mock contextManager to ensure we can spy on it
     (chatUI as any).contextManager = mockContextManager;
+
+    // Attach to DOM so selectors work
+    document.body.appendChild(chatUI.getContainer());
   });
 
   afterEach(() => {
     // Clean up DOM
+    chatUI.destroy();
     if (mockContainer.parentNode) {
       mockContainer.parentNode.removeChild(mockContainer);
-    }
-    // Remove any created elements
-    const chatContainer = document.getElementById("chat-container");
-    if (chatContainer) {
-      chatContainer.remove();
     }
   });
 
@@ -248,12 +251,10 @@ describe("ChatUI", () => {
     // Mock successful chat response handled by generate mock in beforeEach
 
     it("should send message when send button clicked", async () => {
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Hello, AI!";
@@ -268,9 +269,7 @@ describe("ChatUI", () => {
     });
 
     it("should send message when Enter key pressed", async () => {
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input) {
         input.value = "Hello, AI!";
@@ -307,12 +306,10 @@ describe("ChatUI", () => {
     // Removed "should not send message if chatbot not ready" as isReady is deprecated
 
     it("should clear input after sending message", async () => {
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Hello, AI!";
@@ -582,15 +579,15 @@ describe("ChatUI", () => {
 
     it("should display user messages", async () => {
       const mockMessages = [
-        { role: "user", content: "Hello", timestamp: new Date() },
+        { role: "user" as const, content: "Hello", timestamp: new Date() },
       ];
 
       mockContextManager.getConversationMessages.mockResolvedValue(
         mockMessages
       );
 
-      // Wait for messages to load
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // Trigger load manually since constructor already ran
+      await (chatUI as any).loadExistingConversation();
 
       const chatContainer = document.getElementById("chat-container");
       if (chatContainer) {
@@ -600,20 +597,141 @@ describe("ChatUI", () => {
 
     it("should display assistant messages", async () => {
       const mockMessages = [
-        { role: "assistant", content: "Hi there!", timestamp: new Date() },
+        {
+          role: "assistant" as const,
+          content: "Hi there!",
+          timestamp: new Date(),
+        },
       ];
 
       mockContextManager.getConversationMessages.mockResolvedValue(
         mockMessages
       );
 
-      // Wait for messages to load
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // Trigger load manually
+      await (chatUI as any).loadExistingConversation();
 
       const chatContainer = document.getElementById("chat-container");
       if (chatContainer) {
         expect(chatContainer.textContent).toContain("Hi there!");
       }
+    });
+  });
+
+  describe("markdown rendering", () => {
+    it("should render bold text using strong tags", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "This is **bold** text",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain("<strong>bold</strong>");
+    });
+
+    it("should render italic text using em tags", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "This is *italic* text",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain("<em>italic</em>");
+    });
+
+    it("should render inline code using code tags", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "Use `npm start` to run",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain(
+        'code class="bg-gray-100 px-1 py-0.5 rounded text-xs"'
+      );
+      expect(lastBubble.innerHTML).toContain("npm start");
+    });
+
+    it("should render code blocks using pre and code tags", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "```\nconst x = 1;\n```",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain("<pre");
+      expect(lastBubble.innerHTML).toContain("<code>\nconst x = 1;\n</code>");
+    });
+
+    it("should render blockquotes", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "> This is a quote",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain(
+        '<blockquote class="blockquote">This is a quote</blockquote>'
+      );
+    });
+
+    it("should render numbered lists", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "1. Item one\n2. Item two",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain("<ol>");
+      expect(lastBubble.innerHTML).toContain("<li>Item one</li>");
+      expect(lastBubble.innerHTML).toContain("<li>Item two</li>");
+    });
+
+    it("should render bullet lists", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "- Point A\n- Point B",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain("<ul>");
+      expect(lastBubble.innerHTML).toContain("<li>Point A</li>");
+      expect(lastBubble.innerHTML).toContain("<li>Point B</li>");
     });
   });
 
@@ -630,12 +748,10 @@ describe("ChatUI", () => {
         new ApiError("Bad Request", 400, "Bad Request")
       );
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";
@@ -644,7 +760,7 @@ describe("ChatUI", () => {
         // Wait for async operations
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        const messages = document.querySelectorAll("[data-role='assistant']");
+        const messages = document.querySelectorAll(".chat-message");
         expect(messages.length).toBeGreaterThan(0);
         const lastMessage = messages[messages.length - 1];
         expect(lastMessage.textContent).toContain("Invalid request");
@@ -657,12 +773,10 @@ describe("ChatUI", () => {
         new ApiError("Unauthorized", 401, "Unauthorized")
       );
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";
@@ -670,7 +784,7 @@ describe("ChatUI", () => {
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        const messages = document.querySelectorAll("[data-role='assistant']");
+        const messages = document.querySelectorAll(".chat-message");
         expect(messages.length).toBeGreaterThan(0);
         const lastMessage = messages[messages.length - 1];
         expect(lastMessage.textContent).toContain("Authentication failed");
@@ -683,12 +797,10 @@ describe("ChatUI", () => {
         new ApiError("Too Many Requests", 429, "Too Many Requests")
       );
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";
@@ -696,7 +808,7 @@ describe("ChatUI", () => {
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        const messages = document.querySelectorAll("[data-role='assistant']");
+        const messages = document.querySelectorAll(".chat-message");
         expect(messages.length).toBeGreaterThan(0);
         const lastMessage = messages[messages.length - 1];
         expect(lastMessage.textContent).toContain("Too many requests");
@@ -709,12 +821,10 @@ describe("ChatUI", () => {
         new ApiError("Internal Server Error", 500, "Internal Server Error")
       );
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";
@@ -722,7 +832,7 @@ describe("ChatUI", () => {
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        const messages = document.querySelectorAll("[data-role='assistant']");
+        const messages = document.querySelectorAll(".chat-message");
         expect(messages.length).toBeGreaterThan(0);
         const lastMessage = messages[messages.length - 1];
         expect(lastMessage.textContent).toContain("Server error");
@@ -735,12 +845,10 @@ describe("ChatUI", () => {
         new ApiError("Bad Gateway", 502, "Bad Gateway")
       );
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";
@@ -748,7 +856,7 @@ describe("ChatUI", () => {
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        const messages = document.querySelectorAll("[data-role='assistant']");
+        const messages = document.querySelectorAll(".chat-message");
         expect(messages.length).toBeGreaterThan(0);
         const lastMessage = messages[messages.length - 1];
         expect(lastMessage.textContent).toContain("Bad gateway");
@@ -761,12 +869,10 @@ describe("ChatUI", () => {
         new TypeError("Failed to fetch")
       );
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";
@@ -774,7 +880,7 @@ describe("ChatUI", () => {
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
-        const messages = document.querySelectorAll("[data-role='assistant']");
+        const messages = document.querySelectorAll(".chat-message");
         expect(messages.length).toBeGreaterThan(0);
         // Should show error message
         expect(messages.length).toBeGreaterThan(0);
@@ -785,12 +891,10 @@ describe("ChatUI", () => {
       const { generate } = await import("../../api");
       vi.mocked(generate).mockRejectedValueOnce(new Error("Generic error"));
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";
@@ -800,7 +904,7 @@ describe("ChatUI", () => {
 
         // Should not throw, should handle error gracefully
         expect(generate).toHaveBeenCalled();
-        const messages = document.querySelectorAll("[data-role='assistant']");
+        const messages = document.querySelectorAll(".chat-message");
         expect(messages.length).toBeGreaterThan(0);
       }
     });
@@ -811,12 +915,10 @@ describe("ChatUI", () => {
         new ApiError("Test error", 500)
       );
 
-      const sendButton = document.querySelector(
-        "button[type='submit']"
+      const sendButton = document.getElementById(
+        "send-button"
       ) as HTMLButtonElement;
-      const input = document.querySelector(
-        "input[type='text']"
-      ) as HTMLInputElement;
+      const input = document.getElementById("chat-input") as HTMLInputElement;
 
       if (input && sendButton) {
         input.value = "Test message";

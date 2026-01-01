@@ -164,7 +164,7 @@ export class ChatUI {
       "Ask me something about Simon’s work or projects...";
     this.input.className =
       "flex-1 px-4 py-3 rounded-full text-xs sm:text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-400 text-white";
-    this.input.addEventListener("keypress", e => {
+    this.input.addEventListener("keydown", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         this.sendMessage();
@@ -196,6 +196,7 @@ export class ChatUI {
 
     // Send button
     this.sendButton = document.createElement("button");
+    this.sendButton.id = "send-button";
     this.sendButton.innerHTML = `
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
@@ -329,22 +330,18 @@ export class ChatUI {
 
   private renderMarkdown(content: string): string {
     let rendered = content;
+    const placeholders: string[] = [];
 
-    // Handle line breaks and paragraphs
-    rendered = rendered.replace(/\n\n/g, "</p><p>");
-    rendered = rendered.replace(/\n/g, "<br>");
+    // 1. Protect code blocks (```code```) - do this early to avoid mangling content
+    rendered = rendered.replace(/```(.*?)```/gs, (_match, p1) => {
+      const placeholder = `__CODE_BLOCK_${placeholders.length}__`;
+      placeholders.push(
+        `<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>${p1}</code></pre>`
+      );
+      return placeholder;
+    });
 
-    // Wrap in paragraph tags if not already wrapped
-    if (!rendered.startsWith("<p>")) {
-      rendered = `<p>${rendered}</p>`;
-    }
-
-    // Handle bold text (**text**)
-    rendered = rendered.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-
-    // Handle italic text (*text*)
-    rendered = rendered.replace(/\*(.*?)\*/g, "<em>$1</em>");
-
+    // 2. Handle block-level elements that should not be wrapped in <p>
     // Handle numbered lists (1. item) with better indentation
     rendered = rendered.replace(
       /^(\d+\.\s+)(.*?)(?=\n\d+\.|$)/gm,
@@ -359,29 +356,50 @@ export class ChatUI {
     );
     rendered = rendered.replace(/<\/ul>\n<ul>/g, "");
 
-    // Handle indented text (4+ spaces or tabs)
-    rendered = rendered.replace(
-      /^(\s{4,}|\t+)(.*?)(?=\n\S|$)/gm,
-      '<div class="indented-text">$2</div>'
-    );
-
     // Handle blockquotes (> text)
     rendered = rendered.replace(
       /^>\s+(.*?)(?=\n[^>]|$)/gm,
       '<blockquote class="blockquote">$1</blockquote>'
     );
 
-    // Handle code blocks (```code```)
+    // Handle indented text (4+ spaces or tabs)
     rendered = rendered.replace(
-      /```(.*?)```/gs,
-      '<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>$1</code></pre>'
+      /^(\s{4,}|\t+)(.*?)(?=\n\S|$)/gm,
+      '<div class="indented-text">$2</div>'
     );
+
+    // 3. Handle inline formatting
+    // Handle bold text (**text**)
+    rendered = rendered.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+    // Handle italic text (*text*)
+    rendered = rendered.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
     // Handle inline code (`code`)
     rendered = rendered.replace(
       /`(.*?)`/g,
       '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>'
     );
+
+    // 4. Handle remaining line breaks
+    // Replace double newlines with paragraphs and single newlines with <br>
+    rendered = rendered.replace(/\n\n/g, "</p><p>");
+    rendered = rendered.replace(/\n/g, "<br>");
+
+    // 5. Restore protected code blocks
+    placeholders.forEach((html, i) => {
+      rendered = rendered.replace(`__CODE_BLOCK_${i}__`, html);
+    });
+
+    // 6. Wrap in paragraph tags if not already starting with a block-level tag
+    const blockTags = ["<p", "<pre", "<blockquote", "<ul", "<ol", "<div"];
+    const startsWithBlock = blockTags.some(tag =>
+      rendered.trim().startsWith(tag)
+    );
+
+    if (!startsWithBlock) {
+      rendered = `<p>${rendered}</p>`;
+    }
 
     return rendered;
   }
