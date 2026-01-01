@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError } from "../../api/errors";
+import { ApiError } from "../../api";
 import { ChatUI } from "../chat-ui";
 import { ContextManager } from "../context";
 
@@ -9,8 +9,6 @@ import { ContextManager } from "../context";
 async function* mockGenerator(response: string) {
   yield response;
 }
-
-
 
 // Mock the API module
 vi.mock("../../api", async () => {
@@ -526,317 +524,328 @@ describe("ChatUI", () => {
     // Status update logic skipped
   });
 
-describe("token usage display", () => {
-  it("should create token usage indicator", () => {
-    const tokenIndicator = document.querySelector(
-      ".flex.items-center.gap-2.text-xs.text-gray-400"
-    );
-    expect(tokenIndicator).toBeDefined();
+  describe("token usage display", () => {
+    it("should create token usage indicator", () => {
+      const tokenIndicator = document.querySelector(
+        ".flex.items-center.gap-2.text-xs.text-gray-400"
+      );
+      expect(tokenIndicator).toBeDefined();
+    });
+
+    it("should update token usage display", async () => {
+      const mockMessages = [
+        {
+          role: "user",
+          content: "Hello",
+          timestamp: new Date(),
+          tokenCount: 100,
+        },
+        {
+          role: "assistant",
+          content: "Hi",
+          timestamp: new Date(),
+          tokenCount: 50,
+        },
+      ];
+
+      mockContextManager.getConversationMessages.mockResolvedValue(
+        mockMessages
+      );
+
+      // Wait for token usage update
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const tokenIndicator = document.querySelector(
+        ".flex.items-center.gap-2.text-xs.text-gray-400"
+      );
+      expect(tokenIndicator).toBeDefined();
+    });
   });
 
-  it("should update token usage display", async () => {
-    const mockMessages = [
-      {
-        role: "user",
-        content: "Hello",
-        timestamp: new Date(),
-        tokenCount: 100,
-      },
-      {
-        role: "assistant",
-        content: "Hi",
-        timestamp: new Date(),
-        tokenCount: 50,
-      },
-    ];
+  describe("message display", () => {
+    it("should load existing messages", async () => {
+      const mockMessages = [
+        { role: "user", content: "Hello", timestamp: new Date() },
+        { role: "assistant", content: "Hi there!", timestamp: new Date() },
+      ];
 
-    mockContextManager.getConversationMessages.mockResolvedValue(mockMessages);
+      mockContextManager.getConversationMessages.mockResolvedValue(
+        mockMessages
+      );
 
-    // Wait for token usage update
-    await new Promise(resolve => setTimeout(resolve, 0));
+      // Wait for messages to load
+      await new Promise(resolve => setTimeout(resolve, 0));
 
-    const tokenIndicator = document.querySelector(
-      ".flex.items-center.gap-2.text-xs.text-gray-400"
-    );
-    expect(tokenIndicator).toBeDefined();
-  });
-});
+      const chatContainer = document.getElementById("chat-container");
+      expect(chatContainer).toBeDefined();
+    });
 
-describe("message display", () => {
-  it("should load existing messages", async () => {
-    const mockMessages = [
-      { role: "user", content: "Hello", timestamp: new Date() },
-      { role: "assistant", content: "Hi there!", timestamp: new Date() },
-    ];
+    it("should display user messages", async () => {
+      const mockMessages = [
+        { role: "user", content: "Hello", timestamp: new Date() },
+      ];
 
-    mockContextManager.getConversationMessages.mockResolvedValue(mockMessages);
+      mockContextManager.getConversationMessages.mockResolvedValue(
+        mockMessages
+      );
 
-    // Wait for messages to load
-    await new Promise(resolve => setTimeout(resolve, 0));
+      // Wait for messages to load
+      await new Promise(resolve => setTimeout(resolve, 0));
 
-    const chatContainer = document.getElementById("chat-container");
-    expect(chatContainer).toBeDefined();
-  });
+      const chatContainer = document.getElementById("chat-container");
+      if (chatContainer) {
+        expect(chatContainer.textContent).toContain("Hello");
+      }
+    });
 
-  it("should display user messages", async () => {
-    const mockMessages = [
-      { role: "user", content: "Hello", timestamp: new Date() },
-    ];
+    it("should display assistant messages", async () => {
+      const mockMessages = [
+        { role: "assistant", content: "Hi there!", timestamp: new Date() },
+      ];
 
-    mockContextManager.getConversationMessages.mockResolvedValue(mockMessages);
+      mockContextManager.getConversationMessages.mockResolvedValue(
+        mockMessages
+      );
 
-    // Wait for messages to load
-    await new Promise(resolve => setTimeout(resolve, 0));
+      // Wait for messages to load
+      await new Promise(resolve => setTimeout(resolve, 0));
 
-    const chatContainer = document.getElementById("chat-container");
-    if (chatContainer) {
-      expect(chatContainer.textContent).toContain("Hello");
-    }
+      const chatContainer = document.getElementById("chat-container");
+      if (chatContainer) {
+        expect(chatContainer.textContent).toContain("Hi there!");
+      }
+    });
   });
 
-  it("should display assistant messages", async () => {
-    const mockMessages = [
-      { role: "assistant", content: "Hi there!", timestamp: new Date() },
-    ];
+  describe("error handling", () => {
+    beforeEach(async () => {
+      // Import the mocked generate function
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockClear();
+    });
 
-    mockContextManager.getConversationMessages.mockResolvedValue(mockMessages);
+    it("should handle 400 Bad Request error", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(
+        new ApiError("Bad Request", 400, "Bad Request")
+      );
 
-    // Wait for messages to load
-    await new Promise(resolve => setTimeout(resolve, 0));
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-    const chatContainer = document.getElementById("chat-container");
-    if (chatContainer) {
-      expect(chatContainer.textContent).toContain("Hi there!");
-    }
-  });
-});
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-describe("error handling", () => {
-  beforeEach(async () => {
-    // Import the mocked generate function
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockClear();
-  });
+        // Wait for async operations
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-  it("should handle 400 Bad Request error", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(
-      new ApiError("Bad Request", 400, "Bad Request")
-    );
+        const messages = document.querySelectorAll("[data-role='assistant']");
+        expect(messages.length).toBeGreaterThan(0);
+        const lastMessage = messages[messages.length - 1];
+        expect(lastMessage.textContent).toContain("Invalid request");
+      }
+    });
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+    it("should handle 401 Unauthorized error", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(
+        new ApiError("Unauthorized", 401, "Unauthorized")
+      );
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-      // Wait for async operations
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-      const messages = document.querySelectorAll("[data-role='assistant']");
-      expect(messages.length).toBeGreaterThan(0);
-      const lastMessage = messages[messages.length - 1];
-      expect(lastMessage.textContent).toContain("Invalid request");
-    }
-  });
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-  it("should handle 401 Unauthorized error", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(
-      new ApiError("Unauthorized", 401, "Unauthorized")
-    );
+        const messages = document.querySelectorAll("[data-role='assistant']");
+        expect(messages.length).toBeGreaterThan(0);
+        const lastMessage = messages[messages.length - 1];
+        expect(lastMessage.textContent).toContain("Authentication failed");
+      }
+    });
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+    it("should handle 429 Too Many Requests error", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(
+        new ApiError("Too Many Requests", 429, "Too Many Requests")
+      );
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-      const messages = document.querySelectorAll("[data-role='assistant']");
-      expect(messages.length).toBeGreaterThan(0);
-      const lastMessage = messages[messages.length - 1];
-      expect(lastMessage.textContent).toContain("Authentication failed");
-    }
-  });
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-  it("should handle 429 Too Many Requests error", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(
-      new ApiError("Too Many Requests", 429, "Too Many Requests")
-    );
+        const messages = document.querySelectorAll("[data-role='assistant']");
+        expect(messages.length).toBeGreaterThan(0);
+        const lastMessage = messages[messages.length - 1];
+        expect(lastMessage.textContent).toContain("Too many requests");
+      }
+    });
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+    it("should handle 500 Internal Server Error", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(
+        new ApiError("Internal Server Error", 500, "Internal Server Error")
+      );
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-      const messages = document.querySelectorAll("[data-role='assistant']");
-      expect(messages.length).toBeGreaterThan(0);
-      const lastMessage = messages[messages.length - 1];
-      expect(lastMessage.textContent).toContain("Too many requests");
-    }
-  });
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-  it("should handle 500 Internal Server Error", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(
-      new ApiError("Internal Server Error", 500, "Internal Server Error")
-    );
+        const messages = document.querySelectorAll("[data-role='assistant']");
+        expect(messages.length).toBeGreaterThan(0);
+        const lastMessage = messages[messages.length - 1];
+        expect(lastMessage.textContent).toContain("Server error");
+      }
+    });
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+    it("should handle 502 Bad Gateway error", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(
+        new ApiError("Bad Gateway", 502, "Bad Gateway")
+      );
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-      const messages = document.querySelectorAll("[data-role='assistant']");
-      expect(messages.length).toBeGreaterThan(0);
-      const lastMessage = messages[messages.length - 1];
-      expect(lastMessage.textContent).toContain("Server error");
-    }
-  });
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-  it("should handle 502 Bad Gateway error", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(
-      new ApiError("Bad Gateway", 502, "Bad Gateway")
-    );
+        const messages = document.querySelectorAll("[data-role='assistant']");
+        expect(messages.length).toBeGreaterThan(0);
+        const lastMessage = messages[messages.length - 1];
+        expect(lastMessage.textContent).toContain("Bad gateway");
+      }
+    });
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+    it("should handle network errors", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(
+        new TypeError("Failed to fetch")
+      );
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-      const messages = document.querySelectorAll("[data-role='assistant']");
-      expect(messages.length).toBeGreaterThan(0);
-      const lastMessage = messages[messages.length - 1];
-      expect(lastMessage.textContent).toContain("Bad gateway");
-    }
-  });
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-  it("should handle network errors", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+        const messages = document.querySelectorAll("[data-role='assistant']");
+        expect(messages.length).toBeGreaterThan(0);
+        // Should show error message
+        expect(messages.length).toBeGreaterThan(0);
+      }
+    });
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+    it("should handle generic errors gracefully", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(new Error("Generic error"));
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-      const messages = document.querySelectorAll("[data-role='assistant']");
-      expect(messages.length).toBeGreaterThan(0);
-      // Should show error message
-      expect(messages.length).toBeGreaterThan(0);
-    }
-  });
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-  it("should handle generic errors gracefully", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(new Error("Generic error"));
+        // Should not throw, should handle error gracefully
+        expect(generate).toHaveBeenCalled();
+        const messages = document.querySelectorAll("[data-role='assistant']");
+        expect(messages.length).toBeGreaterThan(0);
+      }
+    });
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+    it("should re-enable input after error", async () => {
+      const { generate } = await import("../../api");
+      vi.mocked(generate).mockRejectedValueOnce(
+        new ApiError("Test error", 500)
+      );
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+      const sendButton = document.querySelector(
+        "button[type='submit']"
+      ) as HTMLButtonElement;
+      const input = document.querySelector(
+        "input[type='text']"
+      ) as HTMLInputElement;
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      if (input && sendButton) {
+        input.value = "Test message";
+        sendButton.click();
 
-      // Should not throw, should handle error gracefully
-      expect(generate).toHaveBeenCalled();
-      const messages = document.querySelectorAll("[data-role='assistant']");
-      expect(messages.length).toBeGreaterThan(0);
-    }
-  });
+        // Input should be disabled during request
+        expect(input.disabled).toBe(true);
+        expect(sendButton.disabled).toBe(true);
 
-  it("should re-enable input after error", async () => {
-    const { generate } = await import("../../api");
-    vi.mocked(generate).mockRejectedValueOnce(new ApiError("Test error", 500));
+        await new Promise(resolve => setTimeout(resolve, 50));
 
-    const sendButton = document.querySelector(
-      "button[type='submit']"
-    ) as HTMLButtonElement;
-    const input = document.querySelector(
-      "input[type='text']"
-    ) as HTMLInputElement;
+        // Input should be re-enabled after error
+        expect(input.disabled).toBe(false);
+        expect(sendButton.disabled).toBe(false);
+      }
+    });
 
-    if (input && sendButton) {
-      input.value = "Test message";
-      sendButton.click();
+    describe("cleanup", () => {
+      it("should destroy UI elements", () => {
+        const chatContainer = document.getElementById("chat-container");
+        expect(chatContainer).toBeDefined();
 
-      // Input should be disabled during request
-      expect(input.disabled).toBe(true);
-      expect(sendButton.disabled).toBe(true);
+        // Call destroy method
+        chatUI.destroy();
 
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Input should be re-enabled after error
-      expect(input.disabled).toBe(false);
-      expect(sendButton.disabled).toBe(false);
-    }
-  });
-
-  // Removed model switching error test
-});
-
-describe("cleanup", () => {
-  it("should destroy UI elements", () => {
-    const chatContainer = document.getElementById("chat-container");
-    expect(chatContainer).toBeDefined();
-
-    // Call destroy method
-    chatUI.destroy();
-
-    // Elements should be removed
-    const removedContainer = document.getElementById("chat-container");
-    expect(removedContainer).toBeNull();
+        // Elements should be removed
+        const removedContainer = document.getElementById("chat-container");
+        expect(removedContainer).toBeNull();
+      });
+    });
   });
 });
