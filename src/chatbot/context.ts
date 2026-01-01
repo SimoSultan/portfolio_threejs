@@ -58,7 +58,7 @@ export class ContextManager {
     try {
       // Try to load existing context from storage
       const stored = await this.storage.loadContext();
-      
+
       if (stored) {
         this.context = stored.context;
       } else {
@@ -173,7 +173,7 @@ export class ContextManager {
     };
 
     await this.storage.addMessage(message);
-    
+
     // Note: We don't call saveContext() here because addMessage() already saves the context
     // Calling saveContext() would overwrite the newly added message
   }

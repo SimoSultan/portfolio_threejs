@@ -733,6 +733,39 @@ describe("ChatUI", () => {
       expect(lastBubble.innerHTML).toContain("<li>Point A</li>");
       expect(lastBubble.innerHTML).toContain("<li>Point B</li>");
     });
+
+    it("should render indented bullet lists correctly", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "    - Indented Item",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain("<ul>");
+      expect(lastBubble.innerHTML).toContain("<li>Indented Item</li>");
+      expect(lastBubble.innerHTML).not.toContain("indented-text");
+    });
+
+    it("should merge consecutive blockquotes", () => {
+      const message = {
+        role: "assistant" as const,
+        content: "> Line 1\n> Line 2",
+        timestamp: new Date(),
+        tokenCount: 10,
+        isSummarized: false,
+      };
+      (chatUI as any).addMessageToUI(message);
+
+      const bubbles = document.querySelectorAll(".chat-message");
+      const lastBubble = bubbles[bubbles.length - 1];
+      expect(lastBubble.innerHTML).toContain("<blockquote");
+      expect(lastBubble.innerHTML).toContain("Line 1<br>Line 2");
+    });
   });
 
   describe("error handling", () => {

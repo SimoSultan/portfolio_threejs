@@ -131,6 +131,7 @@ body {
 .chat-message li {
   margin: 0.25rem 0;
   line-height: 1.4;
+  list-style: circle;
 }
 
 .chat-message .indented-text {
@@ -264,46 +265,46 @@ body {
     /* Ensure chat messages don't get cut off */
     padding-bottom: 120px; /* Account for input container height */
   }
-  
+
   #chat-ui-container {
     /* Use visual viewport height on mobile */
     height: 100vh;
     height: 100dvh;
   }
-  
+
   /* Ensure title is at the top on mobile */
   #app {
     align-items: flex-start !important;
   }
-  
+
   /* Add some top padding for the title on mobile */
   .relative.z-10 {
     padding-top: 2rem;
   }
-  
+
   /* Chat UI info container mobile layout */
   #info-container {
     flex-direction: row !important;
     gap: 1rem !important;
   }
-  
+
   /* Ensure buttons don't wrap on small mobile screens */
   #info-container .flex.items-center.gap-4 {
     gap: 0.75rem !important;
     flex-shrink: 0;
   }
-  
+
   /* Make text smaller on very small screens */
   @media (max-width: 480px) {
     #info-container .text-sm {
       font-size: 0.75rem;
     }
-    
+
     #info-container .gap-4 {
       gap: 0.5rem !important;
     }
   }
-  
+
   /* Chat UI button styling for mobile */
   #new-chat-button,
   #info-button {
@@ -312,7 +313,7 @@ body {
     /* Add subtle shadow for better button appearance */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
-  
+
   /* Active/focus states for buttons */
   #new-chat-button:active,
   #info-button:active {

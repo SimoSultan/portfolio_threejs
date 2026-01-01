@@ -113,7 +113,6 @@ export async function generate(
     const contentType = res.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
       const data: any = await res.json();
-      console.log("JSON response:", data);
       return (
         data?.text ??
         data?.content ??

@@ -308,10 +308,10 @@ export class ChatUI {
     messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
     const bubble = document.createElement("div");
-    bubble.className = `max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base ${
+    bubble.className = `chat-message max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base ${
       message.role === "user"
-        ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/30"
-        : "bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message"
+        ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 chat-message--user"
+        : "bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message--assistant"
     }`;
 
     // For AI messages, render markdown; for user messages, use plain text
@@ -342,30 +342,28 @@ export class ChatUI {
     });
 
     // 2. Handle block-level elements that should not be wrapped in <p>
-    // Handle numbered lists (1. item) with better indentation
-    rendered = rendered.replace(
-      /^(\d+\.\s+)(.*?)(?=\n\d+\.|$)/gm,
-      "<ol><li>$2</li></ol>"
-    );
-    rendered = rendered.replace(/<\/ol>\n<ol>/g, "");
+    // Handle numbered lists (allow leading space, handle multiple lines)
+    rendered = rendered.replace(/^\s*\d+\.\s+(.*?)$/gm, "<ol><li>$1</li></ol>");
+    rendered = rendered.replace(/<\/ol>\s*\n\s*<ol>/g, "");
 
-    // Handle bullet points (- item or * item) with better indentation
-    rendered = rendered.replace(
-      /^[-*]\s+(.*?)(?=\n[-*]|$)/gm,
-      "<ul><li>$1</li></ul>"
-    );
-    rendered = rendered.replace(/<\/ul>\n<ul>/g, "");
+    // Handle bullet points (allow leading space, handle -, *, +, merge correctly)
+    rendered = rendered.replace(/^\s*[-*+]\s+(.*?)$/gm, "<ul><li>$1</li></ul>");
+    rendered = rendered.replace(/<\/ul>\s*\n\s*<ul>/g, "");
 
     // Handle blockquotes (> text)
     rendered = rendered.replace(
-      /^>\s+(.*?)(?=\n[^>]|$)/gm,
+      /^\s*>\s+(.*?)$/gm,
       '<blockquote class="blockquote">$1</blockquote>'
     );
-
-    // Handle indented text (4+ spaces or tabs)
     rendered = rendered.replace(
-      /^(\s{4,}|\t+)(.*?)(?=\n\S|$)/gm,
-      '<div class="indented-text">$2</div>'
+      /<\/blockquote>\s*\n\s*<blockquote class="blockquote">/g,
+      "<br>"
+    );
+
+    // Handle indented text (4+ spaces or tabs) - skip if it looks like it was already handled or is a list item
+    rendered = rendered.replace(
+      /^(?!\s*<(?:ul|ol|blockquote|pre|p|div|li))(?:\s{4,}|\t+)(.*?)$/gm,
+      '<div class="indented-text">$1</div>'
     );
 
     // 3. Handle inline formatting
@@ -393,11 +391,10 @@ export class ChatUI {
 
     // 6. Wrap in paragraph tags if not already starting with a block-level tag
     const blockTags = ["<p", "<pre", "<blockquote", "<ul", "<ol", "<div"];
-    const startsWithBlock = blockTags.some(tag =>
-      rendered.trim().startsWith(tag)
-    );
+    const trimmed = rendered.trim();
+    const startsWithBlock = blockTags.some(tag => trimmed.startsWith(tag));
 
-    if (!startsWithBlock) {
+    if (!startsWithBlock && trimmed.length > 0) {
       rendered = `<p>${rendered}</p>`;
     }
 
