@@ -132,6 +132,7 @@ body {
   margin: 0.25rem 0;
   line-height: 1.4;
   list-style: circle;
+  word-break: break-all;
 }
 
 .chat-message .indented-text {

@@ -1,5 +1,18 @@
+import { Marked } from "marked";
+
 import { checkServerHealth, generate, getErrorMessage } from "../api";
 import { ContextManager, type StoredMessage } from "./context";
+
+const marked = new Marked();
+
+marked.use({
+  renderer: {
+    link({ href, title, text }) {
+      const titleAttr = title ? ` title="${title}"` : "";
+      return `<a target="_blank" rel="nofollow noopener noreferrer" href="${href}"${titleAttr}>${text}</a>`;
+    },
+  },
+});
 
 export class ChatUI {
   private container!: HTMLDivElement;
@@ -350,7 +363,7 @@ export class ChatUI {
     this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
   }
 
-  private addMessageToUI(message: StoredMessage): void {
+  private async addMessageToUI(message: StoredMessage): Promise<void> {
     const messageDiv = document.createElement("div");
     messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
@@ -363,7 +376,7 @@ export class ChatUI {
 
     // For AI messages, render markdown; for user messages, use plain text
     if (message.role === "assistant") {
-      bubble.innerHTML = this.renderMarkdown(message.content);
+      bubble.innerHTML = await this.renderMarkdown(message.content, true);
     } else {
       bubble.textContent = message.content;
     }
@@ -375,100 +388,113 @@ export class ChatUI {
     this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
   }
 
-  private renderMarkdown(content: string): string {
-    let rendered = content;
+  private async renderMarkdown(
+    content: string,
+    parseWithMarked: boolean
+  ): Promise<string> {
+    let rendered = "";
     const placeholders: string[] = [];
 
-    // 1. Protect code blocks (```code```) - do this early to avoid mangling content
-    rendered = rendered.replace(/```(.*?)```/gs, (_match, p1) => {
-      const placeholder = `__CODE_BLOCK_${placeholders.length}__`;
-      placeholders.push(
-        `<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>${p1}</code></pre>`
+    if (!parseWithMarked) {
+      rendered = content;
+      // 1. Protect code blocks (```code```) - do this early to avoid mangling content
+      rendered = rendered.replace(/```(.*?)```/gs, (_match, p1) => {
+        const placeholder = `__CODE_BLOCK_${placeholders.length}__`;
+        placeholders.push(
+          `<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>${p1}</code></pre>`
+        );
+        return placeholder;
+      });
+
+      // 2. Handle block-level elements that should not be wrapped in <p>
+      // Handle numbered lists (allow leading space, handle multiple lines)
+      rendered = rendered.replace(
+        /^\s*\d+\.\s+(.*?)$/gm,
+        "<ol><li>$1</li></ol>"
       );
-      return placeholder;
-    });
+      rendered = rendered.replace(/<\/ol>\s*\n\s*<ol>/g, "");
 
-    // 2. Handle block-level elements that should not be wrapped in <p>
-    // Handle numbered lists (allow leading space, handle multiple lines)
-    rendered = rendered.replace(/^\s*\d+\.\s+(.*?)$/gm, "<ol><li>$1</li></ol>");
-    rendered = rendered.replace(/<\/ol>\s*\n\s*<ol>/g, "");
+      // Handle bullet points (allow leading space, handle -, *, +, merge correctly)
+      rendered = rendered.replace(
+        /^\s*[-*+]\s+(.*?)$/gm,
+        "<ul><li>$1</li></ul>"
+      );
+      rendered = rendered.replace(/<\/ul>\s*\n\s*<ul>/g, "");
 
-    // Handle bullet points (allow leading space, handle -, *, +, merge correctly)
-    rendered = rendered.replace(/^\s*[-*+]\s+(.*?)$/gm, "<ul><li>$1</li></ul>");
-    rendered = rendered.replace(/<\/ul>\s*\n\s*<ul>/g, "");
+      // Handle blockquotes (> text)
+      rendered = rendered.replace(
+        /^\s*>\s+(.*?)$/gm,
+        '<blockquote class="blockquote">$1</blockquote>'
+      );
+      rendered = rendered.replace(
+        /<\/blockquote>\s*\n\s*<blockquote class="blockquote">/g,
+        "<br>"
+      );
 
-    // Handle blockquotes (> text)
-    rendered = rendered.replace(
-      /^\s*>\s+(.*?)$/gm,
-      '<blockquote class="blockquote">$1</blockquote>'
-    );
-    rendered = rendered.replace(
-      /<\/blockquote>\s*\n\s*<blockquote class="blockquote">/g,
-      "<br>"
-    );
+      // Handle indented text (4+ spaces or tabs) - skip if it looks like it was already handled or is a list item
+      rendered = rendered.replace(
+        /^(?!\s*<(?:ul|ol|blockquote|pre|p|div|li))(?:\s{4,}|\t+)(.*?)$/gm,
+        '<div class="indented-text">$1</div>'
+      );
 
-    // Handle indented text (4+ spaces or tabs) - skip if it looks like it was already handled or is a list item
-    rendered = rendered.replace(
-      /^(?!\s*<(?:ul|ol|blockquote|pre|p|div|li))(?:\s{4,}|\t+)(.*?)$/gm,
-      '<div class="indented-text">$1</div>'
-    );
+      // 3. Handle inline formatting
+      // Handle bold text (**text**)
+      rendered = rendered.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
-    // 3. Handle inline formatting
-    // Handle bold text (**text**)
-    rendered = rendered.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      // Handle italic text (*text*)
+      rendered = rendered.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
-    // Handle italic text (*text*)
-    rendered = rendered.replace(/\*(.*?)\*/g, "<em>$1</em>");
+      // Handle inline code (`code`)
+      rendered = rendered.replace(
+        /`(.*?)`/g,
+        '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>'
+      );
 
-    // Handle inline code (`code`)
-    rendered = rendered.replace(
-      /`(.*?)`/g,
-      '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>'
-    );
+      // 4. Handle remaining line breaks
+      // Replace double newlines with paragraphs and single newlines with <br>
+      rendered = rendered.replace(/\n\n/g, "</p><p>");
+      rendered = rendered.replace(/\n/g, "<br>");
 
-    // 4. Handle remaining line breaks
-    // Replace double newlines with paragraphs and single newlines with <br>
-    rendered = rendered.replace(/\n\n/g, "</p><p>");
-    rendered = rendered.replace(/\n/g, "<br>");
+      // 5. Restore protected code blocks
+      placeholders.forEach((html, i) => {
+        rendered = rendered.replace(`__CODE_BLOCK_${i}__`, html);
+      });
 
-    // 5. Restore protected code blocks
-    placeholders.forEach((html, i) => {
-      rendered = rendered.replace(`__CODE_BLOCK_${i}__`, html);
-    });
+      // 6. Wrap in paragraph tags if not already starting with a block-level tag
+      const blockTags = ["<p", "<pre", "<blockquote", "<ul", "<ol", "<div"];
+      const trimmed = rendered.trim();
+      const startsWithBlock = blockTags.some(tag => trimmed.startsWith(tag));
 
-    // 6. Wrap in paragraph tags if not already starting with a block-level tag
-    const blockTags = ["<p", "<pre", "<blockquote", "<ul", "<ol", "<div"];
-    const trimmed = rendered.trim();
-    const startsWithBlock = blockTags.some(tag => trimmed.startsWith(tag));
+      if (!startsWithBlock && trimmed.length > 0) {
+        rendered = `<p>${rendered}</p>`;
+      }
 
-    if (!startsWithBlock && trimmed.length > 0) {
-      rendered = `<p>${rendered}</p>`;
+      rendered = rendered.replace(
+        /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g,
+        '<a href="mailto:$1" class="text-blue-400 underline">$1</a>'
+      );
+
+      // 8. Convert URLs to clickable links
+      rendered = rendered.replace(
+        "https://www.linkedin.com/in/simon-curran-brisbane",
+        '<a href="https://www.linkedin.com/in/simon-curran-brisbane" target="_blank" class="text-blue-400 underline">Simon\'s LinkedIn Profile</a>'
+      );
+      rendered = rendered.replace(
+        "https://github.com/SimoSultan",
+        '<a href="https://github.com/SimoSultan" target="_blank" class="text-blue-400 underline">Simon\'s GitHub Profile</a>'
+      );
+      rendered = rendered.replace(
+        "https://drive.google.com/file/d/1o4dsnsq83aPHIeIpS4XFf0ZCOy98zFz5/view",
+        '<a href="https://drive.google.com/file/d/1o4dsnsq83aPHIeIpS4XFf0ZCOy98zFz5/view" target="_blank" class="text-blue-400 underline">Simon\'s Resume</a>'
+      );
+    } else {
+      console.log("Using marked to parse markdown content.");
+      const parseResult = marked.parse(content);
+      rendered =
+        typeof parseResult === "string" ? parseResult : await parseResult;
     }
 
     // 7. Convert email addresses to mailto links
-    rendered = rendered.replace(
-      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g,
-      '<a href="mailto:$1" class="text-blue-400 underline">$1</a>'
-    );
-
-    // 8. Convert URLs to clickable links
-    rendered = rendered.replace(
-      "https://www.linkedin.com/in/simon-curran-brisbane",
-      '<a href="https://www.linkedin.com/in/simon-curran-brisbane" target="_blank" class="text-blue-400 underline">Simon\'s LinkedIn Profile</a>'
-    );
-    rendered = rendered.replace(
-      "https://github.com/SimoSultan",
-      '<a href="https://github.com/SimoSultan" target="_blank" class="text-blue-400 underline">Simon\'s GitHub Profile</a>'
-    );
-    rendered = rendered.replace(
-      "https://drive.google.com/file/d/1o4dsnsq83aPHIeIpS4XFf0ZCOy98zFz5/view",
-      '<a href="https://drive.google.com/file/d/1o4dsnsq83aPHIeIpS4XFf0ZCOy98zFz5/view" target="_blank" class="text-blue-400 underline">Simon\'s Resume</a>'
-    );
-
-    // Finally, remove leading "Assistant:" if present
-    if (rendered.startsWith("Assistant:")) {
-      rendered = rendered.replace("Assistant:", "").trim();
-    }
 
     return rendered;
   }
