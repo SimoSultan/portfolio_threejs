@@ -274,7 +274,6 @@ export class ChatUI {
 
       // Create and display assistant response
       const assistantMessage = this.createMessage("assistant", response);
-      console.log("Assistant response:", assistantMessage);
       this.addMessageToUI(assistantMessage);
 
       // Save assistant response to storage (non-blocking)
@@ -769,7 +768,6 @@ export class ChatUI {
     forceClose,
     forceOpen,
   }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
-    console.log("here");
     const debugDropdown = document.getElementById("debug-dropdown");
     if (!debugDropdown) return;
 
