@@ -11,6 +11,7 @@ export class AnimationManager {
   private originalInfiniteAnimationSpeed: number = 1.0; // Store original speed
   private isInfiniteAnimationRunning: boolean = false; // Track if infinite animation is running
 
+
   constructor(_scene: THREE.Scene) {
     // Scene parameter kept for future use (e.g., adding particles, effects)
     // Currently not used but will be useful for scene-wide animations
@@ -41,6 +42,7 @@ export class AnimationManager {
     // Check if infinite animation is active (either running or should resume)
     if (this.isInfiniteAnimationActive()) {
       this.infiniteAnimationSpeed = speedMultiplier;
+
     }
   }
 
@@ -49,6 +51,7 @@ export class AnimationManager {
    */
   public resumeInfiniteAnimationSpeed(): void {
     this.infiniteAnimationSpeed = this.originalInfiniteAnimationSpeed;
+
   }
 
   /**
@@ -520,6 +523,8 @@ export class AnimationManager {
             originalRotations[index].z +
             Math.sin(adjustedElapsed * 0.004 * this.infiniteAnimationSpeed) *
               0.1;
+
+
         } else {
           // For single cycle, use the original progress-based approach
           const progress = Math.min(elapsed / duration, 1);

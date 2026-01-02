@@ -1,4 +1,4 @@
-import { checkServerHealth, generate } from "../api";
+import { checkServerHealth, generate, getErrorMessage } from "../api";
 import { ContextManager, type StoredMessage } from "./context";
 
 export class ChatUI {
@@ -164,7 +164,7 @@ export class ChatUI {
       "Ask me something about Simon’s work or projects...";
     this.input.className =
       "flex-1 px-4 py-3 rounded-full text-xs sm:text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-400 text-white";
-    this.input.addEventListener("keypress", e => {
+    this.input.addEventListener("keydown", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         this.sendMessage();
@@ -196,6 +196,7 @@ export class ChatUI {
 
     // Send button
     this.sendButton = document.createElement("button");
+    this.sendButton.id = "send-button";
     this.sendButton.innerHTML = `
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
@@ -267,13 +268,6 @@ export class ChatUI {
       // Get conversation history to send to the server
       const conversationHistory =
         await this.contextManager.getConversationMessages();
-      console.log("📚 Sending conversation history:", {
-        messageCount: conversationHistory.length,
-        history: conversationHistory.map(msg => ({
-          role: msg.role,
-          content: msg.content.substring(0, 50) + "...",
-        })),
-      });
 
       let response: string;
       response = await generate(message, { history: conversationHistory });
@@ -288,12 +282,14 @@ export class ChatUI {
       });
     } catch (error) {
       console.error("Chat error:", error);
-      this.addMessageToUI(
-        this.createMessage(
-          "assistant",
-          "Sorry, I encountered an error. Please try again."
-        )
-      );
+      const errorMessage = getErrorMessage(error);
+
+      // If we already started a message, append error there or just create new one?
+      // Simpler to just add a new error message if the previous one was empty,
+      // but if we were streaming partial content, maybe append error?
+      // Standard behavior: just show error message as a fresh bubble or update status.
+      // Let's add a distinct error message.
+      this.addMessageToUI(this.createMessage("assistant", errorMessage));
     } finally {
       // Resume infinite animation at normal speed and restart it
       this.triggerAnimation("resumeInfiniteSpeed");
@@ -311,10 +307,10 @@ export class ChatUI {
     messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
     const bubble = document.createElement("div");
-    bubble.className = `max-w-[80%] md:max-w-md px-4 py-2 rounded-2xl text-sm md:text-base ${
+    bubble.className = `chat-message max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base ${
       message.role === "user"
-        ? "bg-emerald-500/30 backdrop-blur-sm text-emerald-200 border border-emerald-400/30"
-        : "bg-purple-500/10 backdrop-blur-sm text-purple-300 border border-purple-400/20 chat-message"
+        ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 chat-message--user"
+        : "bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message--assistant"
     }`;
 
     // For AI messages, render markdown; for user messages, use plain text
@@ -333,59 +329,73 @@ export class ChatUI {
 
   private renderMarkdown(content: string): string {
     let rendered = content;
+    const placeholders: string[] = [];
 
-    // Handle line breaks and paragraphs
-    rendered = rendered.replace(/\n\n/g, "</p><p>");
-    rendered = rendered.replace(/\n/g, "<br>");
+    // 1. Protect code blocks (```code```) - do this early to avoid mangling content
+    rendered = rendered.replace(/```(.*?)```/gs, (_match, p1) => {
+      const placeholder = `__CODE_BLOCK_${placeholders.length}__`;
+      placeholders.push(
+        `<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>${p1}</code></pre>`
+      );
+      return placeholder;
+    });
 
-    // Wrap in paragraph tags if not already wrapped
-    if (!rendered.startsWith("<p>")) {
-      rendered = `<p>${rendered}</p>`;
-    }
+    // 2. Handle block-level elements that should not be wrapped in <p>
+    // Handle numbered lists (allow leading space, handle multiple lines)
+    rendered = rendered.replace(/^\s*\d+\.\s+(.*?)$/gm, "<ol><li>$1</li></ol>");
+    rendered = rendered.replace(/<\/ol>\s*\n\s*<ol>/g, "");
 
+    // Handle bullet points (allow leading space, handle -, *, +, merge correctly)
+    rendered = rendered.replace(/^\s*[-*+]\s+(.*?)$/gm, "<ul><li>$1</li></ul>");
+    rendered = rendered.replace(/<\/ul>\s*\n\s*<ul>/g, "");
+
+    // Handle blockquotes (> text)
+    rendered = rendered.replace(
+      /^\s*>\s+(.*?)$/gm,
+      '<blockquote class="blockquote">$1</blockquote>'
+    );
+    rendered = rendered.replace(
+      /<\/blockquote>\s*\n\s*<blockquote class="blockquote">/g,
+      "<br>"
+    );
+
+    // Handle indented text (4+ spaces or tabs) - skip if it looks like it was already handled or is a list item
+    rendered = rendered.replace(
+      /^(?!\s*<(?:ul|ol|blockquote|pre|p|div|li))(?:\s{4,}|\t+)(.*?)$/gm,
+      '<div class="indented-text">$1</div>'
+    );
+
+    // 3. Handle inline formatting
     // Handle bold text (**text**)
     rendered = rendered.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
     // Handle italic text (*text*)
     rendered = rendered.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
-    // Handle numbered lists (1. item) with better indentation
-    rendered = rendered.replace(
-      /^(\d+\.\s+)(.*?)(?=\n\d+\.|$)/gm,
-      "<ol><li>$2</li></ol>"
-    );
-    rendered = rendered.replace(/<\/ol>\n<ol>/g, "");
-
-    // Handle bullet points (- item or * item) with better indentation
-    rendered = rendered.replace(
-      /^[-*]\s+(.*?)(?=\n[-*]|$)/gm,
-      "<ul><li>$1</li></ul>"
-    );
-    rendered = rendered.replace(/<\/ul>\n<ul>/g, "");
-
-    // Handle indented text (4+ spaces or tabs)
-    rendered = rendered.replace(
-      /^(\s{4,}|\t+)(.*?)(?=\n\S|$)/gm,
-      '<div class="indented-text">$2</div>'
-    );
-
-    // Handle blockquotes (> text)
-    rendered = rendered.replace(
-      /^>\s+(.*?)(?=\n[^>]|$)/gm,
-      '<blockquote class="blockquote">$1</blockquote>'
-    );
-
-    // Handle code blocks (```code```)
-    rendered = rendered.replace(
-      /```(.*?)```/gs,
-      '<pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto"><code>$1</code></pre>'
-    );
-
     // Handle inline code (`code`)
     rendered = rendered.replace(
       /`(.*?)`/g,
       '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>'
     );
+
+    // 4. Handle remaining line breaks
+    // Replace double newlines with paragraphs and single newlines with <br>
+    rendered = rendered.replace(/\n\n/g, "</p><p>");
+    rendered = rendered.replace(/\n/g, "<br>");
+
+    // 5. Restore protected code blocks
+    placeholders.forEach((html, i) => {
+      rendered = rendered.replace(`__CODE_BLOCK_${i}__`, html);
+    });
+
+    // 6. Wrap in paragraph tags if not already starting with a block-level tag
+    const blockTags = ["<p", "<pre", "<blockquote", "<ul", "<ol", "<div"];
+    const trimmed = rendered.trim();
+    const startsWithBlock = blockTags.some(tag => trimmed.startsWith(tag));
+
+    if (!startsWithBlock && trimmed.length > 0) {
+      rendered = `<p>${rendered}</p>`;
+    }
 
     return rendered;
   }

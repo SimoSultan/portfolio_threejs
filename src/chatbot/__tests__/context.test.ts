@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  type ChatContext,
-  ContextManager,
-  type StoredMessage,
-} from "../context";
+import { ContextManager } from "../context";
 
 // Mock the storage module
 const mockStorage = {
@@ -60,7 +56,7 @@ describe("ContextManager", () => {
 
     // Create ContextManager instance
     contextManager = new ContextManager();
-    
+
     // Wait for async initialization to complete
     await vi.runAllTimersAsync();
   });
@@ -147,7 +143,9 @@ describe("ContextManager", () => {
 
       // Test that the message was added by checking if we can retrieve it
       const messages = await contextManager.getConversationMessages();
-      const userMessage = messages.find(m => m.role === "user" && m.content === message);
+      const userMessage = messages.find(
+        m => m.role === "user" && m.content === message
+      );
       expect(userMessage).toBeDefined();
     });
 
@@ -158,7 +156,9 @@ describe("ContextManager", () => {
 
       // Test that the message was added by checking if we can retrieve it
       const messages = await contextManager.getConversationMessages();
-      const assistantMessage = messages.find(m => m.role === "assistant" && m.content === message);
+      const assistantMessage = messages.find(
+        m => m.role === "assistant" && m.content === message
+      );
       expect(assistantMessage).toBeDefined();
     });
 
@@ -169,21 +169,31 @@ describe("ContextManager", () => {
 
       // Test that the message was added and summarized
       const messages = await contextManager.getConversationMessages();
-      const summarizedMessage = messages.find(m => m.role === "user" && m.isSummarized === true);
+      const summarizedMessage = messages.find(
+        m => m.role === "user" && m.isSummarized === true
+      );
       expect(summarizedMessage).toBeDefined();
-      expect(summarizedMessage?.content.length).toBeLessThan(longMessage.length);
+      expect(summarizedMessage?.content.length).toBeLessThan(
+        longMessage.length
+      );
     });
 
     it("should truncate extremely long messages", async () => {
-      const extremelyLongMessage = "This is an extremely long message. ".repeat(500); // ~15000 chars
+      const extremelyLongMessage = "This is an extremely long message. ".repeat(
+        500
+      ); // ~15000 chars
 
       await contextManager.addMessage("user", extremelyLongMessage);
 
       // Test that the message was added and truncated
       const messages = await contextManager.getConversationMessages();
-      const truncatedMessage = messages.find(m => m.role === "user" && m.isSummarized === true);
+      const truncatedMessage = messages.find(
+        m => m.role === "user" && m.isSummarized === true
+      );
       expect(truncatedMessage).toBeDefined();
-      expect(truncatedMessage?.content.length).toBeLessThan(extremelyLongMessage.length);
+      expect(truncatedMessage?.content.length).toBeLessThan(
+        extremelyLongMessage.length
+      );
     });
   });
 
@@ -196,7 +206,7 @@ describe("ContextManager", () => {
     it("should get conversation messages within token limits", async () => {
       // Clear any existing data first
       await contextManager.clearAllData();
-      
+
       // Add several messages to test token limits
       await contextManager.addMessage("user", "Message 1");
       await contextManager.addMessage("assistant", "Response 1");
@@ -278,9 +288,11 @@ describe("ContextManager", () => {
 
     it("should handle location permission denied", async () => {
       // Mock geolocation to simulate permission denied
-      mockGeolocation.getCurrentPosition.mockImplementation((success, error) => {
-        error({ code: 1, message: "Permission denied" });
-      });
+      mockGeolocation.getCurrentPosition.mockImplementation(
+        (success, error) => {
+          error({ code: 1, message: "Permission denied" });
+        }
+      );
 
       // Refresh location (this should handle the permission denial gracefully)
       await contextManager.refreshLocation();
@@ -345,7 +357,10 @@ describe("ContextManager", () => {
 
     it("should summarize existing messages", async () => {
       // Add some long messages that will be summarized
-      await contextManager.addMessage("user", "This is a very long message. ".repeat(100));
+      await contextManager.addMessage(
+        "user",
+        "This is a very long message. ".repeat(100)
+      );
 
       const result = await contextManager.summarizeExistingMessages();
 
@@ -377,7 +392,10 @@ describe("ContextManager", () => {
     it("should get summary statistics", async () => {
       // Add messages including some long ones that will be summarized
       await contextManager.addMessage("user", "Short message");
-      await contextManager.addMessage("user", "This is a very long message. ".repeat(100));
+      await contextManager.addMessage(
+        "user",
+        "This is a very long message. ".repeat(100)
+      );
 
       const stats = await contextManager.getSummaryStatistics();
 
@@ -409,7 +427,7 @@ describe("ContextManager", () => {
       await contextManager.addMessage("assistant", "Test response");
 
       const exportData = await contextManager.exportConversation();
-      
+
       // Clear data and import it back
       await contextManager.clearAllData();
       await contextManager.importConversation(exportData);
@@ -424,10 +442,10 @@ describe("ContextManager", () => {
       await contextManager.addMessage("user", "Test message");
 
       await contextManager.clearAllData();
-      
+
       // Should still have context available
       expect(contextManager.getContext()).toBeDefined(); // Should recreate default context
-      
+
       // Messages should be cleared
       const messages = await contextManager.getConversationMessages();
       expect(messages).toEqual([]);

@@ -11,10 +11,6 @@ export class DatabaseManager {
   private useIndexedDB: boolean = false;
 
   constructor() {
-    console.log(
-      "🏗️ DatabaseManager constructor called, DB_VERSION:",
-      this.DB_VERSION
-    );
     this.checkStorageSupport();
   }
 
@@ -24,9 +20,7 @@ export class DatabaseManager {
   private checkStorageSupport(): void {
     if (typeof window !== "undefined" && "indexedDB" in window) {
       this.useIndexedDB = true;
-      console.log("✅ IndexedDB is available and will be used");
     } else {
-      console.log("⚠️ IndexedDB not available, falling back to localStorage");
     }
   }
 
@@ -34,13 +28,6 @@ export class DatabaseManager {
    * Save context data to storage
    */
   async saveContext(data: ContextStorage): Promise<void> {
-    console.log("💾 Saving context to storage:", {
-      useIndexedDB: this.useIndexedDB,
-      messageCount: data.messages.length,
-      totalTokens: data.totalTokens,
-      lastUpdated: data.lastUpdated,
-    });
-
     if (this.useIndexedDB) {
       await this.saveToIndexedDB(data);
     } else {
@@ -52,24 +39,12 @@ export class DatabaseManager {
    * Load context data from storage
    */
   async loadContext(): Promise<ContextStorage | null> {
-    console.log(
-      "📂 Loading context from storage, useIndexedDB:",
-      this.useIndexedDB
-    );
-
     let result;
     if (this.useIndexedDB) {
       result = await this.loadFromIndexedDB();
     } else {
       result = this.loadFromLocalStorage();
     }
-
-    console.log("📂 Loaded context result:", {
-      hasData: !!result,
-      messageCount: result?.messages?.length || 0,
-      totalTokens: result?.totalTokens || 0,
-      lastUpdated: result?.lastUpdated || null,
-    });
 
     return result;
   }
@@ -78,9 +53,6 @@ export class DatabaseManager {
    * Clear all stored data
    */
   async clearAll(): Promise<void> {
-    console.log("🗑️ clearAll() called - this should NOT happen automatically!");
-    console.log("🗑️ Stack trace:", new Error().stack);
-
     if (this.useIndexedDB) {
       await this.clearIndexedDB();
     } else {
@@ -162,20 +134,9 @@ export class DatabaseManager {
 
       request.onupgradeneeded = (event: any) => {
         const db = event.target.result;
-        console.log(
-          "🔄 IndexedDB upgrade needed - version:",
-          event.oldVersion,
-          "->",
-          event.newVersion
-        );
-        console.log(
-          "🔄 Upgrade reason:",
-          event.oldVersion === 0 ? "New database" : "Schema change"
-        );
 
         // Create object stores if they don't exist
         if (!db.objectStoreNames.contains("context")) {
-          console.log("📁 Creating context object store");
           const contextStore = db.createObjectStore("context", {
             keyPath: "id",
           });
@@ -185,7 +146,6 @@ export class DatabaseManager {
         }
 
         if (!db.objectStoreNames.contains("messages")) {
-          console.log("📁 Creating messages object store");
           const messageStore = db.createObjectStore("messages", {
             keyPath: "id",
             autoIncrement: true,
@@ -206,6 +166,7 @@ export class DatabaseManager {
         const dataWithId = {
           ...data,
           id: "context",
+
           messages: data.messages.map(msg => ({
             ...msg,
             timestamp:
@@ -218,18 +179,10 @@ export class DatabaseManager {
               ? data.lastUpdated.toISOString()
               : data.lastUpdated,
         };
-        console.log("💾 Saving to IndexedDB:", dataWithId);
-
         const saveRequest = store.put(dataWithId);
 
-        saveRequest.onsuccess = () => {
-          console.log("✅ Successfully saved to IndexedDB");
-          resolve();
-        };
-        saveRequest.onerror = () => {
-          console.error("❌ Failed to save to IndexedDB:", saveRequest.error);
-          reject(saveRequest.error);
-        };
+        saveRequest.onsuccess = () => resolve();
+        saveRequest.onerror = () => reject(saveRequest.error);
       };
     });
   }
@@ -253,16 +206,9 @@ export class DatabaseManager {
 
       request.onupgradeneeded = (event: any) => {
         const db = event.target.result;
-        console.log(
-          "🔄 IndexedDB upgrade needed during load - version:",
-          event.oldVersion,
-          "->",
-          event.newVersion
-        );
 
         // Create object stores if they don't exist (same schema as save)
         if (!db.objectStoreNames.contains("context")) {
-          console.log("📁 Creating context object store during load");
           const contextStore = db.createObjectStore("context", {
             keyPath: "id",
           });
@@ -272,7 +218,6 @@ export class DatabaseManager {
         }
 
         if (!db.objectStoreNames.contains("messages")) {
-          console.log("📁 Creating messages object store during load");
           const messageStore = db.createObjectStore("messages", {
             keyPath: "id",
             autoIncrement: true,
@@ -291,7 +236,6 @@ export class DatabaseManager {
         const getRequest = store.get("context");
         getRequest.onsuccess = () => {
           const result = getRequest.result;
-          console.log("📂 Retrieved from IndexedDB:", result);
 
           if (result) {
             // Properly deserialize Date objects and ensure messages array integrity
@@ -306,25 +250,12 @@ export class DatabaseManager {
               lastUpdated: new Date(result.lastUpdated),
             };
 
-            console.log("📂 Deserialized result:", {
-              messageCount: deserializedResult.messages.length,
-              hasMessages: Array.isArray(deserializedResult.messages),
-              firstMessage: deserializedResult.messages[0],
-              lastUpdated: deserializedResult.lastUpdated,
-            });
-
             resolve(deserializedResult);
           } else {
             resolve(null);
           }
         };
-        getRequest.onerror = () => {
-          console.error(
-            "❌ Failed to retrieve from IndexedDB:",
-            getRequest.error
-          );
-          reject(getRequest.error);
-        };
+        getRequest.onerror = () => reject(getRequest.error);
       };
     });
   }

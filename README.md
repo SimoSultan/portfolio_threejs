@@ -40,8 +40,6 @@ portfolio/
 │   │   ├── database.ts      # Core database operations (IndexedDB/localStorage)
 │   │   ├── storage.ts # Storage business logic and message management
 │   │   └── index.ts           # Database exports and types
-│   ├── scripts/               # Utility scripts
-│   │   └── switch-env.sh      # Environment switcher
 │   └── main.ts                # Main application entry point
 ├── .env                       # Environment variables
 ├── .env.example               # Environment template
@@ -69,29 +67,29 @@ portfolio/
    ollama pull gemma3:1b
    ```
 
-3. **Configure environment:**
+3. **Start development server:**
 
    ```bash
-   # Check current config
-   ./src/scripts/switch-env.sh
-
-   # Switch to local
-   ./src/scripts/switch-env.sh local
-   ```
-
-4. **Start development server:**
-
-   ```bash
+   # Use local portfolio-server (default)
    npm run dev
+   # or explicitly:
+   npm run dev:local
+
+   # Use deployed portfolio-server
+   npm run dev:remote
    ```
 
-5. **Build for production:**
+   > **Note:** Make sure the local portfolio-server is running on `http://localhost:8000` when using `dev:local` or `dev`.
+
+4. **Build for production:**
 
    ```bash
    npm run build
    ```
 
-6. **Preview production build:**
+   > **Note:** Production builds always use the deployed server URL.
+
+5. **Preview production build:**
    ```bash
    npm run preview
    ```

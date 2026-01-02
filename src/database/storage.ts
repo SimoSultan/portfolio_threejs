@@ -47,39 +47,22 @@ export class StorageManager {
    * Add a new message to storage
    */
   async addMessage(message: StoredMessage): Promise<void> {
-    console.log("📝 StorageManager.addMessage called with:", {
-      role: message.role,
-      contentLength: message.content.length,
-      timestamp: message.timestamp
-    });
-
     // Queue the save operation to prevent race conditions
     return new Promise((resolve, reject) => {
       const saveOperation = async () => {
         try {
           let existing = await this.loadContext();
-          console.log("📝 Loaded existing context:", {
-            hasContext: !!existing,
-            messageCount: existing?.messages?.length || 0
-          });
 
           // If no context exists, create initial context
           if (!existing) {
             existing = this.createInitialContext();
-            console.log("📝 Created initial context");
           }
 
           existing.messages.push(message);
           existing.totalTokens += message.tokenCount;
           existing.lastUpdated = new Date();
 
-          console.log("📝 About to save context with:", {
-            messageCount: existing.messages.length,
-            totalTokens: existing.totalTokens
-          });
-
           await this.saveContext(existing);
-          console.log("📝 Successfully saved context with", existing.messages.length, "messages");
           resolve();
         } catch (error) {
           console.error("❌ Error in saveOperation:", error);
