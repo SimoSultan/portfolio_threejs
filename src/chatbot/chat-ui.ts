@@ -16,6 +16,7 @@ export class ChatUI {
   private isDebugDropdownOpen: boolean = false;
   private infoContainer!: HTMLDivElement;
   private contextManager: ContextManager;
+  private loadingBubbleTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.contextManager = new ContextManager();
@@ -49,7 +50,7 @@ export class ChatUI {
     this.chatContainer = document.createElement("div");
     this.chatContainer.className =
       "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 w-full";
-    this.chatContainer.style.height = "calc(100% - 15vh)";
+    this.chatContainer.style.height = "calc(100% - 18vh)";
     this.chatContainer.style.minHeight = "calc(100% - 140px)";
     this.chatContainer.id = "chat-container";
 
@@ -250,6 +251,13 @@ export class ChatUI {
 
     // Add user message to UI immediately
     this.addMessageToUI(userMessage);
+    // Save user message to storage (non-blocking)
+    this.contextManager.addMessage("user", message).catch(error => {
+      console.error("Failed to save user message:", error);
+    });
+
+    // Show loading message
+    this.showLoadingMessage();
 
     // Disable input while generating
     this.input.disabled = true;
@@ -259,11 +267,6 @@ export class ChatUI {
     // Speed up infinite animation for loading
     this.triggerAnimation("speedUpInfinite");
 
-    // Save user message to storage (non-blocking)
-    this.contextManager.addMessage("user", message).catch(error => {
-      console.error("Failed to save user message:", error);
-    });
-
     try {
       // Get conversation history to send to the server
       const conversationHistory =
@@ -271,6 +274,8 @@ export class ChatUI {
 
       let response: string;
       response = await generate(message, { history: conversationHistory });
+
+      this.hideLoadingMessage();
 
       // Create and display assistant response
       const assistantMessage = this.createMessage("assistant", response);
@@ -283,6 +288,7 @@ export class ChatUI {
     } catch (error) {
       console.error("Chat error:", error);
       const errorMessage = getErrorMessage(error);
+      console.error("Error message to display:", errorMessage);
 
       // If we already started a message, append error there or just create new one?
       // Simpler to just add a new error message if the previous one was empty,
@@ -302,12 +308,54 @@ export class ChatUI {
     }
   }
 
+  private showLoadingMessage(): void {
+    let innerText = "Loading...";
+
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "flex justify-start";
+    messageDiv.id = "loading-message";
+
+    const bubble = document.createElement("div");
+    bubble.id = "loading-bubble";
+    bubble.className =
+      "chat-message max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message--assistant";
+
+    // For AI messages, render markdown; for user messages, use plain text
+    bubble.innerHTML = `<p><em>${innerText}</em></p>`;
+    messageDiv.appendChild(bubble);
+
+    this.chatContainer.appendChild(messageDiv);
+
+    // Update the loading message if it's taking too long
+    this.loadingBubbleTimeout = setTimeout(() => {
+      const bubble = document.getElementById("loading-bubble");
+      if (!bubble) return;
+      bubble.innerHTML =
+        "<p><em>This is taking longer than usual...</br>Please bare with me as I am only using free versions of relevant software.</em> 😅</p>";
+    }, 7_500);
+
+    // Scroll to bottom
+    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+  }
+
+  private hideLoadingMessage(): void {
+    const loadingMessage = document.getElementById("loading-message");
+    if (!loadingMessage) return;
+
+    this.chatContainer.removeChild(loadingMessage);
+
+    clearTimeout(this.loadingBubbleTimeout!);
+
+    // Scroll to bottom
+    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+  }
+
   private addMessageToUI(message: StoredMessage): void {
     const messageDiv = document.createElement("div");
     messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
     const bubble = document.createElement("div");
-    bubble.className = `chat-message max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base ${
+    bubble.className = `chat-message flex flex-wrap max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base ${
       message.role === "user"
         ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 chat-message--user"
         : "bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message--assistant"
@@ -395,6 +443,31 @@ export class ChatUI {
 
     if (!startsWithBlock && trimmed.length > 0) {
       rendered = `<p>${rendered}</p>`;
+    }
+
+    // 7. Convert email addresses to mailto links
+    rendered = rendered.replace(
+      /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g,
+      '<a href="mailto:$1" class="text-blue-400 underline">$1</a>'
+    );
+
+    // 8. Convert URLs to clickable links
+    rendered = rendered.replace(
+      "https://www.linkedin.com/in/simon-curran-brisbane",
+      '<a href="https://www.linkedin.com/in/simon-curran-brisbane" target="_blank" class="text-blue-400 underline">Simon\'s LinkedIn Profile</a>'
+    );
+    rendered = rendered.replace(
+      "https://github.com/SimoSultan",
+      '<a href="https://github.com/SimoSultan" target="_blank" class="text-blue-400 underline">Simon\'s GitHub Profile</a>'
+    );
+    rendered = rendered.replace(
+      "https://drive.google.com/file/d/1o4dsnsq83aPHIeIpS4XFf0ZCOy98zFz5/view",
+      '<a href="https://drive.google.com/file/d/1o4dsnsq83aPHIeIpS4XFf0ZCOy98zFz5/view" target="_blank" class="text-blue-400 underline">Simon\'s Resume</a>'
+    );
+
+    // Finally, remove leading "Assistant:" if present
+    if (rendered.startsWith("Assistant:")) {
+      rendered = rendered.replace("Assistant:", "").trim();
     }
 
     return rendered;
