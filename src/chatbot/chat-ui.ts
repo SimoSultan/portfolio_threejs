@@ -22,9 +22,6 @@ export class ChatUI {
   private debugButton!: HTMLButtonElement;
   private debugDropdown!: HTMLDivElement;
   private statusIndicator!: HTMLDivElement;
-  private contextDisplay!: HTMLDivElement;
-  private contextDropdown!: HTMLDivElement;
-  private isContextDropdownOpen: boolean = false;
   private isDebugDropdownOpen: boolean = false;
   private infoContainer!: HTMLDivElement;
   private contextManager: ContextManager;
@@ -61,10 +58,6 @@ export class ChatUI {
     this.inputContainer.className =
       "absolute bottom-[-1px] z-20 right-0 left-0 flex flex-col p-5 gap-4 bg-white/5 backdrop-blur-md sm:rounded-xl shadow-lg border border-white/20 min-h-[120px] sm:mb-6 md:max-w-[80%] mx-auto";
 
-    this.showLoadingMessage(
-      "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-    );
-
     // Create the model icon
     const modelIcon = document.createElement("span");
     modelIcon.innerHTML = "🤖";
@@ -99,10 +92,6 @@ export class ChatUI {
     setTimeout(() => {
       this.performHealthCheck();
     }, 100);
-
-    // Context display (created and hidden by default)
-    this.createContextDisplay();
-    this.contextDisplay.style.display = "none";
 
     // Create new chat button
     const newChatButton = document.createElement("div");
@@ -329,12 +318,12 @@ export class ChatUI {
     this.chatUIContainer.appendChild(messageDiv);
 
     // Update the loading message if it's taking too long
-    // this.loadingBubbleTimeout = setTimeout(() => {
-    //   const bubble = document.getElementById("loading-bubble");
-    //   if (!bubble) return;
-    //   bubble.innerHTML =
-    //     "<p><em>This is taking longer than usual...</br>Please bare with me as I am only using free versions of relevant software.</em> 😅</p>";
-    // }, 7_500);
+    this.loadingBubbleTimeout = setTimeout(() => {
+      const bubble = document.getElementById("loading-bubble");
+      if (!bubble) return;
+      bubble.innerHTML =
+        "<p><em>This is taking longer than usual...</br>Please bare with me as I am only using free versions of relevant software.</em> 😅</p>";
+    }, 7_500);
 
     // Scroll to bottom
     this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
@@ -628,88 +617,6 @@ export class ChatUI {
     // Since we no longer have individual buttons, return null
     // The animation feedback is now handled in the debug dropdown
     return null;
-  }
-
-  private createContextDisplay(): void {
-    this.contextDisplay = document.createElement("div");
-    this.contextDisplay.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-colors min-w-0 w-auto overflow-visible";
-    this.contextDisplay.id = "context-display";
-
-    // Create context summary (inline display)
-    const contextSummary = document.createElement("div");
-    contextSummary.className = "flex items-center gap-2 truncate";
-    contextSummary.innerHTML = `<span>📍 Context</span><span class="text-xs text-gray-600">▲</span>`;
-    contextSummary.id = "context-summary";
-
-    this.contextDisplay.appendChild(contextSummary);
-
-    // Add click event to toggle dropdown
-    this.contextDisplay.addEventListener("click", e => {
-      e.stopPropagation();
-      this.toggleContextDropdown();
-    });
-
-    // Initial context display
-    this.updateContextDisplay();
-
-    // Update context every 5 minutes instead of every minute for better performance
-    setInterval(() => {
-      this.updateContextDisplay();
-    }, 300000);
-  }
-
-  private updateContextDisplay(): void {
-    const contextSummary = document.getElementById("context-summary");
-    if (!contextSummary) {
-      return;
-    }
-
-    // Update inline summary with loading state
-    contextSummary.innerHTML = `
-        <span>📍 Context</span>
-        <span class="text-gray-500">Loading...</span>
-        <span class=>${this.isContextDropdownOpen ? "▼" : "▲"}</span>
-      `;
-  }
-
-  private toggleContextDropdown({
-    forceClose,
-    forceOpen,
-  }: { forceClose?: boolean; forceOpen?: boolean } = {}): void {
-    if (forceClose) {
-      this.contextDropdown.style.display = "none";
-      this.isContextDropdownOpen = false;
-      return;
-    }
-
-    if (forceOpen) {
-      this.contextDropdown.style.display = "block";
-      this.isContextDropdownOpen = true;
-      return;
-    }
-
-    if (this.isContextDropdownOpen) {
-      this.contextDropdown.style.display = "none";
-      this.isContextDropdownOpen = false;
-      // Rotate arrow back up
-      this.updateContextArrow(false);
-    } else {
-      this.contextDropdown.style.display = "block";
-      this.isContextDropdownOpen = true;
-      // Rotate arrow down
-      this.updateContextArrow(true);
-    }
-  }
-
-  private updateContextArrow(isOpen: boolean): void {
-    const contextSummary = document.getElementById("context-summary");
-    if (contextSummary) {
-      const arrow = contextSummary.querySelector("span:last-child");
-      if (arrow) {
-        arrow.innerHTML = isOpen ? "▼" : "▲";
-      }
-    }
   }
 
   private createDebugDropdown(): void {
