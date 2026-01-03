@@ -78,8 +78,6 @@ export class ChatUI {
     // Close dropdown when clicking outside
     this.chatUIContainer.addEventListener("click", () => {
       this.toggleDebugDropdown({ forceClose: true });
-
-      this.toggleContextDropdown({ forceClose: true });
     });
 
     // Status indicator
