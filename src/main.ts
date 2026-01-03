@@ -86,12 +86,17 @@ class PortfolioScene {
 
     // Position the chat UI within the app container
     const appContainer = document.getElementById("app");
-    if (appContainer && this.chatUI) {
-      // Move the chat UI to be positioned relative to the app container
-      const chatContainer = this.chatUI.getContainer();
-      if (chatContainer) {
-        appContainer.appendChild(chatContainer);
-      }
+    if (!appContainer || !this.chatUI) return;
+
+    // Move the chat UI to be positioned relative to the app container
+    const chatContainer = this.chatUI.getChatUIContainer();
+    if (chatContainer) {
+      appContainer.appendChild(chatContainer);
+    }
+
+    const inputContainer = this.chatUI.getInputContainer();
+    if (inputContainer) {
+      appContainer.appendChild(inputContainer);
     }
   }
 

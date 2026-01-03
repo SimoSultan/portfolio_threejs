@@ -15,8 +15,7 @@ marked.use({
 });
 
 export class ChatUI {
-  private container!: HTMLDivElement;
-  private chatContainer!: HTMLDivElement;
+  private chatUIContainer!: HTMLDivElement;
   private inputContainer!: HTMLDivElement;
   private input!: HTMLInputElement;
   private sendButton!: HTMLButtonElement;
@@ -53,24 +52,18 @@ export class ChatUI {
 
   private createUI(): void {
     // Main container - positioned absolutely over canvas, full height
-    this.container = document.createElement("div");
-    this.container.className =
-      "absolute inset-0 bg-transparent z-10 flex flex-col h-screen h-dvh w-full";
-    this.container.style.top = "0";
-    this.container.id = "chat-ui-container";
-
-    // Chat messages container - takes up remaining height above input
-    this.chatContainer = document.createElement("div");
-    this.chatContainer.className =
-      "overflow-y-auto p-4 pt-50 sm:pt-4 space-y-2 md:space-y-3 w-full";
-    this.chatContainer.style.height = "calc(100% - 18vh)";
-    this.chatContainer.style.minHeight = "calc(100% - 140px)";
-    this.chatContainer.id = "chat-container";
-
-    // Input container - takes up 10% of screen height at the bottom
+    this.chatUIContainer = document.createElement("div");
+    this.chatUIContainer.className =
+      "bg-transparent z-0 flex flex-col w-full p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600/30 scrollbar-track-transparent pb-[calc(env(safe-area-inset-bottom)+150px+180px)] sm:pb-[180px]";
+    this.chatUIContainer.id = "chat-ui-container";
+    // Input container - takes up at least 120px height at bottom
     this.inputContainer = document.createElement("div");
     this.inputContainer.className =
-      "absolute bottom-0 left-0 right-0 flex flex-col justify-around items-center py-3 px-5 gap-2 bg-white/5 backdrop-blur-md rounded-t-2xl sm:rounded-xl shadow-lg border-t border-white/10 h-[15vh] min-h-[100px] sm:mx-auto md:max-w-[800px] sm:mb-6 h-[auto]";
+      "absolute bottom-[-1px] z-20 right-0 left-0 flex flex-col p-5 gap-4 bg-white/5 backdrop-blur-md sm:rounded-xl shadow-lg border border-white/20 min-h-[120px] sm:mb-6 md:max-w-[80%] mx-auto";
+
+    this.showLoadingMessage(
+      "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+    );
 
     // Create the model icon
     const modelIcon = document.createElement("span");
@@ -90,7 +83,7 @@ export class ChatUI {
     arrowIcon.id = "model-arrow";
 
     // Close dropdown when clicking outside
-    this.chatContainer.addEventListener("click", () => {
+    this.chatUIContainer.addEventListener("click", () => {
       this.toggleDebugDropdown({ forceClose: true });
 
       this.toggleContextDropdown({ forceClose: true });
@@ -114,13 +107,13 @@ export class ChatUI {
     // Create new chat button
     const newChatButton = document.createElement("div");
     newChatButton.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-1 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-100 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-1 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
     newChatButton.id = "new-chat-button";
 
     const newChatSummary = document.createElement("div");
     newChatSummary.className =
       "flex items-center gap-2 truncate text-sm sm:text-base";
-    newChatSummary.innerHTML = `<span>New Chat</span><span class="text-xs text-gray-600">+</span>`;
+    newChatSummary.innerHTML = `<span>New Chat</span><span class="text-xs ">+</span>`;
     newChatSummary.id = "new-chat-summary";
 
     newChatButton.appendChild(newChatSummary);
@@ -131,13 +124,13 @@ export class ChatUI {
     // Create info button to show first-time use popup on demand
     const infoButton = document.createElement("div");
     infoButton.className =
-      "relative flex items-center gap-2 cursor-pointer hover:text-gray-600 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-1 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
+      "relative flex items-center gap-2 cursor-pointer hover:text-gray-100 transition-all duration-200 min-w-0 w-auto overflow-visible px-3 py-1 rounded-full border border-white/20 hover:border-white/40 hover:bg-white/5";
     infoButton.id = "info-button";
 
     const infoSummary = document.createElement("div");
     infoSummary.className =
       "flex items-center gap-2 truncate text-sm sm:text-base";
-    infoSummary.innerHTML = `<span>Context Info</span><span class="text-xs text-gray-600">▲</span>`;
+    infoSummary.innerHTML = `<span>Context Info</span><span class="text-xs">▲</span>`;
     infoButton.appendChild(infoSummary);
     infoButton.addEventListener("click", () => {
       this.showAboutModal();
@@ -174,10 +167,9 @@ export class ChatUI {
     this.input = document.createElement("input");
     this.input.id = "chat-input";
     this.input.type = "text";
-    this.input.placeholder =
-      "Ask me something about Simon’s work or projects...";
+    this.input.placeholder = "Ask me about Simon’s career...";
     this.input.className =
-      "flex-1 px-4 py-3 rounded-full text-xs sm:text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-sm border border-white/10 placeholder-gray-400 text-white";
+      "flex-1 px-4 py-3 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-white/20 bg-white/5 backdrop-blur-md border border-white/10 placeholder-gray-400 text-white disabled:text-gray-500 disabled:cursor-wait disabled:placeholder-gray-600 disabled:bg-white/2";
     this.input.addEventListener("keydown", e => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -231,9 +223,6 @@ export class ChatUI {
 
     // Assemble UI
     this.inputContainer.appendChild(inputRow);
-
-    this.container.appendChild(this.chatContainer);
-    this.container.appendChild(this.inputContainer);
 
     // Don't auto-append to body - let main.ts handle positioning
   }
@@ -321,8 +310,8 @@ export class ChatUI {
     }
   }
 
-  private showLoadingMessage(): void {
-    let innerText = "Loading...";
+  private showLoadingMessage(text?: string): void {
+    let innerText = text || "Loading...";
 
     const messageDiv = document.createElement("div");
     messageDiv.className = "flex justify-start";
@@ -331,44 +320,44 @@ export class ChatUI {
     const bubble = document.createElement("div");
     bubble.id = "loading-bubble";
     bubble.className =
-      "chat-message max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message--assistant";
+      "chat-message max-w-[80%] md:max-w-md px-4 py-2 rounded-2xl backdrop-blur-md text-sm md:text-base bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message--assistant z-10";
 
     // For AI messages, render markdown; for user messages, use plain text
     bubble.innerHTML = `<p><em>${innerText}</em></p>`;
     messageDiv.appendChild(bubble);
 
-    this.chatContainer.appendChild(messageDiv);
+    this.chatUIContainer.appendChild(messageDiv);
 
     // Update the loading message if it's taking too long
-    this.loadingBubbleTimeout = setTimeout(() => {
-      const bubble = document.getElementById("loading-bubble");
-      if (!bubble) return;
-      bubble.innerHTML =
-        "<p><em>This is taking longer than usual...</br>Please bare with me as I am only using free versions of relevant software.</em> 😅</p>";
-    }, 7_500);
+    // this.loadingBubbleTimeout = setTimeout(() => {
+    //   const bubble = document.getElementById("loading-bubble");
+    //   if (!bubble) return;
+    //   bubble.innerHTML =
+    //     "<p><em>This is taking longer than usual...</br>Please bare with me as I am only using free versions of relevant software.</em> 😅</p>";
+    // }, 7_500);
 
     // Scroll to bottom
-    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+    this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
   }
 
   private hideLoadingMessage(): void {
     const loadingMessage = document.getElementById("loading-message");
     if (!loadingMessage) return;
 
-    this.chatContainer.removeChild(loadingMessage);
+    this.chatUIContainer.removeChild(loadingMessage);
 
     clearTimeout(this.loadingBubbleTimeout!);
 
     // Scroll to bottom
-    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+    this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
   }
 
   private async addMessageToUI(message: StoredMessage): Promise<void> {
     const messageDiv = document.createElement("div");
-    messageDiv.className = `flex ${message.role === "user" ? "justify-end" : "justify-start"}`;
+    messageDiv.className = `flex mb-3 ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
     const bubble = document.createElement("div");
-    bubble.className = `chat-message flex flex-wrap max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-sm rounded-2xl text-sm md:text-base ${
+    bubble.className = `chat-message flex flex-wrap max-w-[80%] md:max-w-md px-4 py-2 backdrop-blur-md rounded-2xl text-sm md:text-base ${
       message.role === "user"
         ? "bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 chat-message--user"
         : "bg-purple-500/10 text-purple-300 border border-purple-400/20 chat-message--assistant"
@@ -382,10 +371,10 @@ export class ChatUI {
     }
 
     messageDiv.appendChild(bubble);
-    this.chatContainer.appendChild(messageDiv);
+    this.chatUIContainer.appendChild(messageDiv);
 
     // Scroll to bottom
-    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+    this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
   }
 
   private async renderMarkdown(
@@ -500,7 +489,7 @@ export class ChatUI {
   }
 
   private async clearChat(): Promise<void> {
-    this.chatContainer.innerHTML = "";
+    this.chatUIContainer.innerHTML = "";
   }
 
   private async performHealthCheck(): Promise<void> {
@@ -535,13 +524,17 @@ export class ChatUI {
     `;
   }
 
-  public getContainer(): HTMLDivElement {
-    return this.container;
+  public getChatUIContainer(): HTMLDivElement {
+    return this.chatUIContainer;
+  }
+
+  public getInputContainer(): HTMLDivElement {
+    return this.inputContainer;
   }
 
   public destroy(): void {
-    if (this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
+    if (this.chatUIContainer.parentNode) {
+      this.chatUIContainer.parentNode.removeChild(this.chatUIContainer);
     }
   }
 
@@ -651,9 +644,6 @@ export class ChatUI {
 
     this.contextDisplay.appendChild(contextSummary);
 
-    // Create the dropdown details container
-    this.createContextDropdown();
-
     // Add click event to toggle dropdown
     this.contextDisplay.addEventListener("click", e => {
       e.stopPropagation();
@@ -679,42 +669,8 @@ export class ChatUI {
     contextSummary.innerHTML = `
         <span>📍 Context</span>
         <span class="text-gray-500">Loading...</span>
-        <span class="text-xs text-gray-600">${this.isContextDropdownOpen ? "▼" : "▲"}</span>
+        <span class=>${this.isContextDropdownOpen ? "▼" : "▲"}</span>
       `;
-  }
-
-  private createContextDropdown(): void {
-    this.contextDropdown = document.createElement("div");
-    this.contextDropdown.className =
-      "absolute bottom-full right-0 mb-1 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600/30 z-50 min-w-64 p-3";
-    this.contextDropdown.style.display = "none";
-    this.contextDropdown.id = "context-dropdown";
-
-    // Add refresh location button
-    const refreshButton = document.createElement("button");
-    refreshButton.innerHTML = "🔄";
-    refreshButton.className =
-      "absolute top-2 right-2 text-xs text-gray-400 hover:text-gray-200 transition-colors";
-    refreshButton.title = "Refresh Location";
-    refreshButton.addEventListener("click", async e => {
-      e.stopPropagation();
-      refreshButton.innerHTML = "⏳";
-      refreshButton.disabled = true;
-      try {
-        this.updateContextDisplay();
-      } catch (error) {
-        console.error("Failed to refresh location:", error);
-      } finally {
-        refreshButton.innerHTML = "🔄";
-        refreshButton.disabled = false;
-      }
-    });
-
-    this.contextDropdown.appendChild(refreshButton);
-
-    // Position the dropdown relative to the context display
-    this.contextDisplay.style.position = "relative";
-    this.contextDisplay.appendChild(this.contextDropdown);
   }
 
   private toggleContextDropdown({
@@ -1005,7 +961,7 @@ export class ChatUI {
       const viewport = window.visualViewport;
 
       // Update container height to use visual viewport
-      this.container.style.height = `${viewport.height}px`;
+      this.chatUIContainer.style.height = `${viewport.height}px`;
 
       // Ensure input container stays at the bottom of the viewport
       if (this.inputContainer) {
