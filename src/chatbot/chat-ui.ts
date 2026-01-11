@@ -26,6 +26,7 @@ export class ChatUI {
   private infoContainer!: HTMLDivElement;
   private contextManager: ContextManager;
   private loadingBubbleTimeout: ReturnType<typeof setTimeout> | null = null;
+  private loadingBubbleTimeout2: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.contextManager = new ContextManager();
@@ -34,7 +35,7 @@ export class ChatUI {
   }
 
   // Helper function to create a proper StoredMessage object
-  private createMessage(
+  public createMessage(
     role: "user" | "assistant",
     content: string
   ): StoredMessage {
@@ -275,6 +276,7 @@ export class ChatUI {
         console.error("Failed to save assistant message:", error);
       });
     } catch (error) {
+      this.hideLoadingMessage();
       console.error("Chat error:", error);
       const errorMessage = getErrorMessage(error);
       console.error("Error message to display:", errorMessage);
@@ -321,7 +323,18 @@ export class ChatUI {
       if (!bubble) return;
       bubble.innerHTML =
         "<p><em>This is taking longer than usual...</br>Please bare with me as I am only using free versions of relevant software.</em> 😅</p>";
+
+      this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
     }, 7_500);
+
+    this.loadingBubbleTimeout2 = setTimeout(() => {
+      const bubble = document.getElementById("loading-bubble");
+      if (!bubble) return;
+      bubble.innerHTML =
+        "<p><em>Yes, it really is taking a while...</br>It takes a while on first load. Please hang on a bit longer.</em></p>";
+
+      this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
+    }, 15_000);
 
     // Scroll to bottom
     this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
@@ -334,12 +347,13 @@ export class ChatUI {
     this.chatUIContainer.removeChild(loadingMessage);
 
     clearTimeout(this.loadingBubbleTimeout!);
+    clearTimeout(this.loadingBubbleTimeout2!);
 
     // Scroll to bottom
     this.chatUIContainer.scrollTop = this.chatUIContainer.scrollHeight;
   }
 
-  private async addMessageToUI(message: StoredMessage): Promise<void> {
+  public async addMessageToUI(message: StoredMessage): Promise<void> {
     const messageDiv = document.createElement("div");
     messageDiv.className = `flex mb-3 ${message.role === "user" ? "justify-end" : "justify-start"}`;
 
@@ -464,7 +478,6 @@ export class ChatUI {
         '<a href="https://drive.google.com/file/d/1o4dsnsq83aPHIeIpS4XFf0ZCOy98zFz5/view" target="_blank" class="text-blue-400 underline">Simon\'s Resume</a>'
       );
     } else {
-      console.log("Using marked to parse markdown content.");
       const parseResult = marked.parse(content);
       rendered =
         typeof parseResult === "string" ? parseResult : await parseResult;
