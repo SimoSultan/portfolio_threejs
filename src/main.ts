@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+import { checkServerHealth, generate } from "./api";
 import { ChatUI } from "./chatbot";
 import { AnimationManager } from "./threejs/animation";
 import { BackgroundManager } from "./threejs/background";
@@ -25,7 +26,7 @@ class PortfolioScene {
     this.setupEventListeners();
   }
 
-  private init(): void {
+  private async init(): Promise<void> {
     // Scene setup
     this.scene = new THREE.Scene();
     // Leave scene background transparent so CSS gradient can show through
@@ -97,6 +98,19 @@ class PortfolioScene {
     const inputContainer = this.chatUI.getInputContainer();
     if (inputContainer) {
       appContainer.appendChild(inputContainer);
+    }
+
+    try {
+      const healthy = await checkServerHealth();
+      if (!healthy) return;
+
+      const response = await generate("Hello!");
+
+      // Create and display assistant response
+      const assistantMessage = this.chatUI.createMessage("assistant", response);
+      this.chatUI.addMessageToUI(assistantMessage);
+    } catch (error) {
+      console.error("Chat error:", error);
     }
   }
 
